@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -29,11 +29,11 @@ jobs:
       - name: Gradle (con caché)
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Pruebas unitarias
-        run: ./gradlew test --no-daemon --stacktrace
-
-      - name: Ensamblar APK debug
-        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
+      - name: Pruebas unitarias y APK debug
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew test :app:assembleDebug --no-daemon --stacktrace --console=plain 2>&1 | tee build.log
 
       - name: Publicar APK como artefacto
         uses: actions/upload-artifact@v4
@@ -51,3 +51,25 @@ jobs:
           path: "**/build/reports/tests/**"
           if-no-files-found: ignore
           retention-days: 7
+
+      # Si la compilación falla, deja el extracto relevante del registro como comentario
+      # del commit, para poder diagnosticarlo desde la API sin abrir la interfaz web.
+      - name: Comentar el error en el commit
+        if: failure()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "### Android CI: fallo en la ejecución ${{ github.run_id }}"
+            echo
+            echo '```'
+            grep -n -E "FAILURE|What went wrong|Could not|error:|^e: |Unresolved|Caused by|not found|Execution failed|BUILD FAILED" build.log | head -80
+            echo
+            echo "----- últimas 120 líneas -----"
+            tail -n 120 build.log
+            echo '```'
+          } > comment.md
+          # Límite de 65 536 caracteres por comentario.
+          head -c 60000 comment.md > comment_trim.md
+          jq -Rs '{body: .}' comment_trim.md | gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" --input -
