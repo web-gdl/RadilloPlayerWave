@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_library">Library</string>
+    <string name="nav_now_playing">Now playing</string>
+    <string name="nav_visualizer">Visualizer</string>
+
+    <string name="placeholder_library">The local music library arrives in Phase 1.</string>
+    <string name="placeholder_now_playing">The now-playing screen arrives in Phase 1.</string>
+    <string name="placeholder_visualizer">Audio-reactive scenes arrive in Phase 2.</string>
+</resources>

@@ -1,0 +1,53 @@
+name: Android CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Compilar APK debug y ejecutar pruebas
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Gradle (con caché)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Pruebas unitarias
+        run: ./gradlew test --no-daemon --stacktrace
+
+      - name: Ensamblar APK debug
+        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
+
+      - name: Publicar APK como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: RadilloPlayerWave-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publicar informes de pruebas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: "**/build/reports/tests/**"
+          if-no-files-found: ignore
+          retention-days: 7

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RadilloPlayerWave</string>
+
+    <string name="nav_library">Biblioteca</string>
+    <string name="nav_now_playing">Reproduciendo</string>
+    <string name="nav_visualizer">Visualizador</string>
+
+    <string name="placeholder_library">La biblioteca de música local se activa en la Fase 1.</string>
+    <string name="placeholder_now_playing">La pantalla de reproducción se activa en la Fase 1.</string>
+    <string name="placeholder_visualizer">Las escenas reactivas al audio se activan en la Fase 2.</string>
+</resources>
