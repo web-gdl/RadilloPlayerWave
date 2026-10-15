@@ -42,7 +42,7 @@ frames `synthetic = true`; las escenas degradan a animación lenta y la UI lo in
 | `MediaLibraryService` de Media3 | Notificación, pantalla bloqueada, auriculares y Bluetooth sin código propio. |
 | Sin color dinámico (Material You) | La identidad visual debe ser estable y coherente con las escenas. |
 | Hilt + KSP | Inyección estándar de Android; KSP evita kapt. |
-| AGP 8.13 / Kotlin 2.2 / Gradle 8.14 | Combinación con compatibilidad documentada entre AGP, KGP, KSP y Compose; migrable a AGP 9 más adelante. |
+| AGP 9.4 / Kotlin 2.4 / Gradle 9.6 / compileSdk 37 | AndroidX actual (Compose 1.12, lifecycle 2.11, core 1.19) exige compileSdk 37 y AGP ≥ 9.1; Hilt ≥ 2.59 exige AGP 9. Kotlin integrado en AGP. |
 
 ## Paquetes previstos
 

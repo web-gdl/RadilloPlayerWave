@@ -2,11 +2,12 @@
 # de release notes (ver docs/DEPENDENCIES.md para el inventario y las licencias).
 
 [versions]
-agp = "8.13.2"
-kotlin = "2.2.21"
-ksp = "2.2.21-2.0.5"
-# Hilt 2.59+ exige AGP 9.0; 2.58 es la última versión compatible con AGP 8.x.
-hilt = "2.58"
+agp = "9.4.0"
+# Con AGP 9 (Kotlin integrado) la versión de KGP la fija el plugin del compilador de Compose.
+kotlin = "2.4.10"
+# KSP ≥ 2.3.0 es independiente de la versión de Kotlin.
+ksp = "2.3.11"
+hilt = "2.60.1"
 androidxHilt = "1.4.0"
 
 composeBom = "2026.09.00"
@@ -89,7 +90,6 @@ robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }

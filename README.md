@@ -10,10 +10,10 @@ reproducción llegan en la Fase 1; las escenas del visualizador, en la Fase 2.
 
 | Herramienta | Versión |
 |---|---|
-| Android Studio | Rabbit 1 (2026.2.1) o Quail 4 (2026.1.4). Cualquier versión que admita AGP 8.13 |
+| Android Studio | Rabbit 1 (2026.2.1) o Quail 4 (2026.1.4): las únicas que admiten AGP 9.4 |
 | JDK | 17 o superior (el JBR 21 que incluye Android Studio sirve) |
-| Android SDK | Platform 36 y Build-Tools 35.0.0 (Android Studio los descarga al sincronizar) |
-| Gradle | 8.14.3 (lo descarga el *wrapper*; no hay que instalarlo) |
+| Android SDK | Platform 37 y Build-Tools 36.0.0 (Android Studio los descarga al sincronizar) |
+| Gradle | 9.6.0 (lo descarga el *wrapper*; no hay que instalarlo) |
 
 ## Abrir y compilar
 

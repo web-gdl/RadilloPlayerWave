@@ -5,11 +5,11 @@ Ninguna dependencia es GPL/LGPL. Todas son Apache-2.0 salvo que se indique.
 
 | Dependencia | Versión | Licencia | Uso |
 |---|---|---|---|
-| Android Gradle Plugin | 8.13.2 | Apache-2.0 | Build |
-| Gradle | 8.14.3 | Apache-2.0 | Build |
-| Kotlin / KGP / plugin Compose | 2.2.21 | Apache-2.0 | Lenguaje |
-| KSP | 2.2.21-2.0.5 | Apache-2.0 | Procesado de anotaciones |
-| Dagger Hilt | 2.58 | Apache-2.0 | Inyección de dependencias (2.59+ exige AGP 9) |
+| Android Gradle Plugin | 9.4.0 | Apache-2.0 | Build (Kotlin integrado) |
+| Gradle | 9.6.0 | Apache-2.0 | Build |
+| Kotlin / KGP / plugin Compose | 2.4.10 | Apache-2.0 | Lenguaje |
+| KSP | 2.3.11 | Apache-2.0 | Procesado de anotaciones (independiente de la versión de Kotlin) |
+| Dagger Hilt | 2.60.1 | Apache-2.0 | Inyección de dependencias (exige AGP 9) |
 | androidx.hilt (hilt-navigation-compose) | 1.4.0 | Apache-2.0 | ViewModels en Compose |
 | Compose BOM | 2026.09.00 (Compose 1.12.1) | Apache-2.0 | UI |
 | material-icons-extended | 1.7.8 | Apache-2.0 | Iconos Material (ya no está en el BOM) |
