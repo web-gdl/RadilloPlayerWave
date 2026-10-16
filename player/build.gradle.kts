@@ -17,6 +17,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
@@ -29,7 +33,7 @@ dependencies {
     api(libs.androidx.media3.exoplayer)
     api(libs.androidx.media3.session)
     api(libs.androidx.media3.common)
-    implementation(libs.androidx.lifecycle.service)
+    implementation(libs.androidx.core)
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(libs.junit)

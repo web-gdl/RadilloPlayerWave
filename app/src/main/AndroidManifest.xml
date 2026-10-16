@@ -2,8 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Los permisos de lectura de audio, notificaciones y servicio en primer plano
-         se añaden en la Fase 1 junto con el servicio de reproducción. -->
+    <!-- Lectura de audio: permiso granular en Android 13+, almacenamiento en versiones anteriores. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- Notificación de reproducción (Android 13+). Opcional: la app funciona sin ella. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Los permisos del servicio en primer plano los declara el módulo :player. -->
 
     <application
         android:name=".RadilloApplication"

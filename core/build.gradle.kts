@@ -33,6 +33,8 @@ dependencies {
     debugApi(libs.androidx.compose.ui.tooling)
 
     api(libs.kotlinx.coroutines.android)
+    api(libs.coil.compose)
+    api(libs.androidx.palette)
 
     testImplementation(libs.junit)
     testImplementation(libs.truth)
