@@ -288,3 +288,13 @@ usados en release y la UI Compose actual desaparece en esa fase.
   iconos con el tema real en móvil y en 1024×600 mdpi, en claro y oscuro.
 - Hilt se mantiene: tras R8 su coste es pequeño; se reevaluará con mediciones del equipo real.
 
+
+### Correcciones 0.8.1–0.8.2 (confirmadas por el usuario en el equipo real, 16-10-2026)
+
+- Visualizador en blanco desde la Fase B: el hilo de render consultaba `MediaController` (solo
+  admite el hilo principal). Ahora el controlador publica una instantánea del reloj y el motor
+  sigue dibujando aunque el reloj falle (prueba de regresión `VisualizerEngineRenderTest`).
+- Menú lateral con icono y texto centrados; iconos de 36 dp en el raíl y de 32 dp en los botones
+  (44 dp en reproducir) para usarlos al volante.
+- «Reproduciendo» muestra el visualizador en vivo en el recuadro de la carátula (un toque alterna).
+- Verificado en el autoestéreo JCAC10003 / alps 8227L a 1024×600: interfaz, menú y visualizadores.
