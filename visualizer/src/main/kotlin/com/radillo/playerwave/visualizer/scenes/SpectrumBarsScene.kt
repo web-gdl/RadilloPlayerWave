@@ -39,7 +39,7 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Espectro") {
     private var leftPadding = 0f
 
     override fun rebuild() {
-        val newCount = (40f * params.density).roundToInt().coerceIn(12, 96)
+        val newCount = (40f * params.effectiveDensity).roundToInt().coerceIn(12, 96)
         if (newCount != barCount || levels.size != newCount) {
             barCount = newCount
             levels = FloatArray(barCount)

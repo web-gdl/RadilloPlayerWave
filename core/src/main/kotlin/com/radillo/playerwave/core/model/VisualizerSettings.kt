@@ -11,6 +11,8 @@ data class VisualizerSettings(
     /** Desplazamiento manual imagen/sonido en ms (positivo = la imagen va más tarde). */
     val syncOffsetMs: Int = 0,
     val keepScreenOn: Boolean = true,
+    /** Gobernador de calidad: reduce la densidad de las escenas si el dispositivo no mantiene la fluidez. */
+    val autoQuality: Boolean = true,
 ) {
     companion object {
         val SENSITIVITY_RANGE = 0.25f..3f

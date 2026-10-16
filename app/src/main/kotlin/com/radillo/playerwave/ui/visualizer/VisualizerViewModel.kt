@@ -30,6 +30,8 @@ class VisualizerViewModel @Inject constructor(
         settingsRepository.settings.stateIn(viewModelScope, SharingStarted.Eagerly, VisualizerSettings())
     val playbackState: StateFlow<PlaybackState> = playback.state
     val dataState: StateFlow<DataState> = engine.dataState
+    /** Factor de calidad vigente (1 = completo) decidido por el gobernador. */
+    val quality: StateFlow<Float> = engine.quality
     val sceneIds: List<String> = engine.sceneIds
     val palettes: List<VisualPalette> = Palettes.all
 
@@ -43,6 +45,7 @@ class VisualizerViewModel @Inject constructor(
     fun selectScene(id: String) = commit { it.copy(sceneId = id) }
     fun selectPalette(id: String) = commit { it.copy(paletteId = id) }
     fun setKeepScreenOn(enabled: Boolean) = commit { it.copy(keepScreenOn = enabled) }
+    fun setAutoQuality(enabled: Boolean) = commit { it.copy(autoQuality = enabled) }
     fun resetTuning() = commit {
         it.copy(sensitivity = 1f, intensity = 1f, speed = 1f, density = 1f, syncOffsetMs = 0)
     }
@@ -69,5 +72,6 @@ class VisualizerViewModel @Inject constructor(
             ),
         )
         engine.setSyncOffsetMs(s.syncOffsetMs)
+        engine.setAutoQuality(s.autoQuality)
     }
 }

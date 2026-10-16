@@ -48,6 +48,7 @@ class DataStoreVisualizerSettingsRepository @Inject constructor(
             prefs[KEY_PALETTE] = next.paletteId
             prefs[KEY_SYNC] = next.syncOffsetMs
             prefs[KEY_KEEP_SCREEN_ON] = next.keepScreenOn
+            prefs[KEY_AUTO_QUALITY] = next.autoQuality
         }
     }
 
@@ -62,6 +63,7 @@ class DataStoreVisualizerSettingsRepository @Inject constructor(
             paletteId = this[KEY_PALETTE] ?: defaults.paletteId,
             syncOffsetMs = this[KEY_SYNC] ?: defaults.syncOffsetMs,
             keepScreenOn = this[KEY_KEEP_SCREEN_ON] ?: defaults.keepScreenOn,
+            autoQuality = this[KEY_AUTO_QUALITY] ?: defaults.autoQuality,
         )
     }
 
@@ -74,5 +76,6 @@ class DataStoreVisualizerSettingsRepository @Inject constructor(
         val KEY_PALETTE = stringPreferencesKey("palette")
         val KEY_SYNC = intPreferencesKey("sync_offset_ms")
         val KEY_KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on")
+        val KEY_AUTO_QUALITY = booleanPreferencesKey("auto_quality")
     }
 }

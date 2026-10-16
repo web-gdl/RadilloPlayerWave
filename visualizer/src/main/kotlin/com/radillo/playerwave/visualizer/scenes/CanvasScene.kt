@@ -36,7 +36,7 @@ abstract class CanvasScene(
 
     override fun onParamsChanged(params: SceneParams) {
         val paletteChanged = params.paletteId != this.params.paletteId
-        val densityChanged = params.density != this.params.density
+        val densityChanged = params.effectiveDensity != this.params.effectiveDensity
         this.params = params
         if (paletteChanged) palette = Palettes.byId(params.paletteId)
         if (paletteChanged || densityChanged) rebuild()

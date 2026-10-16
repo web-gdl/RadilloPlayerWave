@@ -57,10 +57,17 @@ class VisualizerEngine(
     val currentSceneId: StateFlow<String?> = _currentSceneId
     val sceneIds: List<String> get() = registry.ids
 
+    /** Factor de calidad vigente (1 = completo) decidido por el [QualityGovernor]. */
+    private val _quality = MutableStateFlow(1f)
+    val quality: StateFlow<Float> = _quality
+    private val governor = QualityGovernor()
+
     // ---- Estado de render (solo hilo de render) ----
     private var scene: Scene? = null
     private var outgoing: Scene? = null
     private var transition = 1f
+    /** Parámetros elegidos por el usuario (quality siempre 1) y los efectivos (con la calidad del gobernador). */
+    private var userParams = SceneParams()
     private var params = SceneParams()
     private var width = 0
     private var height = 0
@@ -117,13 +124,32 @@ class VisualizerEngine(
         }
         scene = next
         _currentSceneId.value = id
+        governor.reset()
     }
 
     fun setParams(newParams: SceneParams) {
-        if (newParams == params) return
-        params = newParams
-        scene?.onParamsChanged(newParams)
-        outgoing?.onParamsChanged(newParams)
+        val normalized = newParams.copy(quality = 1f)
+        if (normalized == userParams) return
+        userParams = normalized
+        applyParams(normalized.copy(quality = governor.quality))
+    }
+
+    /**
+     * Activa o desactiva el gobernador de calidad. Desactivado, las escenas usan siempre la
+     * densidad elegida por el usuario.
+     */
+    fun setAutoQuality(enabled: Boolean) {
+        if (governor.enabled == enabled) return
+        governor.enabled = enabled
+        applyParams(userParams.copy(quality = governor.quality))
+    }
+
+    private fun applyParams(effective: SceneParams) {
+        if (effective == params) return
+        params = effective
+        _quality.value = effective.quality
+        scene?.onParamsChanged(effective)
+        outgoing?.onParamsChanged(effective)
     }
 
     fun setSyncOffsetMs(ms: Int) {
@@ -137,14 +163,19 @@ class VisualizerEngine(
         layerBounds = Rect(0f, 0f, widthPx.toFloat(), heightPx.toFloat())
         scene?.onResize(widthPx, heightPx)
         outgoing?.onResize(widthPx, heightPx)
+        governor.reset()
     }
 
     // ---- Render ----
 
     /** Avanza la simulación un frame. Llamar desde el hilo de render antes de [draw]. */
     fun onFrame(nowNanos: Long) {
-        val dt = if (lastFrameNanos == 0L) 1f / 60f else ((nowNanos - lastFrameNanos) / 1e9f).coerceIn(0.001f, 0.1f)
+        val rawDt = if (lastFrameNanos == 0L) 1f / 60f else (nowNanos - lastFrameNanos) / 1e9f
+        val dt = rawDt.coerceIn(0.001f, 0.1f)
         lastFrameNanos = nowNanos
+
+        // El gobernador decide con la duración real del frame (una pausa larga no cuenta como tardío).
+        governor.onFrame(rawDt)?.let { q -> applyParams(userParams.copy(quality = q)) }
 
         val frame = pickFrame(nowNanos, dt)
         lastShown = frame

@@ -15,7 +15,12 @@ data class SceneParams(
     val speed: Float = 1f,           // 0.25 .. 3
     val density: Float = 1f,         // 0.25 .. 2 (partículas, barras, líneas)
     val paletteId: String = "aurora",
-)
+    /** Factor del gobernador de calidad (0.3 .. 1); multiplica a `density` en los recuentos. */
+    val quality: Float = 1f,
+) {
+    /** Densidad efectiva: la elegida por el usuario reducida por el gobernador de calidad. */
+    val effectiveDensity: Float get() = density * quality
+}
 
 /**
  * Contrato de una escena. Las escenas no conocen al reproductor: solo reciben

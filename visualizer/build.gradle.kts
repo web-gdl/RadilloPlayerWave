@@ -20,6 +20,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    testOptions {
+        // Las escenas crean android.graphics.Path en su construcción; en la JVM los stubs del
+        // SDK devuelven valores por defecto en vez de lanzar, lo que basta para probar `update`.
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {

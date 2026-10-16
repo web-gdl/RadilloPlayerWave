@@ -77,7 +77,7 @@ class RingsScene : CanvasScene(id = ID, displayName = "Anillos") {
         for (r in rings.indices) {
             val ring = rings[r]
             val lo = n * r / 3
-            val hi = n * (r + 1) / 3
+            val hi = max(lo + 1, n * (r + 1) / 3).coerceAtMost(max(n, 1))
             val count = max(1, hi - lo)
             val targetEnergy = (energies[r] * sensitivity).coerceIn(0f, 1f)
             ring.energy += (targetEnergy - ring.energy) * (if (targetEnergy > ring.energy) rise else fall)
@@ -86,7 +86,7 @@ class RingsScene : CanvasScene(id = ID, displayName = "Anillos") {
                 // Simetría espejo: el vértice v y el vertexCount - v leen la misma banda.
                 val mirrored = if (v <= half) v else ring.vertexCount - v
                 val pos = lo + mirrored.toFloat() / half * (count - 1)
-                val band = (sampleLinear(bands, pos.coerceIn(lo.toFloat(), (hi - 1).toFloat())) * sensitivity).coerceIn(0f, 1f)
+                val band = (sampleLinear(bands, pos.coerceIn(lo.toFloat(), max(lo, hi - 1).toFloat())) * sensitivity).coerceIn(0f, 1f)
                 val target = 1f + band * 0.22f * params.intensity
                 val cur = ring.radii[v]
                 ring.radii[v] = cur + (target - cur) * (if (target > cur) rise else fall)

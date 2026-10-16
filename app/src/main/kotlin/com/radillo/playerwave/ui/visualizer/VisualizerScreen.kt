@@ -62,9 +62,13 @@ import com.radillo.playerwave.R
 import com.radillo.playerwave.core.model.VisualizerSettings
 import com.radillo.playerwave.visualizer.engine.DataState
 import com.radillo.playerwave.visualizer.render.VisualizerSurface
+import com.radillo.playerwave.visualizer.scenes.AmbientScene
+import com.radillo.playerwave.visualizer.scenes.LineFieldScene
 import com.radillo.playerwave.visualizer.scenes.OscilloscopeScene
+import com.radillo.playerwave.visualizer.scenes.ParticlesScene
 import com.radillo.playerwave.visualizer.scenes.RingsScene
 import com.radillo.playerwave.visualizer.scenes.SpectrumBarsScene
+import com.radillo.playerwave.visualizer.scenes.TunnelScene
 import kotlinx.coroutines.delay
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -74,6 +78,10 @@ fun sceneLabelRes(id: String): Int = when (id) {
     SpectrumBarsScene.ID -> R.string.scene_spectrum
     OscilloscopeScene.ID -> R.string.scene_oscilloscope
     RingsScene.ID -> R.string.scene_rings
+    ParticlesScene.ID -> R.string.scene_particles
+    TunnelScene.ID -> R.string.scene_tunnel
+    LineFieldScene.ID -> R.string.scene_lines
+    AmbientScene.ID -> R.string.scene_ambient
     else -> R.string.scene_unknown
 }
 
@@ -102,6 +110,7 @@ fun VisualizerScreen(
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val playback by viewModel.playbackState.collectAsStateWithLifecycle()
     val dataState by viewModel.dataState.collectAsStateWithLifecycle()
+    val quality by viewModel.quality.collectAsStateWithLifecycle()
     var controlsVisible by remember { mutableStateOf(true) }
     var showSettings by remember { mutableStateOf(false) }
 
@@ -163,11 +172,13 @@ fun VisualizerScreen(
     if (showSettings) {
         VisualizerSettingsSheet(
             settings = settings,
+            quality = quality,
             palettes = viewModel.palettes.map { it.id },
             onPreview = viewModel::preview,
             onCommit = viewModel::commit,
             onSelectPalette = viewModel::selectPalette,
             onKeepScreenOn = viewModel::setKeepScreenOn,
+            onAutoQuality = viewModel::setAutoQuality,
             onReset = viewModel::resetTuning,
             onDismiss = { showSettings = false },
         )
@@ -310,11 +321,13 @@ private fun OverlayIconButton(onClick: () -> Unit, content: @Composable () -> Un
 @Composable
 private fun VisualizerSettingsSheet(
     settings: VisualizerSettings,
+    quality: Float,
     palettes: List<String>,
     onPreview: (VisualizerSettings) -> Unit,
     onCommit: ((VisualizerSettings) -> VisualizerSettings) -> Unit,
     onSelectPalette: (String) -> Unit,
     onKeepScreenOn: (Boolean) -> Unit,
+    onAutoQuality: (Boolean) -> Unit,
     onReset: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -386,6 +399,21 @@ private fun VisualizerSettingsSheet(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.vis_keep_screen_on), modifier = Modifier.weight(1f))
                 Switch(checked = settings.keepScreenOn, onCheckedChange = onKeepScreenOn)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.vis_auto_quality))
+                    Text(
+                        text = if (settings.autoQuality && quality < 0.995f) {
+                            stringResource(R.string.vis_auto_quality_current, (quality * 100f).roundToInt())
+                        } else {
+                            stringResource(R.string.vis_auto_quality_hint)
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Switch(checked = settings.autoQuality, onCheckedChange = onAutoQuality)
             }
             Spacer(Modifier.height(16.dp))
         }

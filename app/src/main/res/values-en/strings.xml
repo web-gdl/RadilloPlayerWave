@@ -7,6 +7,10 @@
     <string name="scene_spectrum">Spectrum</string>
     <string name="scene_oscilloscope">Oscilloscope</string>
     <string name="scene_rings">Rings</string>
+    <string name="scene_particles">Particles</string>
+    <string name="scene_tunnel">Tunnel</string>
+    <string name="scene_lines">Line field</string>
+    <string name="scene_ambient">Ambient</string>
     <string name="scene_unknown">Scene</string>
 
     <string name="palette_aurora">Aurora</string>
@@ -24,6 +28,9 @@
     <string name="vis_sync">Audio/video sync</string>
     <string name="vis_sync_value">%d ms</string>
     <string name="vis_keep_screen_on">Keep the screen on</string>
+    <string name="vis_auto_quality">Automatic quality</string>
+    <string name="vis_auto_quality_hint">Lowers detail if the phone can’t keep up</string>
+    <string name="vis_auto_quality_current">Detail reduced to %d %% to stay smooth</string>
     <string name="vis_reset">Reset</string>
     <string name="vis_fullscreen">Full screen</string>
     <string name="vis_exit_fullscreen">Exit full screen</string>

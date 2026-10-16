@@ -35,7 +35,7 @@ class OscilloscopeScene : CanvasScene(id = ID, displayName = "Osciloscopio") {
     private var flash = 0f
 
     override fun rebuild() {
-        val newCount = (240f * params.density).roundToInt().coerceIn(64, 512)
+        val newCount = (240f * params.effectiveDensity).roundToInt().coerceIn(64, 512)
         if (newCount != pointCount || leftPoints.size != newCount) {
             pointCount = newCount
             leftPoints = FloatArray(pointCount)
