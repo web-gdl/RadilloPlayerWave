@@ -128,7 +128,7 @@
     <string name="settings_version">Versión %s</string>
     <string name="settings_privacy">Todo funciona en el dispositivo: sin cuentas, sin anuncios y sin telemetría.</string>
     <string name="settings_licenses">Licencias de terceros</string>
-    <string name="settings_licenses_intro">RadilloPlayerWave incluye estas bibliotecas de código abierto:</string>
+    <string name="settings_licenses_intro">RadilloPlayerWave es de dominio público (The Unlicense): puedes usarlo, copiarlo y modificarlo sin restricciones. Incluye estas bibliotecas de código abierto:</string>
 
     <!-- Fase A (coche): fps, diagnóstico, orientación -->
     <string name="vis_max_fps">Fotogramas por segundo</string>

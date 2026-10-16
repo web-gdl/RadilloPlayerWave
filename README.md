@@ -124,3 +124,13 @@ docs/        Arquitectura, dependencias y licencias, limitaciones
 
 La regla de dependencias es estricta: `visualizer` nunca depende de `player` ni de Media3.
 Ver `docs/ARCHITECTURE.md`.
+
+## Licencia
+
+**Dominio público.** RadilloPlayerWave se entrega sin restricciones bajo
+[The Unlicense](https://unlicense.org): cualquiera puede copiarlo, modificarlo, venderlo o
+distribuirlo, con o sin atribución, para lo que quiera. Es un regalo para la humanidad.
+
+Las bibliotecas de terceros que incluye el APK (AndroidX, Media3, Kotlin, Dagger Hilt, Coil, Material
+Icons) conservan sus propias licencias, todas Apache 2.0; el inventario está en
+`docs/DEPENDENCIES.md` y en la pantalla **Ajustes ▸ Licencias de terceros** de la app.

@@ -1,5 +1,11 @@
 # Inventario de dependencias y licencias
 
+**Licencia del proyecto:** dominio público — [The Unlicense](https://unlicense.org) (archivo
+`LICENSE`). El código propio puede usarse sin ninguna restricción. Las dependencias de abajo son
+de terceros y conservan su licencia (todas Apache-2.0 salvo las de pruebas, que no se redistribuyen);
+al redistribuir el APK hay que mantener sus avisos, cosa que hace la pantalla «Licencias de
+terceros» de la app.
+
 Versiones verificadas el 15-10-2026 contra las páginas oficiales de *release notes*.
 Ninguna dependencia es GPL/LGPL. Todas son Apache-2.0 salvo que se indique.
 

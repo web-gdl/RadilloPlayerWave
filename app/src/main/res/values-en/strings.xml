@@ -126,7 +126,7 @@
     <string name="settings_version">Version %s</string>
     <string name="settings_privacy">Everything runs on the device: no accounts, no ads, no telemetry.</string>
     <string name="settings_licenses">Third-party licenses</string>
-    <string name="settings_licenses_intro">RadilloPlayerWave includes these open-source libraries:</string>
+    <string name="settings_licenses_intro">RadilloPlayerWave is public domain (The Unlicense): use, copy and modify it without restrictions. It includes these open-source libraries:</string>
 
     <!-- Phase A (car): fps, diagnostics, orientation -->
     <string name="vis_max_fps">Frames per second</string>
