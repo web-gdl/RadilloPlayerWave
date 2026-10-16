@@ -1,8 +1,8 @@
 # Dispositivo objetivo: autoestéreo MTK 8227L (1 GB RAM, Mali-450, 1024×600)
 
 Adaptación de RadilloPlayerWave a una unidad Android de coche de gama baja.
-Estado: **Opción 1 aprobada por el usuario** (música en memoria interna y USB). Fases A y B
-hechas; C y D pendientes.
+Estado: **Opción 1 aprobada por el usuario** (música en memoria interna y USB). Fases A, B y C
+hechas; D pendiente.
 
 ## 1. Qué es realmente este hardware y qué implica
 
@@ -268,3 +268,23 @@ usados en release y la UI Compose actual desaparece en esa fase.
   incluido el tamaño 1024×600.
 
 `core` conserva Compose hasta la Fase C porque la UI actual depende de su tema y componentes.
+
+### Fase C (hecha, 0.8.0-faseC)
+
+- Interfaz en vistas nativas: `MainActivity` (`FragmentActivity`, tema de plataforma sin AppCompat)
+  con fragments XML + ViewBinding para biblioteca, detalle de colección/lista, búsqueda,
+  reproduciendo, cola, visualizador, ecualizador, ajustes y diagnóstico. Navegación propia
+  (`Navigator`): raíl lateral en pantallas ≥ 600 dp (el autoestéreo) y barra inferior en móviles.
+- Listas con una sola `RecyclerView`/`RowAdapter` (`ListAdapter`, diff en segundo plano, sin
+  animaciones de elementos). Menús y diálogos de plataforma (`AlertDialog`, `PopupMenu`).
+- Dimensiones en `values-sw600dp` para 1024×600 a 160 dpi: filas de 76 dp, botones de 64 dp,
+  texto de 20 sp. Tema oscuro por defecto en pantallas de coche («según el sistema»).
+- Fuera del APK: Compose, Material 3, material-icons-extended, Coil, Navigation y DataStore.
+  `core.ui.ArtworkLoader` (RGB_565, `inSampleSize`, LRU ≤ 6 MB, 2 hilos de baja prioridad)
+  sustituye a Coil; los ajustes usan `SharedPreferences` (lectura síncrona del tema antes del
+  primer frame). Iconos vectoriales propios derivados de Material Icons (Apache 2.0).
+- Resultado en CI: **APK release de 1,4 MB** (2,6 MB en la Fase B, 24 MB el debug inicial).
+- Prueba nueva: `ResourcesInflationTest` (Robolectric) infla todos los layouts y carga todos los
+  iconos con el tema real en móvil y en 1024×600 mdpi, en claro y oscuro.
+- Hilt se mantiene: tras R8 su coste es pequeño; se reevaluará con mediciones del equipo real.
+

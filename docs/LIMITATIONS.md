@@ -95,7 +95,12 @@ el coste de mantenimiento.
   de calidad; compilado y probado en CI.
 - **Adaptación al autoestéreo** (`docs/TARGET_DEVICE.md`): Fase A (0.6.0, release firmado y
   reducido, perfil del dispositivo, diagnóstico, tope de fps) y Fase B (0.7.0, visualizador en
-  `SurfaceView` con hilo propio y escenas sobre Canvas) compiladas y probadas en CI; Fases C
-  (UI en Vistas) y D (coche) pendientes.
+  `SurfaceView` con hilo propio y escenas sobre Canvas) y Fase C (0.8.0, interfaz en vistas
+  nativas, sin Compose ni Coil ni DataStore; APK de 1,4 MB) compiladas y probadas en CI; Fase D
+  (coche) pendiente.
+- Fase C: favoritos, listas y ajustes guardados con versiones anteriores se pierden al actualizar
+  (los ajustes pasaron de DataStore a SharedPreferences). La interfaz en vistas no tiene todavía
+  el tinte de interfaz completo con el color de la carátula: el acento se aplica al botón de
+  reproducir y a la barra de progreso.
 - Pendiente de prueba manual en dispositivo por parte del usuario (sincronía, rendimiento de
   cada escena, comportamiento del gobernador, ecualizador en hardware real).

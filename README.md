@@ -32,7 +32,7 @@ con 1 GB de RAM, procesador Cortex‑A7 de 32 bits, GPU Mali‑450 (solo OpenGL 
 de 1024×600 a 160 dpi y una versión de Android que suele estar «maquillada» en la ROM. En esos
 equipos las apps actuales van a tirones o se cierran por falta de memoria. Por eso aquí:
 
-- el APK **release** pesa ~2,6 MB (R8, recursos reducidos, solo audio en el reproductor);
+- el APK **release** pesa ~1,4 MB (vistas nativas sin Compose, R8, recursos reducidos, solo audio en el reproductor);
 - la app detecta el **nivel de Android real** aunque el sistema declare otro, y no usa nada que no
   exista en el equipo;
 - un **perfil de dispositivo** ajusta solo los valores por defecto: visualizador a 30 fps, menos
@@ -42,23 +42,21 @@ equipos las apps actuales van a tirones o se cierran por falta de memoria. Por e
 - un **gobernador de calidad** mide la fluidez y baja el detalle cuando hace falta;
 - una pantalla de **Diagnóstico** muestra RAM, GPU, Android real y fps, con el informe copiable.
 
-La adaptación avanza por fases documentadas en `docs/TARGET_DEVICE.md`: A (cimientos) y
-B (visualizador en `SurfaceView`) están hechas; C (interfaz en vistas nativas para 1024×600) y
-D (escáner de USB, arranque con el coche, teclas del volante) están en camino. Hasta la Fase C la
-interfaz sigue siendo Jetpack Compose, que funciona pero es más pesada de lo que este hardware
-merece.
+La adaptación avanza por fases documentadas en `docs/TARGET_DEVICE.md`: A (cimientos),
+B (visualizador en `SurfaceView`) y C (interfaz en vistas nativas para 1024×600, sin Compose)
+están hechas; D (escáner de USB, arranque con el coche, teclas del volante) está en camino.
 
 > **In English:** a local music player for Android with a real‑time audio visualizer (FFT on the
 > player's own PCM, no microphone), tuned for cheap Android car head units — model JCAC10003 on the
 > alps 8227L platform (AC822TL / MediaTek MT8227L, 1 GB RAM, Cortex‑A7, Mali‑450, 1024×600). Release
-> APK ≈ 2.6 MB, real‑API‑level detection, low‑end device profile, 30 fps cap, quality governor and a
+> APK ≈ 1.4 MB (native Views, no Compose), real‑API‑level detection, low‑end device profile, 30 fps cap, quality governor and a
 > diagnostics screen. Spanish and English UI.
 
 Nombre provisional: comprobar disponibilidad de marca antes de cualquier uso comercial.
 
 ## Estado
 
-**0.7.0 (Fase B de la adaptación al autoestéreo).** Biblioteca de música local (canciones,
+**0.8.0 (Fase C de la adaptación al autoestéreo).** Biblioteca de música local (canciones,
 álbumes, artistas, carpetas y listas), favoritos, búsqueda, reproducción en segundo plano con
 notificación y pantalla bloqueada, cola y mini reproductor, temporizador de apagado, ecualizador y
 refuerzo de graves del dispositivo (solo cuando existen de verdad), tema claro/oscuro con acento de
@@ -68,7 +66,7 @@ parte de sus usuarios (ver la pantalla Diagnóstico).
 
 **Dispositivo objetivo:** autoestéreo JCAC10003 / alps 8227L (ver arriba). La adaptación se describe
 en `docs/TARGET_DEVICE.md` y avanza por fases (A: cimientos ✅ · B: visualizador en SurfaceView ✅ ·
-C: UI en Vistas · D: coche). La app sigue funcionando en teléfonos y tabletas.
+C: UI en Vistas ✅ · D: coche). La app sigue funcionando en teléfonos y tabletas.
 
 **APK:** cada *push* a `main` compila en GitHub Actions un APK **release** (R8, recursos
 reducidos) y lo publica en **Releases**: <https://github.com/web-gdl/RadilloPlayerWave/releases/latest>
@@ -114,9 +112,9 @@ Ejecutar las pruebas unitarias:
 ## Estructura
 
 ```
-app/         Ensamblaje: Application (Hilt), MainActivity, navegación, recursos
-core/        Modelos de dominio, tema (claro/oscuro, acento de carátula), tipografía, formas
-data/        Biblioteca (MediaStore + Room), favoritos y listas (Room), ajustes (DataStore)
+app/         Actividad única, fragments XML + ViewBinding, navegación propia, recursos (1024×600 y móvil)
+core/        Modelos, perfil del dispositivo, carga de carátulas (RGB_565) y acento de carátula
+data/        Biblioteca (MediaStore + Room), favoritos y listas (Room), ajustes (SharedPreferences)
 player/      ExoPlayer, MediaSession, servicio, tap de PCM (audiotap), efectos (audiofx), temporizador
 visualizer/  Análisis (FFT, bandas, onsets), motor, escenas sobre Canvas, SurfaceView con hilo de render
 docs/        Arquitectura, dependencias y licencias, limitaciones
