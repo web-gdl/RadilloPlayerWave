@@ -33,7 +33,7 @@ class ParticlesScene : CanvasScene(id = ID, displayName = "Partículas") {
     private var vy = FloatArray(0)
     private var life = FloatArray(0)
     private var maxLife = FloatArray(0)
-    private var size = FloatArray(0)
+    private var sizes = FloatArray(0)
     private var hue = FloatArray(0)
     private var colorIndex = IntArray(0)
     private var cursor = 0
@@ -65,7 +65,7 @@ class ParticlesScene : CanvasScene(id = ID, displayName = "Partículas") {
             vy = FloatArray(capacity)
             life = FloatArray(capacity)
             maxLife = FloatArray(capacity)
-            size = FloatArray(capacity)
+            sizes = FloatArray(capacity)
             hue = FloatArray(capacity)
             colorIndex = IntArray(capacity)
             cursor = 0
@@ -160,7 +160,7 @@ class ParticlesScene : CanvasScene(id = ID, displayName = "Partículas") {
         val l = AVERAGE_LIFE * (0.6f + 0.8f * random.nextFloat())
         life[slot] = l
         maxLife[slot] = l
-        size[slot] = unit * (1.8f + 3.6f * random.nextFloat())
+        sizes[slot] = unit * (1.8f + 3.6f * random.nextFloat())
         val hu = random.nextFloat()
         hue[slot] = hu
         colorIndex[slot] = (hu * (palette.colors.size - 1)).roundToInt().coerceIn(0, palette.colors.size - 1)
@@ -188,7 +188,7 @@ class ParticlesScene : CanvasScene(id = ID, displayName = "Partículas") {
             val fadeOut = if (t < 0.35f) t / 0.35f else 1f
             val e = bandCache[(hue[i] * (BAND_SLOTS - 1)).toInt()]
             val alpha = (fadeIn * fadeOut * (0.5f + 0.5f * e)).coerceIn(0f, 1f)
-            val radius = size[i] * (0.7f + 0.9f * e) * intensity
+            val radius = sizes[i] * (0.7f + 0.9f * e) * intensity
             val color = colors[colorIndex[i]]
             val px = x[i]
             val py = y[i]
