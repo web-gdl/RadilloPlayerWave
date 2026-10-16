@@ -6,6 +6,8 @@ import androidx.room.Room
 import com.radillo.playerwave.data.library.LibraryRepository
 import com.radillo.playerwave.data.library.LibraryRepositoryImpl
 import com.radillo.playerwave.data.library.db.RadilloDatabase
+import com.radillo.playerwave.data.settings.DataStoreVisualizerSettingsRepository
+import com.radillo.playerwave.data.settings.VisualizerSettingsRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -37,4 +39,8 @@ abstract class DataBindsModule {
     @Binds
     @Singleton
     abstract fun bindLibraryRepository(impl: LibraryRepositoryImpl): LibraryRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindVisualizerSettings(impl: DataStoreVisualizerSettingsRepository): VisualizerSettingsRepository
 }

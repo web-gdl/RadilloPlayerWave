@@ -11,6 +11,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.radillo.playerwave.core.model.Track
+import com.radillo.playerwave.visualizer.analysis.PlaybackClock
 import com.radillo.playerwave.player.service.PlaybackService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -36,7 +37,7 @@ import javax.inject.Singleton
 @Singleton
 class MediaControllerPlaybackController @Inject constructor(
     @ApplicationContext private val context: Context,
-) : PlaybackController {
+) : PlaybackController, PlaybackClock {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val _state = MutableStateFlow(PlaybackState())
@@ -151,6 +152,16 @@ class MediaControllerPlaybackController @Inject constructor(
             }
         }
     }
+
+    // ---- PlaybackClock (hilo principal, llamado en cada frame de render) ----
+
+    override fun positionUs(): Long? {
+        val c = controller ?: return null
+        if (c.mediaItemCount == 0) return null
+        return c.currentPosition * 1000L
+    }
+
+    override fun isPlaying(): Boolean = controller?.isPlaying == true
 
     // ---- Comandos ----
 

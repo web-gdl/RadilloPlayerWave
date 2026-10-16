@@ -4,7 +4,31 @@
     <string name="nav_now_playing">Now playing</string>
     <string name="nav_visualizer">Visualizer</string>
 
-    <string name="placeholder_visualizer">Audio-reactive scenes arrive in Phase 2.</string>
+    <string name="scene_spectrum">Spectrum</string>
+    <string name="scene_oscilloscope">Oscilloscope</string>
+    <string name="scene_rings">Rings</string>
+    <string name="scene_unknown">Scene</string>
+
+    <string name="palette_aurora">Aurora</string>
+    <string name="palette_ember">Ember</string>
+    <string name="palette_ocean">Ocean</string>
+    <string name="palette_neon">Neon</string>
+    <string name="palette_mono">Mono</string>
+
+    <string name="vis_settings">Scene settings</string>
+    <string name="vis_sensitivity">Sensitivity</string>
+    <string name="vis_intensity">Intensity</string>
+    <string name="vis_speed">Speed</string>
+    <string name="vis_density">Density</string>
+    <string name="vis_palette">Palette</string>
+    <string name="vis_sync">Audio/video sync</string>
+    <string name="vis_sync_value">%d ms</string>
+    <string name="vis_keep_screen_on">Keep the screen on</string>
+    <string name="vis_reset">Reset</string>
+    <string name="vis_fullscreen">Full screen</string>
+    <string name="vis_exit_fullscreen">Exit full screen</string>
+    <string name="vis_no_audio_data">No audio data on this route: ambient mode</string>
+    <string name="vis_idle">Pick a song to see the music</string>
 
     <string name="tab_songs">Songs</string>
     <string name="tab_albums">Albums</string>

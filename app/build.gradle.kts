@@ -13,8 +13,8 @@ android {
         applicationId = "com.radillo.playerwave"
         minSdk = 24
         targetSdk = 37
-        versionCode = 2
-        versionName = "0.2.0-fase1"
+        versionCode = 3
+        versionName = "0.3.0-fase2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

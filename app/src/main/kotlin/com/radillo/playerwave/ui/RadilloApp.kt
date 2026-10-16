@@ -2,12 +2,14 @@ package com.radillo.playerwave.ui
 
 import android.net.Uri
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -15,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -24,11 +25,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.radillo.playerwave.R
 import com.radillo.playerwave.ui.library.CollectionDetailScreen
 import com.radillo.playerwave.ui.library.CollectionDetailViewModel
 import com.radillo.playerwave.ui.library.CollectionKind
-import com.radillo.playerwave.ui.library.EmptyState
 import com.radillo.playerwave.ui.library.LibraryScreen
 import com.radillo.playerwave.ui.library.LibraryViewModel
 import com.radillo.playerwave.ui.navigation.TopLevelDestination
@@ -38,10 +37,12 @@ import com.radillo.playerwave.ui.player.MiniPlayer
 import com.radillo.playerwave.ui.player.NowPlayingScreen
 import com.radillo.playerwave.ui.player.PlayerViewModel
 import com.radillo.playerwave.ui.player.QueueScreen
+import com.radillo.playerwave.ui.visualizer.VisualizerScreen
 
 object Routes {
     const val COLLECTION = "collection/{${CollectionDetailViewModel.ARG_KIND}}/{${CollectionDetailViewModel.ARG_KEY}}?title={${CollectionDetailViewModel.ARG_TITLE}}"
     const val QUEUE = "queue"
+    const val IMMERSIVE = "visualizer/immersive"
 
     fun collection(kind: CollectionKind, key: String, title: String): String =
         "collection/${kind.name}/${Uri.encode(key)}?title=${Uri.encode(title)}"
@@ -60,38 +61,20 @@ fun RadilloApp() {
 
     val playerViewModel: PlayerViewModel = hiltViewModel()
     val playbackState by playerViewModel.state.collectAsStateWithLifecycle()
-    val showMiniPlayer = playbackState.currentTrack != null &&
+    val immersive = currentRoute == Routes.IMMERSIVE
+    val showMiniPlayer = playbackState.currentTrack != null && !immersive &&
         currentRoute != TopLevelDestination.NOW_PLAYING.route && currentRoute != Routes.QUEUE
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = if (immersive) WindowInsets(0, 0, 0, 0) else ScaffoldDefaults.contentWindowInsets,
         bottomBar = {
-            Column {
-                if (showMiniPlayer) {
-                    MiniPlayer(
-                        state = playbackState,
-                        onTogglePlay = playerViewModel::togglePlayPause,
-                        onNext = playerViewModel::next,
-                        onOpen = { navController.navigateTopLevel(TopLevelDestination.NOW_PLAYING) },
-                    )
-                }
-                NavigationBar {
-                    TopLevelDestination.entries.forEach { destination ->
-                        val selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = { navController.navigateTopLevel(destination) },
-                            icon = {
-                                Icon(
-                                    imageVector = if (selected) destination.selectedIcon else destination.icon,
-                                    contentDescription = null,
-                                )
-                            },
-                            label = { Text(stringResource(destination.labelRes)) },
-                        )
-                    }
-                }
-            }
+            if (!immersive) AppBottomBar(
+                navController = navController,
+                currentRoute = currentRoute,
+                showMiniPlayer = showMiniPlayer,
+                playerViewModel = playerViewModel,
+            )
         },
     ) { innerPadding ->
         NavHost(
@@ -128,7 +111,54 @@ fun RadilloApp() {
                 QueueScreen(onBack = { navController.popBackStack() })
             }
             composable(TopLevelDestination.VISUALIZER.route) {
-                EmptyState(stringResource(R.string.placeholder_visualizer))
+                VisualizerScreen(
+                    immersive = false,
+                    onEnterImmersive = { navController.navigate(Routes.IMMERSIVE) },
+                    onExitImmersive = {},
+                )
+            }
+            composable(Routes.IMMERSIVE) {
+                VisualizerScreen(
+                    immersive = true,
+                    onEnterImmersive = {},
+                    onExitImmersive = { navController.popBackStack() },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppBottomBar(
+    navController: NavHostController,
+    currentRoute: String?,
+    showMiniPlayer: Boolean,
+    playerViewModel: PlayerViewModel,
+) {
+    val playbackState by playerViewModel.state.collectAsStateWithLifecycle()
+    Column {
+        if (showMiniPlayer) {
+            MiniPlayer(
+                state = playbackState,
+                onTogglePlay = playerViewModel::togglePlayPause,
+                onNext = playerViewModel::next,
+                onOpen = { navController.navigateTopLevel(TopLevelDestination.NOW_PLAYING) },
+            )
+        }
+        NavigationBar {
+            TopLevelDestination.entries.forEach { destination ->
+                val selected = currentRoute == destination.route
+                NavigationBarItem(
+                    selected = selected,
+                    onClick = { navController.navigateTopLevel(destination) },
+                    icon = {
+                        Icon(
+                            imageVector = if (selected) destination.selectedIcon else destination.icon,
+                            contentDescription = null,
+                        )
+                    },
+                    label = { Text(stringResource(destination.labelRes)) },
+                )
             }
         }
     }

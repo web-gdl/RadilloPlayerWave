@@ -6,7 +6,31 @@
     <string name="nav_now_playing">Reproduciendo</string>
     <string name="nav_visualizer">Visualizador</string>
 
-    <string name="placeholder_visualizer">Las escenas reactivas al audio se activan en la Fase 2.</string>
+    <string name="scene_spectrum">Espectro</string>
+    <string name="scene_oscilloscope">Osciloscopio</string>
+    <string name="scene_rings">Anillos</string>
+    <string name="scene_unknown">Escena</string>
+
+    <string name="palette_aurora">Aurora</string>
+    <string name="palette_ember">Brasa</string>
+    <string name="palette_ocean">Océano</string>
+    <string name="palette_neon">Neón</string>
+    <string name="palette_mono">Mono</string>
+
+    <string name="vis_settings">Ajustes de la escena</string>
+    <string name="vis_sensitivity">Sensibilidad</string>
+    <string name="vis_intensity">Intensidad</string>
+    <string name="vis_speed">Velocidad</string>
+    <string name="vis_density">Densidad</string>
+    <string name="vis_palette">Paleta</string>
+    <string name="vis_sync">Sincronía imagen/sonido</string>
+    <string name="vis_sync_value">%d ms</string>
+    <string name="vis_keep_screen_on">Mantener la pantalla encendida</string>
+    <string name="vis_reset">Restablecer</string>
+    <string name="vis_fullscreen">Pantalla completa</string>
+    <string name="vis_exit_fullscreen">Salir de pantalla completa</string>
+    <string name="vis_no_audio_data">Sin datos de audio en esta ruta: modo ambiental</string>
+    <string name="vis_idle">Elige una canción para ver la música</string>
 
     <string name="tab_songs">Canciones</string>
     <string name="tab_albums">Álbumes</string>

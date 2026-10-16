@@ -26,6 +26,7 @@ dependencies {
     // El visualizador solo depende de :core (modelos y tema). Nunca de :player ni de Media3.
     implementation(project(":core"))
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
     // El paquete `analysis` es Kotlin puro: se prueba con JUnit sin Robolectric.
     testImplementation(libs.junit)
