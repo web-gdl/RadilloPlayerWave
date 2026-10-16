@@ -1,0 +1,223 @@
+# Dispositivo objetivo: autoestéreo MTK 8227L (1 GB RAM, Mali-450, 1024×600)
+
+Propuesta de adaptación de RadilloPlayerWave a una unidad Android de coche de gama baja.
+Estado: **propuesta pendiente de aprobación** (ver «Decisión» al final).
+
+## 1. Qué es realmente este hardware y qué implica
+
+| Dato | Valor | Consecuencia para la app |
+|---|---|---|
+| SoC | MediaTek MT8227L / AC8227L, 4× Cortex-A7 a ~1,3 GHz, **32 bits** (armeabi-v7a) | CPU en orden, sin arm64. Nada pesado en el hilo principal; pocas llamadas de dibujo por frame; builds **release con R8** (los debug son 2–4× más lentos). |
+| GPU | Mali-450 MP2 (Utgard) | **Solo OpenGL ES 2.0**: la escena de terreno 3D prevista en ES 3.0 debe rehacerse en ES 2.0 o en Canvas. Poca tasa de relleno: nada de capas fuera de pantalla (`saveLayer`), desenfoques, sombras, ni mezclas aditivas a pantalla completa. |
+| RAM | 1 GB total; ~250–400 MB libres para la app en primer plano; límite de heap por proceso típico 128–192 MB | Presupuesto: app completa ≤ 90 MB PSS con el visualizador activo; servicio de reproducción solo ≤ 40 MB. Sin `largeHeap` (no ayuda y puede ser ignorado). |
+| Android | «11 (API 30)» declarado; en estas unidades suele ser 8.1 o 9 real con la cadena de versión alterada en `build.prop` | `Build.VERSION.SDK_INT` **no es fiable**: una API «de 30» puede no existir y lanzar `NoSuchMethodError`. Detectar el nivel real por presencia de clases y no usar nada por encima de API 26 sin guardas. |
+| Pantalla | 1024×600 px, 160 dpi (mdpi real), horizontal fija | 1 dp = 1 px: la UI se diseña a tamaño real en una sola disposición horizontal. Objetivos táctiles ≥ 64 dp, texto ≥ 20 sp (uso al volante). Todos los recursos vectoriales; ningún mapa de bits por densidad. |
+| Entorno | Coche: arranque con la llave, música en USB/SD, radio y Bluetooth del propio equipo compiten por el foco de audio, teclas multimedia del volante | Escáner de carpetas USB además de MediaStore; reanudación tras el arranque (opcional); foco de audio y `KEYCODE_MEDIA_*` por MediaSession (ya presente); modo oscuro por defecto. |
+
+## 2. Diagnóstico del proyecto actual frente a este objetivo
+
+Lo que ya encaja (se conserva):
+
+- Separación en módulos `core` / `data` / `player` / `visualizer` / `app` y la regla «visualizer nunca depende de player».
+- Análisis de audio en Kotlin puro (FFT 2048 a 60 Hz ≈ 7 MFLOPS: trivial incluso para un A7), tap de PCM sin micrófono, `QualityGovernor`.
+- Media3 ExoPlayer + `MediaLibraryService`: necesario para el tap de PCM (la alternativa `MediaPlayer` + `audiofx.Visualizer` exigiría el permiso de micrófono, prohibido por el pliego). Se recorta su configuración.
+- Room para la caché de biblioteca, favoritos y listas (coste de memoria despreciable; se mantiene «al mínimo»).
+
+Lo que **no** encaja:
+
+| Pieza actual | Problema en este hardware | Sustituto propuesto |
+|---|---|---|
+| Jetpack Compose + Material 3 | ~4–5 MB de dex y 30–60 MB de RAM extra; primera composición de 0,5–1 s en un A7; recomposiciones en listas | Vistas XML planas (`ConstraintLayout`/`LinearLayout`), `RecyclerView`, ViewBinding, widgets de plataforma con estilo propio |
+| Compose Canvas para las escenas (hilo principal) | Un frame lento del visualizador congela también la UI; ~500 llamadas de dibujo por frame en Partículas | `SurfaceView` con hilo de render propio, `android.graphics.Canvas` acelerado (`lockHardwareCanvas`, API 26+, con respaldo software), lotes `drawPoints`/`drawLines` (de ~1 300 llamadas a ~4), tope de 30 fps |
+| material-icons-extended | 23 MB del APK debug; miles de vectores | ~30 `VectorDrawable` propios en `res/drawable` |
+| Coil | Caché, hilos y decodificación genéricos | Cargador propio: `BitmapFactory` con `inSampleSize` + `RGB_565` (mitad de memoria), `LruCache` ≤ 6 MB, 2 hilos |
+| Hilt | Generación de código y arranque extra sin beneficio con ~15 clases | Grafo manual (`AppGraph` con singletons perezosos) |
+| Navigation Compose | Dependencia completa para 10 rutas | `FragmentManager` directo, una `Activity` |
+| DataStore | Lectura asíncrona que obliga a «esperar» el tema al arrancar | `SharedPreferences` (lectura síncrona de ~10 claves) |
+| APK **debug** sin R8 | Es lo que se ha instalado hasta ahora: sin optimizar ni reducir | Build **release** firmado, minificado y con recursos reducidos (previsión: 24 MB → 4–6 MB) |
+
+## 3. Estructura propuesta
+
+```
+app/        Activity única (horizontal), fragments: Biblioteca (pestañas), Reproduciendo, Visualizador,
+            Listas/Detalle, Búsqueda, Ecualizador, Ajustes, Diagnóstico. XML + ViewBinding.
+            AppGraph (DI manual), cargador de carátulas, iconos vectoriales propios.
+core/       Modelos, DeviceProfile (RAM, nivel de API real, perfil «gama baja»), utilidades.
+            Colores/dimensiones/estilos en XML. Sin Compose.
+data/       MediaStore + escáner de carpetas (USB/SD) con MediaMetadataRetriever, Room mínimo
+            (sin paging/rx; un solo hilo de consulta), preferencias (SharedPreferences).
+player/     ExoPlayer solo audio (LoadControl de 2 MB, sin renderers de vídeo/texto),
+            MediaLibraryService, tap PCM, efectos, temporizador. Sin cambios de arquitectura.
+visualizer/ analysis (igual), engine (igual + tope de fps), QualityGovernor (igual),
+            scenes sobre android.graphics.Canvas, VisualizerSurfaceView (hilo de render).
+```
+
+Dependencias finales: `media3-exoplayer`, `media3-session`, `room-runtime`/`room-ktx` + compilador (KSP),
+`kotlinx-coroutines-android`, `core-ktx`, `fragment-ktx`, `recyclerview`, `constraintlayout`,
+`palette` (opcional, 50 KB). Pruebas: JUnit, Truth, Robolectric. **Sin** Compose, Material, Hilt,
+Coil, Navigation ni DataStore. La app no tiene código nativo: un solo APK universal.
+
+## 4. Configuración de compilación recomendada
+
+`app/build.gradle.kts` (fragmentos relevantes; AGP 9.4, Kotlin integrado):
+
+```kotlin
+android {
+    namespace = "com.radillo.playerwave"
+    compileSdk = 37
+
+    defaultConfig {
+        applicationId = "com.radillo.playerwave"
+        minSdk = 24            // no subir: la ROM puede ser más antigua de lo que declara
+        targetSdk = 37
+        versionCode = 6
+        versionName = "0.6.0-coche"
+    }
+
+    // Solo los idiomas de la app: elimina las traducciones de las bibliotecas AndroidX.
+    androidResources {
+        localeFilters += listOf("es", "en")
+    }
+
+    signingConfigs {
+        create("release") {
+            // Claves en secretos de GitHub Actions (y copia de respaldo en manos del usuario).
+            val path = System.getenv("RADILLO_KEYSTORE_PATH")
+            if (path != null) {
+                storeFile = file(path)
+                storePassword = System.getenv("RADILLO_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("RADILLO_KEY_ALIAS")
+                keyPassword = System.getenv("RADILLO_KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = true          // R8 (modo completo por defecto en AGP 8+)
+            isShrinkResources = true        // elimina recursos sin referencia
+            isDebuggable = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
+        }
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            isMinifyEnabled = false
+        }
+    }
+
+    buildFeatures {
+        viewBinding = true
+        buildConfig = true
+        // compose = false (eliminado)
+    }
+
+    packaging {
+        resources.excludes += setOf(
+            "META-INF/*.version", "META-INF/*.kotlin_module", "kotlin/**",
+            "DebugProbesKt.bin", "META-INF/LICENSE*", "META-INF/AL2.0", "META-INF/LGPL2.1",
+        )
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+}
+```
+
+`app/proguard-rules.pro`:
+
+```
+# Más agresivo: permite a R8 cambiar visibilidades y aplanar paquetes.
+-allowaccessmodification
+-repackageclasses ''
+
+# Fuera los logs de depuración en release (el A7 agradece cada llamada menos).
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+}
+
+# Media3, Room (KSP) y coroutines traen sus propias reglas de consumidor. Nada más que mantener:
+# la Activity y el Service los conserva el manifiesto.
+```
+
+`gradle.properties` (además de lo existente):
+
+```
+android.enableR8.fullMode=true
+android.nonTransitiveRClass=true
+android.nonFinalResIds=true
+```
+
+Notas:
+
+- Perfiles de referencia (*baseline profiles*) no se incluyen: aportan poco en Android ≤ 9 y
+  requieren medir en el propio dispositivo.
+- APK universal (`assembleRelease`), no AAB: se instala a mano en la unidad.
+- La firma la hace CI con un almacén de claves generado una sola vez; el usuario guarda el `.jks`
+  y las contraseñas. Sin firma estable no se podría actualizar la app sin desinstalarla.
+
+## 5. Buenas prácticas para este hardware (reglas que aplicará todo el código)
+
+**Hilos**
+
+- Hilo principal: solo entrada y actualización de vistas. Nada de E/S, decodificación ni consultas.
+- Escaneo y base de datos en `Dispatchers.IO.limitedParallelism(2)` (4 núcleos lentos: más hilos solo compiten).
+- Análisis de audio en un hilo propio (`THREAD_PRIORITY_DEFAULT`); render del visualizador en su hilo (`THREAD_PRIORITY_DISPLAY`); escaneo en `THREAD_PRIORITY_BACKGROUND`.
+- `DiffUtil` en segundo plano (`AsyncListDiffer` con un ejecutor de un hilo).
+
+**Memoria**
+
+- Carátulas: decodificar con `inJustDecodeBounds` + `inSampleSize` a ≤ 256 px (160 px en listas), `RGB_565`, `LruCache` ≤ 6 MB; cancelar cargas al reciclar la fila.
+- ExoPlayer: `DefaultLoadControl` con objetivo de 2 MB y 10–30 s de búfer (archivos locales), sin *back buffer*; sin renderers de vídeo, texto ni metadatos; `EXTENSION_RENDERER_MODE_OFF`.
+- `onTrimMemory`: vaciar la caché de carátulas y liberar los búferes de las escenas cuando la UI no está visible.
+- Sin `largeHeap`. Sin bibliotecas de depuración de memoria en release. Medición con la pantalla de **Diagnóstico** de la propia app (RAM total/libre, PSS del proceso, heap máximo, nivel de API real, GPU, fps y calidad del visualizador) y con `adb shell dumpsys meminfo` cuando haya PC.
+
+**GPU / UI**
+
+- Disposiciones planas (≤ 2 niveles), sin fondo de ventana redundante (el raíz pinta el fondo una sola vez), sin elevación/sombras, sin `alpha` animado en vistas grandes, sin recorte de esquinas en listas.
+- Iconos `VectorDrawable` ≤ 48 dp; ninguna imagen por densidad; texto del sistema.
+- Un solo modo oscuro por defecto (confort nocturno al volante), claro opcional. Colores planos de alto contraste.
+- Transiciones: ninguna animación de pantalla; cambio de escena por fundido a fondo (sin `saveLayer`).
+
+**Visualizador**
+
+- `SurfaceView` + hilo de render con `Choreographer`; tope de **30 fps** por defecto en este perfil (60 opcional). Menos calor y mitad de CPU/GPU.
+- Lotes: partículas y segmentos con `drawPoints`/`drawLines` por color (4–8 llamadas por frame en vez de cientos); degradados y `Paint` creados en `rebuild`, nunca por frame.
+- Perfil «gama baja» (`DeviceProfile`): densidad base 0,6, calidad mínima 0,25, máximo 150 partículas, Ambiente con 3 manchas pequeñas y mezcla aditiva limitada a su radio.
+- Fundido entre escenas por alfa del fondo, sin capas fuera de pantalla.
+
+**Android «falso»**
+
+- `RealApiLevel`: detectar el nivel real por presencia de clases (`android.app.Person` → 28, `android.app.role.RoleManager` → 29, `android.media.MediaParser` → 30, `android.window.SplashScreen` → 31…) y mostrarlo en Diagnóstico junto al declarado.
+- Toda API > 26 detrás de una guarda del nivel **real** y `try/catch (LinkageError)`. Nada de reflexión sobre APIs ocultas.
+- Permisos: `READ_EXTERNAL_STORAGE` (≤ 32) / `READ_MEDIA_AUDIO` (≥ 33) según el nivel real; `requestLegacyExternalStorage` para un Android 10 real.
+
+**Coche**
+
+- Escáner de carpetas para USB/SD (`/storage/XXXX-XXXX`) con `MediaMetadataRetriever` y caché en Room, además de MediaStore; rescan al recibir `ACTION_MEDIA_MOUNTED`.
+- Pantalla horizontal fija (`screenOrientation="landscape"`) en este perfil; teclado de búsqueda con `adjustResize` (ocupa media pantalla de 600 px).
+- Reanudar la reproducción al encender (opcional, `RECEIVE_BOOT_COMPLETED`) y recordar posición y cola.
+- Foco de audio cedido a radio/BT del equipo y recuperado al volver (`handleAudioFocus = true`, ya presente).
+
+## 6. Plan por fases (cada una termina con un APK release probado en CI)
+
+| Fase | Contenido | Probar en la unidad |
+|---|---|---|
+| **A. Cimientos** | Build release firmado y reducido; `DeviceProfile` + nivel de API real; pantalla Diagnóstico; tope de fps y valores por defecto de gama baja en el visualizador actual; LoadControl y renderers solo audio; iconos propios en lugar de icons-extended | Arranque, RAM en Diagnóstico, fps de cada escena. Sirve de **línea base** antes de reescribir la UI |
+| **B. Visualizador en SurfaceView** | Escenas portadas a `android.graphics.Canvas` con lotes; hilo de render; `visualizer` y `core` sin Compose | Fluidez a 30/60 fps, calor, calidad del gobernador |
+| **C. UI en Vistas** | Todas las pantallas en XML/RecyclerView para 1024×600; cargador de carátulas propio; fuera Compose, Hilt, Coil, Navigation, DataStore | Respuesta táctil, memoria total, tamaño del APK |
+| **D. Coche** | Escáner USB/SD, montaje/desmontaje, reanudación al arrancar, teclas del volante, ajuste fino con Diagnóstico | Uso real conduciendo (de copiloto) |
+
+La antigua Fase 5 (terreno 3D en OpenGL ES 3.0) pasa a opcional en ES 2.0 o Canvas, al final.
+
+## 7. Decisión
+
+- **Opción 1 (recomendada):** las cuatro fases anteriores. La app queda nativa en Kotlin con Vistas, ~5 MB, ~50–70 MB de RAM, visualizador en su propio hilo. Coste: reescribir el módulo `app` y portar las siete escenas; `data`, `player` y el análisis se conservan con sus pruebas.
+- **Opción 2:** conservar Compose y aplicar solo la Fase A más recortes (iconos propios, sin Coil, tope de fps, perfil gama baja). Más rápida de hacer; la app seguirá siendo más pesada (≈ +40 MB de RAM, arranque y listas más lentos en un A7).
+
+Preguntas abiertas para el usuario: opción elegida; de dónde sale la música en el coche (USB/SD/memoria interna), para priorizar el escáner de carpetas.
