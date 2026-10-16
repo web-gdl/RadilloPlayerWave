@@ -18,6 +18,9 @@ import com.radillo.playerwave.player.audiofx.AudioEffectsHub
 import com.radillo.playerwave.player.audiotap.AudioTapHub
 import com.radillo.playerwave.player.audiotap.RadilloRenderersFactory
 import com.radillo.playerwave.player.engine.MediaItemMapper
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import com.radillo.playerwave.data.settings.PlaybackPreferencesRepository
 
 /**
  * Servicio de reproducción. Media3 se encarga de la notificación, los controles de la pantalla
@@ -28,13 +31,22 @@ import com.radillo.playerwave.player.engine.MediaItemMapper
  * testeable con Robolectric.
  */
 @OptIn(UnstableApi::class)
+@AndroidEntryPoint
 class PlaybackService : MediaLibraryService() {
+
+    @Inject lateinit var playbackPrefs: PlaybackPreferencesRepository
 
     private var session: MediaLibrarySession? = null
 
     override fun onCreate() {
         super.onCreate()
         val player = buildPlayer()
+
+        // Restaurar preferencias guardadas (aleatorio, repetición)
+        val prefs = playbackPrefs.snapshot()
+        player.shuffleModeEnabled = prefs.shuffleEnabled
+        player.repeatMode = prefs.repeatMode
+
         val builder = MediaLibrarySession.Builder(this, player, LibraryCallback())
         sessionActivityIntent()?.let(builder::setSessionActivity)
         session = builder.build()
@@ -75,8 +87,23 @@ class PlaybackService : MediaLibraryService() {
             override fun onAudioSessionIdChanged(audioSessionId: Int) {
                 AudioEffectsHub.onSessionId(audioSessionId)
             }
+            // Guardar preferencias cuando cambian durante la sesión
+            override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+                savePlaybackPreferences(player)
+            }
+            override fun onRepeatModeChanged(repeatMode: Int) {
+                savePlaybackPreferences(player)
+            }
         })
         return player
+    }
+
+    private fun savePlaybackPreferences(player: Player) {
+        val prefs = com.radillo.playerwave.data.settings.PlaybackPreferences(
+            shuffleEnabled = player.shuffleModeEnabled,
+            repeatMode = player.repeatMode,
+        )
+        playbackPrefs.save(prefs)
     }
 
     private fun sessionActivityIntent(): PendingIntent? {
