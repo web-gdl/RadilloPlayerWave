@@ -298,3 +298,21 @@ usados en release y la UI Compose actual desaparece en esa fase.
   (44 dp en reproducir) para usarlos al volante.
 - «Reproduciendo» muestra el visualizador en vivo en el recuadro de la carátula (un toque alterna).
 - Verificado en el autoestéreo JCAC10003 / alps 8227L a 1024×600: interfaz, menú y visualizadores.
+
+## 8. Galería: screenshots del autoestéreo
+
+Pantalla de inicio (Biblioteca) en el JCAC10003:
+
+![Biblioteca](screenshots/biblioteca.png)
+
+Reproduciendo con visualizador:
+
+![Reproduciendo](screenshots/reproduciendo-visualizador.png)
+
+Opciones de visualizador:
+
+![Visualizador](screenshots/visualizador-ajustes.png)
+
+Pantalla de diagnóstico:
+
+![Diagnóstico](screenshots/diagnostico.png)
