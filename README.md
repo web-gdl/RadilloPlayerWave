@@ -3,8 +3,12 @@
 Reproductor de música local para Android centrado en visualizaciones reactivas al audio.
 Nombre provisional: comprobar disponibilidad de marca antes de cualquier uso comercial.
 
-**Estado: Fase 0 (esqueleto).** La app abre con tres destinos vacíos. La biblioteca y la
-reproducción llegan en la Fase 1; las escenas del visualizador, en la Fase 2.
+**Estado: Fase 1.** Biblioteca de música local (canciones, álbumes, artistas, carpetas),
+reproducción en segundo plano con notificación, pantalla bloqueada y auriculares, pantalla
+"Reproduciendo", cola y mini reproductor. Las escenas del visualizador llegan en la Fase 2.
+
+**APK:** cada *push* a `main` compila en GitHub Actions; el APK de depuración se descarga desde
+**Actions ▸ ejecución ▸ Artifacts ▸ RadilloPlayerWave-debug-apk**.
 
 ## Requisitos
 
