@@ -3,11 +3,13 @@
 Reproductor de música local para Android centrado en visualizaciones reactivas al audio.
 Nombre provisional: comprobar disponibilidad de marca antes de cualquier uso comercial.
 
-**Estado: Fase 2 (MVP).** Biblioteca de música local, reproducción en segundo plano con
-notificación y pantalla bloqueada, cola y mini reproductor, y el **visualizador**: análisis de
-audio en tiempo real (sin micrófono) con tres escenas originales — Espectro, Osciloscopio y
-Anillos —, modo inmersivo, paletas y ajustes de sensibilidad, intensidad, velocidad, densidad y
-sincronía.
+**Estado: Fase 3 (0.4.0).** Biblioteca de música local (canciones, álbumes, artistas, carpetas y
+listas), favoritos, búsqueda, reproducción en segundo plano con notificación y pantalla bloqueada,
+cola y mini reproductor, temporizador de apagado, ecualizador y refuerzo de graves del
+dispositivo (solo cuando existen de verdad), tema claro/oscuro con acento de la carátula,
+disposición adaptada a pantallas anchas, y el **visualizador**: análisis de audio en tiempo real
+(sin micrófono) con tres escenas originales — Espectro, Osciloscopio y Anillos —, modo inmersivo,
+paletas y ajustes de sensibilidad, intensidad, velocidad, densidad y sincronía.
 
 **APK:** cada *push* a `main` compila en GitHub Actions; el APK de depuración se descarga desde
 **Actions ▸ ejecución ▸ Artifacts ▸ RadilloPlayerWave-debug-apk**.
@@ -43,9 +45,9 @@ Ejecutar las pruebas unitarias:
 
 ```
 app/         Ensamblaje: Application (Hilt), MainActivity, navegación, recursos
-core/        Modelos de dominio, tema (claro/oscuro), tipografía, formas
-data/        Biblioteca (MediaStore + Room), ajustes del visualizador (DataStore)
-player/      ExoPlayer, MediaSession, servicio, tap de PCM (audiotap)
+core/        Modelos de dominio, tema (claro/oscuro, acento de carátula), tipografía, formas
+data/        Biblioteca (MediaStore + Room), favoritos y listas (Room), ajustes (DataStore)
+player/      ExoPlayer, MediaSession, servicio, tap de PCM (audiotap), efectos (audiofx), temporizador
 visualizer/  Análisis (FFT, bandas, onsets), motor de escenas, escenas, render
 docs/        Arquitectura, dependencias y licencias, limitaciones
 ```

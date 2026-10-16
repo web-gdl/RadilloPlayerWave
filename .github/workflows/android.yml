@@ -54,6 +54,42 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+      # Resumen verificable (pruebas por módulo y tamaño del APK) en el resumen del job
+      # y como comentario del commit, consultable por la API sin descargar artefactos.
+      - name: Resumen de pruebas y APK
+        if: success()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "### Android CI: ejecución ${{ github.run_id }} correcta"
+            echo
+            echo "| Módulo | Pruebas | Fallos | Errores | Omitidas |"
+            echo "|---|---:|---:|---:|---:|"
+            for module in app core data player visualizer; do
+              dir="$module/build/test-results"
+              [ -d "$dir" ] || continue
+              python3 - "$module" "$dir" <<'PY'
+          import glob, sys, xml.etree.ElementTree as ET
+          module, d = sys.argv[1], sys.argv[2]
+          t = f = e = s = 0
+          for path in glob.glob(f"{d}/**/TEST-*.xml", recursive=True):
+              r = ET.parse(path).getroot()
+              t += int(r.get("tests", 0)); f += int(r.get("failures", 0))
+              e += int(r.get("errors", 0)); s += int(r.get("skipped", 0))
+          print(f"| {module} | {t} | {f} | {e} | {s} |")
+          PY
+            done
+            echo
+            for apk in app/build/outputs/apk/debug/*.apk; do
+              echo "- APK: \`$(basename "$apk")\` — $(du -h "$apk" | cut -f1)"
+            done
+            echo "- versionName: $(grep -oE 'versionName = "[^"]+"' app/build.gradle.kts | cut -d'"' -f2)"
+          } > summary.md
+          cat summary.md >> "$GITHUB_STEP_SUMMARY"
+          jq -Rs '{body: .}' summary.md | gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" --input -
+
       # Si la compilación falla, deja el extracto relevante del registro como comentario
       # del commit, para poder diagnosticarlo desde la API sin abrir la interfaz web.
       - name: Comentar el error en el commit

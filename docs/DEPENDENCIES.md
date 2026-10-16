@@ -17,8 +17,8 @@ Ninguna dependencia es GPL/LGPL. Todas son Apache-2.0 salvo que se indique.
 | androidx.activity | 1.13.0 | Apache-2.0 | Activity + Compose |
 | androidx.lifecycle | 2.11.0 | Apache-2.0 | ViewModel, servicio |
 | androidx.navigation | 2.10.2 | Apache-2.0 | Navegación Compose |
-| androidx.datastore | 1.2.1 | Apache-2.0 | Preferencias |
-| androidx.room | 2.8.5 | Apache-2.0 | Caché de biblioteca |
+| androidx.datastore | 1.2.1 | Apache-2.0 | Preferencias (visualizador, tema, ecualizador) |
+| androidx.room | 2.8.5 | Apache-2.0 | Caché de biblioteca, favoritos y listas |
 | androidx.media3 (exoplayer, session, common) | 1.11.1 | Apache-2.0 | Reproducción |
 | androidx.palette | 1.0.0 | Apache-2.0 | Color dominante de carátulas |
 | Coil 3 (coil-compose) | 3.6.3 | Apache-2.0 | Carga de carátulas |
@@ -27,6 +27,9 @@ Ninguna dependencia es GPL/LGPL. Todas son Apache-2.0 salvo que se indique.
 | Truth | 1.4.4 | Apache-2.0 | Tests |
 | androidx.test (core, ext-junit, espresso) | 1.7.0 / 1.3.0 / 3.7.0 | Apache-2.0 | Tests |
 | Robolectric | 4.17 | MIT | Tests |
+
+La Fase 3 no añade dependencias: el ecualizador y el refuerzo de graves usan
+`android.media.audiofx` (plataforma) y el acento de carátula, `androidx.palette`.
 
 ## Recursos gráficos
 

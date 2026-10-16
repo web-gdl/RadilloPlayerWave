@@ -40,15 +40,44 @@ el coste de mantenimiento.
 - Las pistas de menos de 5 s se excluyen del escaneo (tonos y notificaciones mal etiquetadas).
 - Las carátulas se leen de `content://media/external/audio/albumart/<id>`; si MediaStore no la
   ha indexado, se muestra el marcador propio.
-- Sin ecualizador todavía (Fase 3, solo si es verificable en el dispositivo).
 - La cola se muestra en orden de reproducción lineal; con "aleatorio" activo el orden real lo
   decide ExoPlayer.
+
+## Favoritos, listas, ajustes y efectos (Fase 3)
+
+- **Ecualizador y refuerzo de graves** usan los efectos del propio dispositivo
+  (`android.media.audiofx`) sobre la sesión de audio del reproductor. Hace falta haber iniciado la
+  reproducción al menos una vez para que exista la sesión; hasta entonces la pantalla lo indica.
+  Si el dispositivo no ofrece un `Equalizer` operativo, la pantalla dice que no está disponible:
+  no se simula nada. El número de bandas, su rango (normalmente ±15 dB) y los nombres de los
+  preajustes los decide el fabricante (suelen venir en inglés).
+- Los efectos se aplican al `audioSessionId` del ExoPlayer de esta app; no afectan a otras apps.
+  Con salida Bluetooth algunos dispositivos aplican su propio procesado y el efecto puede ser
+  menos perceptible.
+- **Favoritos y listas** se guardan en la base de datos local de la app (Room), no en MediaStore:
+  no se comparten con otros reproductores y se pierden al desinstalar la app. Durante el
+  desarrollo la base de datos usa *migración destructiva*: al cambiar el esquema entre versiones
+  se borran favoritos y listas (la caché de pistas se regenera sola). Antes de la versión 1.0
+  se añadirán migraciones reales.
+- El **temporizador de apagado** vive en el proceso de la app: si el sistema mata el proceso
+  también se detiene la música, así que no hace falta persistirlo. Pausa (no cierra la app).
+- El **acento de la carátula** se extrae con Palette de una miniatura de ~96 px y se ajusta en
+  saturación y luminosidad para mantener el contraste; en carátulas muy oscuras o grises el acento
+  se parece al color base del tema. Se puede desactivar en Ajustes.
+- La **búsqueda** compara título, artista y álbum por subcadena, con un máximo de 200 resultados (sin acentos normalizados ni
+  búsqueda fonética).
+- En pantallas anchas (≥ 600 dp) se usa un raíl de navegación lateral y «Reproduciendo» pasa a
+  dos columnas; no hay disposición específica para plegables con bisagra.
 
 ## Estado por fase
 
 - **Fase 0:** esqueleto; compilado en CI.
 - **Fase 1:** biblioteca y reproducción; compilado y probado en CI.
-- **Fase 2 (actual, MVP):** motor de visualización y escenas Espectro/Osciloscopio/Anillos;
+- **Fase 2 (MVP):** motor de visualización y escenas Espectro/Osciloscopio/Anillos;
   compilado y probado en CI (FFT, bandas, suavizado/AGC/onsets, anillo PCM, analizador,
   historial de frames, procesador de audio con Robolectric).
-- Pendiente de prueba manual en dispositivo por parte del usuario (sincronía, rendimiento).
+- **Fase 3 (actual, 0.4.0):** favoritos, listas, búsqueda, temporizador de apagado, ecualizador,
+  ajustes (tema, colores de carátula) y disposición adaptativa; compilado y probado en CI
+  (repositorio de favoritos/listas con Room en memoria y Robolectric).
+- Pendiente de prueba manual en dispositivo por parte del usuario (sincronía, rendimiento,
+  ecualizador en hardware real).
