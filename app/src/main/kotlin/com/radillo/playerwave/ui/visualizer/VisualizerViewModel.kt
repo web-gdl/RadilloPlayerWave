@@ -2,6 +2,7 @@ package com.radillo.playerwave.ui.visualizer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.radillo.playerwave.core.device.DeviceProfile
 import com.radillo.playerwave.core.model.VisualizerSettings
 import com.radillo.playerwave.data.settings.VisualizerSettingsRepository
 import com.radillo.playerwave.player.engine.PlaybackController
@@ -24,6 +25,7 @@ class VisualizerViewModel @Inject constructor(
     val engine: VisualizerEngine,
     private val settingsRepository: VisualizerSettingsRepository,
     private val playback: PlaybackController,
+    val profile: DeviceProfile,
 ) : ViewModel() {
 
     val settings: StateFlow<VisualizerSettings> =
@@ -36,8 +38,14 @@ class VisualizerViewModel @Inject constructor(
     val palettes: List<VisualPalette> = Palettes.all
 
     init {
+        // Perfil del dispositivo: menos densidad y calidad mínima más baja en gama baja.
+        engine.setDeviceScale(profile.visualizerDensityScale)
+        engine.setMinQuality(profile.minQuality)
         viewModelScope.launch { settingsRepository.settings.collect { applyToEngine(it) } }
     }
+
+    /** Tope de fps efectivo (el elegido, o el del perfil si está en automático). */
+    fun effectiveMaxFps(settings: VisualizerSettings): Int = if (settings.maxFps > 0) settings.maxFps else profile.defaultMaxFps
 
     /** Aplica los ajustes al motor sin persistirlos (vista previa mientras se arrastra un control). */
     fun preview(settings: VisualizerSettings) = applyToEngine(settings)
@@ -46,6 +54,7 @@ class VisualizerViewModel @Inject constructor(
     fun selectPalette(id: String) = commit { it.copy(paletteId = id) }
     fun setKeepScreenOn(enabled: Boolean) = commit { it.copy(keepScreenOn = enabled) }
     fun setAutoQuality(enabled: Boolean) = commit { it.copy(autoQuality = enabled) }
+    fun setMaxFps(fps: Int) = commit { it.copy(maxFps = fps) }
     fun resetTuning() = commit {
         it.copy(sensitivity = 1f, intensity = 1f, speed = 1f, density = 1f, syncOffsetMs = 0)
     }
@@ -73,5 +82,6 @@ class VisualizerViewModel @Inject constructor(
         )
         engine.setSyncOffsetMs(s.syncOffsetMs)
         engine.setAutoQuality(s.autoQuality)
+        engine.setMaxFps(effectiveMaxFps(s))
     }
 }

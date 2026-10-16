@@ -40,6 +40,7 @@ import androidx.navigation.navArgument
 import com.radillo.playerwave.core.model.ThemeMode
 import com.radillo.playerwave.core.ui.theme.RadilloTheme
 import com.radillo.playerwave.ui.adaptive.isWideScreen
+import com.radillo.playerwave.ui.diagnostics.DiagnosticsScreen
 import com.radillo.playerwave.ui.effects.EqualizerScreen
 import com.radillo.playerwave.ui.library.CollectionDetailScreen
 import com.radillo.playerwave.ui.library.CollectionDetailViewModel
@@ -67,6 +68,7 @@ object Routes {
     const val QUEUE = "queue"
     const val EQUALIZER = "equalizer"
     const val SETTINGS = "settings"
+    const val DIAGNOSTICS = "diagnostics"
     const val IMMERSIVE = "visualizer/immersive"
 
     fun collection(kind: CollectionKind, key: String, title: String): String =
@@ -201,7 +203,11 @@ private fun AppNavHost(navController: NavHostController, modifier: Modifier) {
             SettingsScreen(
                 onBack = { navController.popBackStack() },
                 onOpenEqualizer = { navController.navigate(Routes.EQUALIZER) },
+                onOpenDiagnostics = { navController.navigate(Routes.DIAGNOSTICS) },
             )
+        }
+        composable(Routes.DIAGNOSTICS) {
+            DiagnosticsScreen(onBack = { navController.popBackStack() })
         }
         composable(TopLevelDestination.VISUALIZER.route) {
             VisualizerScreen(

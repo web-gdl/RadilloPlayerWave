@@ -173,12 +173,14 @@ fun VisualizerScreen(
         VisualizerSettingsSheet(
             settings = settings,
             quality = quality,
+            defaultMaxFps = viewModel.profile.defaultMaxFps,
             palettes = viewModel.palettes.map { it.id },
             onPreview = viewModel::preview,
             onCommit = viewModel::commit,
             onSelectPalette = viewModel::selectPalette,
             onKeepScreenOn = viewModel::setKeepScreenOn,
             onAutoQuality = viewModel::setAutoQuality,
+            onMaxFps = viewModel::setMaxFps,
             onReset = viewModel::resetTuning,
             onDismiss = { showSettings = false },
         )
@@ -322,12 +324,14 @@ private fun OverlayIconButton(onClick: () -> Unit, content: @Composable () -> Un
 private fun VisualizerSettingsSheet(
     settings: VisualizerSettings,
     quality: Float,
+    defaultMaxFps: Int,
     palettes: List<String>,
     onPreview: (VisualizerSettings) -> Unit,
     onCommit: ((VisualizerSettings) -> VisualizerSettings) -> Unit,
     onSelectPalette: (String) -> Unit,
     onKeepScreenOn: (Boolean) -> Unit,
     onAutoQuality: (Boolean) -> Unit,
+    onMaxFps: (Int) -> Unit,
     onReset: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -391,6 +395,24 @@ private fun VisualizerSettingsSheet(
                         selected = id == settings.paletteId,
                         onClick = { onSelectPalette(id) },
                         label = { Text(stringResource(paletteLabelRes(id))) },
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+            Text(stringResource(R.string.vis_max_fps), style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                VisualizerSettings.MAX_FPS_OPTIONS.forEach { option ->
+                    FilterChip(
+                        selected = settings.maxFps == option,
+                        onClick = { onMaxFps(option) },
+                        label = {
+                            Text(
+                                if (option == 0) stringResource(R.string.vis_fps_auto, defaultMaxFps)
+                                else stringResource(R.string.vis_fps_value, option),
+                            )
+                        },
                     )
                 }
             }

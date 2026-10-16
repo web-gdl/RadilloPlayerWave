@@ -52,6 +52,8 @@ class DataStoreAppSettingsRepository @Inject constructor(
             val next = transform(prefs.toAppSettings())
             prefs[KEY_THEME] = next.themeMode.name
             prefs[KEY_ARTWORK_COLORS] = next.artworkColors
+            // -1 = según el dispositivo, 0 = libre, 1 = horizontal fija.
+            prefs[KEY_LOCK_LANDSCAPE] = when (next.lockLandscape) { null -> -1; false -> 0; true -> 1 }
         }
     }
 
@@ -71,6 +73,7 @@ class DataStoreAppSettingsRepository @Inject constructor(
         return AppSettings(
             themeMode = mode,
             artworkColors = this[KEY_ARTWORK_COLORS] ?: defaults.artworkColors,
+            lockLandscape = when (this[KEY_LOCK_LANDSCAPE] ?: -1) { 0 -> false; 1 -> true; else -> null },
         )
     }
 
@@ -89,6 +92,7 @@ class DataStoreAppSettingsRepository @Inject constructor(
     private companion object {
         val KEY_THEME = stringPreferencesKey("theme_mode")
         val KEY_ARTWORK_COLORS = booleanPreferencesKey("artwork_colors")
+        val KEY_LOCK_LANDSCAPE = intPreferencesKey("lock_landscape")
         val KEY_EQ_ENABLED = booleanPreferencesKey("eq_enabled")
         val KEY_EQ_BANDS = stringPreferencesKey("eq_bands_mb")
         val KEY_EQ_PRESET = intPreferencesKey("eq_preset")

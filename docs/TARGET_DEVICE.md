@@ -1,7 +1,8 @@
 # Dispositivo objetivo: autoestéreo MTK 8227L (1 GB RAM, Mali-450, 1024×600)
 
-Propuesta de adaptación de RadilloPlayerWave a una unidad Android de coche de gama baja.
-Estado: **propuesta pendiente de aprobación** (ver «Decisión» al final).
+Adaptación de RadilloPlayerWave a una unidad Android de coche de gama baja.
+Estado: **Opción 1 aprobada por el usuario** (música en memoria interna y USB). Fase A hecha;
+B, C y D pendientes.
 
 ## 1. Qué es realmente este hardware y qué implica
 
@@ -215,9 +216,34 @@ Notas:
 
 La antigua Fase 5 (terreno 3D en OpenGL ES 3.0) pasa a opcional en ES 2.0 o Canvas, al final.
 
-## 7. Decisión
+## 7. Decisión y estado
 
-- **Opción 1 (recomendada):** las cuatro fases anteriores. La app queda nativa en Kotlin con Vistas, ~5 MB, ~50–70 MB de RAM, visualizador en su propio hilo. Coste: reescribir el módulo `app` y portar las siete escenas; `data`, `player` y el análisis se conservan con sus pruebas.
-- **Opción 2:** conservar Compose y aplicar solo la Fase A más recortes (iconos propios, sin Coil, tope de fps, perfil gama baja). Más rápida de hacer; la app seguirá siendo más pesada (≈ +40 MB de RAM, arranque y listas más lentos en un A7).
+El usuario eligió la **Opción 1** (Vistas nativas, fases A–D). La música del coche está en la
+memoria interna del equipo y en memorias USB: el escáner de carpetas de la Fase D prioriza
+los volúmenes USB.
 
-Preguntas abiertas para el usuario: opción elegida; de dónde sale la música en el coche (USB/SD/memoria interna), para priorizar el escáner de carpetas.
+### Fase A (hecha, 0.6.0-faseA)
+
+- Build **release** con R8 modo completo, recursos reducidos, `localeFilters` es/en y exclusión
+  de metadatos; firma con clave propia cifrada en el repositorio (`keystore/radillo-release.jks.enc`,
+  secreto `RADILLO_KEYSTORE_PASSWORD`) y respaldo con la clave de depuración. CI publica
+  `RadilloPlayerWave.apk` en Releases e indica la firma usada.
+- `core.device.RealApiLevel` (nivel de API real por presencia de clases), `DeviceProfile`
+  (RAM, heap, 32/64 bits, pistas de hardware, acelerómetro, modo coche → `lowEnd`,
+  `fixedLandscape`, `defaultMaxFps`, `visualizerDensityScale`, `minQuality`, `artworkMaxPx`) y
+  `GpuProbe` (cadenas de OpenGL ES vía EGL).
+- Visualizador: tope de fps (`VisualizerEngine.setMaxFps`, 30 por defecto en gama baja, ajuste
+  «Fotogramas por segundo» Automático/30/60), `SceneParams.deviceScale` (0,6 en gama baja),
+  calidad mínima del gobernador según perfil, medición de fps (`engine.fps`). El gobernador
+  conoce el tope (`targetFrameSeconds`) para no confundir frames limitados con tardíos.
+- Reproductor: `DefaultLoadControl` de 2 MB (10–30 s) sin *back buffer*; fábrica de renderers
+  **solo audio** (sin vídeo, texto, metadatos, cámara ni imagen) con *decoder fallback*.
+- Pantalla **Diagnóstico** (Ajustes ▸ Dispositivo): modelo, hardware, ABIs, Android declarado y
+  real, perfil y motivos, RAM total/libre, PSS y heap de la app, pantalla, GPU, fps y calidad;
+  botón para copiar el informe al portapapeles.
+- Orientación: horizontal fija cuando el perfil lo indica (sin acelerómetro o modo coche), con
+  ajuste manual «Pantalla siempre horizontal».
+- Pruebas nuevas: `DeviceProfileTest` (4) y dos más del gobernador (tope de fps, calidad mínima).
+
+Los iconos propios en lugar de `material-icons-extended` pasan a la Fase C: R8 ya elimina los no
+usados en release y la UI Compose actual desaparece en esa fase.

@@ -13,10 +13,30 @@ android {
         applicationId = "com.radillo.playerwave"
         minSdk = 24
         targetSdk = 37
-        versionCode = 5
-        versionName = "0.5.0-fase4"
+        versionCode = 6
+        versionName = "0.6.0-faseA"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    // Solo los idiomas de la app: fuera las traducciones de las bibliotecas AndroidX (menos APK).
+    androidResources {
+        localeFilters += listOf("es", "en")
+    }
+
+    // Clave de firma: en CI se descifra keystore/radillo-release.jks.enc con el secreto
+    // RADILLO_KEYSTORE_PASSWORD y se exporta RADILLO_KEYSTORE_PATH. Sin ella (build local o
+    // secreto ausente) el release se firma con la clave de depuración, para seguir siendo instalable.
+    val releaseKeystore = System.getenv("RADILLO_KEYSTORE_PATH")?.let { file(it) }?.takeIf { it.exists() }
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = System.getenv("RADILLO_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("RADILLO_KEY_ALIAS") ?: "radillo"
+                keyPassword = System.getenv("RADILLO_KEY_PASSWORD") ?: System.getenv("RADILLO_KEYSTORE_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -25,13 +45,14 @@ android {
             versionNameSuffix = "-debug"
         }
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = true          // R8 en modo completo (por defecto desde AGP 8)
+            isShrinkResources = true        // elimina recursos sin referencia
+            isDebuggable = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            // La firma de release se configura en la Fase 5 con una clave propia del usuario.
+            signingConfig = if (releaseKeystore != null) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
         }
     }
 
@@ -47,7 +68,13 @@ android {
 
     packaging {
         resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += setOf(
+                "/META-INF/{AL2.0,LGPL2.1}",
+                "META-INF/*.version",
+                "META-INF/*.kotlin_module",
+                "kotlin/**",
+                "DebugProbesKt.bin",
+            )
         }
     }
 

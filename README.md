@@ -13,12 +13,21 @@ Campo de líneas y Ambiente —, modo inmersivo, paletas, ajustes de sensibilida
 velocidad, densidad y sincronía, y un gobernador de calidad que reduce el detalle cuando el
 dispositivo no mantiene la fluidez.
 
-**APK:** cada *push* a `main` compila en GitHub Actions y publica el APK de depuración en
-**Releases**: <https://github.com/web-gdl/RadilloPlayerWave/releases/latest> (archivo
-`RadilloPlayerWave-debug.apk`; liga directa:
-<https://github.com/web-gdl/RadilloPlayerWave/releases/latest/download/RadilloPlayerWave-debug.apk>).
+**Dispositivo objetivo:** autoestéreo Android MTK 8227L (Cortex-A7 32 bits, Mali-450, 1 GB RAM,
+1024×600 a 160 dpi). La adaptación se describe en `docs/TARGET_DEVICE.md` y avanza por fases
+(A: cimientos ✅ · B: visualizador en SurfaceView · C: UI en Vistas · D: coche). La app sigue
+funcionando en teléfonos y tabletas.
+
+**APK:** cada *push* a `main` compila en GitHub Actions un APK **release** (R8, recursos
+reducidos) y lo publica en **Releases**: <https://github.com/web-gdl/RadilloPlayerWave/releases/latest>
+(archivo `RadilloPlayerWave.apk`; liga directa:
+<https://github.com/web-gdl/RadilloPlayerWave/releases/latest/download/RadilloPlayerWave.apk>).
 También queda como artefacto de la ejecución (**Actions ▸ ejecución ▸ Artifacts**), con 30 días
 de caducidad. Mientras el repositorio sea privado hace falta tener la sesión de GitHub iniciada.
+
+**Firma:** la clave de release viaja cifrada en `keystore/radillo-release.jks.enc` y CI la descifra
+con el secreto `RADILLO_KEYSTORE_PASSWORD`. Sin el secreto, el APK se firma con la clave de
+depuración (el resumen de cada compilación indica cuál se usó).
 
 ## Requisitos
 
@@ -36,9 +45,11 @@ de caducidad. Mientras el repositorio sea privado hace falta tener la sesión de
 3. **Build ▸ Build App Bundle(s) / APK(s) ▸ Build APK(s)**, o desde terminal:
 
    ```bash
-   ./gradlew :app:assembleDebug
+   ./gradlew :app:assembleRelease
    ```
-   El APK queda en `app/build/outputs/apk/debug/app-debug.apk`.
+   El APK queda en `app/build/outputs/apk/release/app-release.apk` (firmado con la clave de
+   depuración si no se definen `RADILLO_KEYSTORE_PATH` y `RADILLO_KEYSTORE_PASSWORD`). Para el
+   dispositivo objetivo usa siempre el **release**: el debug es varias veces más lento.
 4. Instálalo en un dispositivo con depuración USB o arrástralo a un emulador.
 
 Ejecutar las pruebas unitarias:

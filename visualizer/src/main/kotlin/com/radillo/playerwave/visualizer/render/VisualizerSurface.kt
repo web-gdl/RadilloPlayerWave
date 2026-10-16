@@ -34,8 +34,8 @@ fun VisualizerSurface(
     LaunchedEffect(engine) {
         while (true) {
             withFrameNanos { now ->
-                engine.onFrame(now)
-                frameTick.longValue = now
+                // Con tope de fps el motor salta vsyncs: entonces no se invalida el lienzo.
+                if (engine.onFrame(now)) frameTick.longValue = now
             }
         }
     }

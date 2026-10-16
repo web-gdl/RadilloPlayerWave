@@ -8,6 +8,7 @@ import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.Player
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
@@ -47,8 +48,22 @@ class PlaybackService : MediaLibraryService() {
         // El tap de PCM alimenta al visualizador sin permisos de micrófono. El offload de audio
         // queda deshabilitado (valor por defecto): con offload el PCM no pasa por los AudioProcessor.
         val renderersFactory = RadilloRenderersFactory(this, AudioTapHub.newProcessor())
+        // Archivos locales: basta con unos segundos de búfer. El valor por defecto de Media3 reserva
+        // ~13 MB para audio; aquí se limita a 2 MB para dispositivos con 1 GB de RAM.
+        val loadControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(
+                /* minBufferMs = */ 10_000,
+                /* maxBufferMs = */ 30_000,
+                /* bufferForPlaybackMs = */ 1_000,
+                /* bufferForPlaybackAfterRebufferMs = */ 2_000,
+            )
+            .setTargetBufferBytes(2 * 1024 * 1024)
+            .setPrioritizeTimeOverSizeThresholds(false)
+            .setBackBuffer(/* backBufferDurationMs = */ 0, /* retainBackBufferFromKeyframe = */ false)
+            .build()
         val player = ExoPlayer.Builder(this, renderersFactory)
-            // handleAudioFocus = true: pausa en llamadas y cede el foco a otras apps.
+            .setLoadControl(loadControl)
+            // handleAudioFocus = true: pausa en llamadas y cede el foco a otras apps (radio del coche).
             .setAudioAttributes(audioAttributes, true)
             // Pausa al desconectar auriculares.
             .setHandleAudioBecomingNoisy(true)

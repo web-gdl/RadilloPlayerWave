@@ -49,6 +49,7 @@ class DataStoreVisualizerSettingsRepository @Inject constructor(
             prefs[KEY_SYNC] = next.syncOffsetMs
             prefs[KEY_KEEP_SCREEN_ON] = next.keepScreenOn
             prefs[KEY_AUTO_QUALITY] = next.autoQuality
+            prefs[KEY_MAX_FPS] = next.maxFps
         }
     }
 
@@ -64,6 +65,7 @@ class DataStoreVisualizerSettingsRepository @Inject constructor(
             syncOffsetMs = this[KEY_SYNC] ?: defaults.syncOffsetMs,
             keepScreenOn = this[KEY_KEEP_SCREEN_ON] ?: defaults.keepScreenOn,
             autoQuality = this[KEY_AUTO_QUALITY] ?: defaults.autoQuality,
+            maxFps = this[KEY_MAX_FPS] ?: defaults.maxFps,
         )
     }
 
@@ -77,5 +79,6 @@ class DataStoreVisualizerSettingsRepository @Inject constructor(
         val KEY_SYNC = intPreferencesKey("sync_offset_ms")
         val KEY_KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on")
         val KEY_AUTO_QUALITY = booleanPreferencesKey("auto_quality")
+        val KEY_MAX_FPS = intPreferencesKey("max_fps")
     }
 }

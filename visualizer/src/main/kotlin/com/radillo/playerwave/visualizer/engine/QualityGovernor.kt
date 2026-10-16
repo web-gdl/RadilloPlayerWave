@@ -21,12 +21,29 @@ package com.radillo.playerwave.visualizer.engine
  *   la ventana en vez de contarse como tardío.
  */
 class QualityGovernor(
-    private val minQuality: Float = 0.3f,
+    minQuality: Float = 0.3f,
     private val windowFrames: Int = 60,
     private val warmUpSeconds: Float = 1.5f,
 ) {
     var quality: Float = 1f
         private set
+
+    /** Calidad mínima; se puede bajar en dispositivos de gama baja. */
+    var minQuality: Float = minQuality
+        set(value) {
+            field = value.coerceIn(0.05f, 1f)
+            if (quality < field) quality = field
+        }
+
+    /**
+     * Periodo objetivo cuando el render está limitado (p. ej. 1/30 s con tope de 30 fps). Un frame
+     * solo cuenta como tardío si supera también este periodo, no el de la pantalla.
+     */
+    var targetFrameSeconds: Float = 0f
+        set(value) {
+            field = value.coerceAtLeast(0f)
+            reset()
+        }
 
     /** Con `false` la calidad vuelve a 1 y no se toma ninguna decisión. */
     var enabled: Boolean = true
@@ -70,7 +87,8 @@ class QualityGovernor(
         }
         if (dtSeconds < windowMinDt) windowMinDt = dtSeconds
         frames++
-        if (dtSeconds > maxOf(period * LATE_FACTOR, LATE_FLOOR_SECONDS)) late++
+        val basePeriod = maxOf(period, targetFrameSeconds)
+        if (dtSeconds > maxOf(basePeriod * LATE_FACTOR, LATE_FLOOR_SECONDS)) late++
         if (frames < windowFrames) return null
 
         val ratio = late.toFloat() / frames

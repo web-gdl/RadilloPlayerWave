@@ -13,6 +13,8 @@ data class VisualizerSettings(
     val keepScreenOn: Boolean = true,
     /** Gobernador de calidad: reduce la densidad de las escenas si el dispositivo no mantiene la fluidez. */
     val autoQuality: Boolean = true,
+    /** Tope de fotogramas por segundo del visualizador; 0 = según el dispositivo (30 en gama baja, 60 si no). */
+    val maxFps: Int = 0,
 ) {
     companion object {
         val SENSITIVITY_RANGE = 0.25f..3f
@@ -20,5 +22,7 @@ data class VisualizerSettings(
         val SPEED_RANGE = 0.25f..3f
         val DENSITY_RANGE = 0.25f..2f
         val SYNC_RANGE_MS = -300..800
+        /** Opciones del tope de fps: 0 = automático. */
+        val MAX_FPS_OPTIONS = listOf(0, 30, 60)
     }
 }

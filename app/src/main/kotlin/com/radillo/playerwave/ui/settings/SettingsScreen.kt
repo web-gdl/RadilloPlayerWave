@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.GraphicEq
+import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -41,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.radillo.playerwave.BuildConfig
 import com.radillo.playerwave.R
+import com.radillo.playerwave.core.device.DeviceProfile
 import com.radillo.playerwave.core.model.AppSettings
 import com.radillo.playerwave.core.model.ThemeMode
 import com.radillo.playerwave.data.settings.AppSettingsRepository
@@ -54,6 +56,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val repository: AppSettingsRepository,
+    val profile: DeviceProfile,
 ) : ViewModel() {
 
     /** `null` hasta que DataStore entrega el primer valor; así el tema no parpadea al arrancar. */
@@ -66,6 +69,10 @@ class SettingsViewModel @Inject constructor(
 
     fun setArtworkColors(enabled: Boolean) {
         viewModelScope.launch { repository.update { it.copy(artworkColors = enabled) } }
+    }
+
+    fun setLockLandscape(enabled: Boolean) {
+        viewModelScope.launch { repository.update { it.copy(lockLandscape = enabled) } }
     }
 }
 
@@ -84,6 +91,7 @@ private val ThirdPartyLicenses = listOf(
 fun SettingsScreen(
     onBack: () -> Unit,
     onOpenEqualizer: () -> Unit,
+    onOpenDiagnostics: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
@@ -133,6 +141,16 @@ fun SettingsScreen(
                     Switch(checked = current.artworkColors, onCheckedChange = viewModel::setArtworkColors)
                 },
             )
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.settings_lock_landscape)) },
+                supportingContent = { Text(stringResource(R.string.settings_lock_landscape_hint)) },
+                trailingContent = {
+                    Switch(
+                        checked = current.lockLandscape ?: viewModel.profile.fixedLandscape,
+                        onCheckedChange = viewModel::setLockLandscape,
+                    )
+                },
+            )
             HorizontalDivider()
 
             SectionLabel(stringResource(R.string.settings_audio))
@@ -141,6 +159,21 @@ fun SettingsScreen(
                 leadingContent = { Icon(Icons.Rounded.GraphicEq, contentDescription = null) },
                 trailingContent = { Icon(Icons.Rounded.ChevronRight, contentDescription = null) },
                 modifier = Modifier.clickable(onClick = onOpenEqualizer),
+            )
+            HorizontalDivider()
+
+            SectionLabel(stringResource(R.string.settings_section_device))
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.settings_diagnostics)) },
+                supportingContent = {
+                    Text(
+                        if (viewModel.profile.lowEnd) stringResource(R.string.diag_profile_low_end_short)
+                        else stringResource(R.string.diag_profile_normal),
+                    )
+                },
+                leadingContent = { Icon(Icons.Rounded.Memory, contentDescription = null) },
+                trailingContent = { Icon(Icons.Rounded.ChevronRight, contentDescription = null) },
+                modifier = Modifier.clickable(onClick = onOpenDiagnostics),
             )
             HorizontalDivider()
 

@@ -97,6 +97,28 @@ class QualityGovernorTest {
     }
 
     @Test
+    fun `a frame cap raises the late threshold so capped frames are not jank`() {
+        val governor = QualityGovernor(warmUpSeconds = 0f)
+        governor.targetFrameSeconds = 1f / 30f
+        // Con tope de 30 fps cada frame dura ~33 ms: no es tardío (umbral 53 ms).
+        assertThat(governor.feed(1f / 30f, 3_000)).isEmpty()
+        assertThat(governor.quality).isEqualTo(1f)
+        // Pero perder frames incluso con el tope (70 ms) sí baja la calidad.
+        governor.feed(0.07f, 600)
+        assertThat(governor.quality).isLessThan(1f)
+    }
+
+    @Test
+    fun `min quality can be lowered for low end devices`() {
+        val governor = QualityGovernor(warmUpSeconds = 0f)
+        governor.minQuality = 0.25f
+        governor.feed(janky, 4_000)
+        assertThat(governor.quality).isWithin(1e-6f).of(0.25f)
+        governor.minQuality = 0.5f // subirlo eleva la calidad vigente al nuevo mínimo
+        assertThat(governor.quality).isWithin(1e-6f).of(0.5f)
+    }
+
+    @Test
     fun `high refresh rate does not count 60 fps as jank`() {
         val governor = QualityGovernor(warmUpSeconds = 0f)
         // Pantalla de 120 Hz que a veces entrega a 60: 16,7 ms < 22 ms, no es tardío.

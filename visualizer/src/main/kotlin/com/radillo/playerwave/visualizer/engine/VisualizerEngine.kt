@@ -62,6 +62,17 @@ class VisualizerEngine(
     val quality: StateFlow<Float> = _quality
     private val governor = QualityGovernor()
 
+    /** Fotogramas renderizados por segundo, medidos (se actualiza una vez por segundo). */
+    private val _fps = MutableStateFlow(0f)
+    val fps: StateFlow<Float> = _fps
+    private var fpsWindowStartNanos = 0L
+    private var fpsWindowFrames = 0
+
+    /** Tope de fotogramas por segundo; 0 = sin tope (el de la pantalla). */
+    private var maxFps = 0
+    private var lastRenderedNanos = 0L
+    private var deviceScale = 1f
+
     // ---- Estado de render (solo hilo de render) ----
     private var scene: Scene? = null
     private var outgoing: Scene? = null
@@ -128,11 +139,38 @@ class VisualizerEngine(
     }
 
     fun setParams(newParams: SceneParams) {
-        val normalized = newParams.copy(quality = 1f)
+        val normalized = newParams.copy(quality = 1f, deviceScale = 1f)
         if (normalized == userParams) return
         userParams = normalized
-        applyParams(normalized.copy(quality = governor.quality))
+        applyParams(effectiveParams())
     }
+
+    /** Factor fijo del perfil del dispositivo (0.6 en gama baja) que reduce la densidad de las escenas. */
+    fun setDeviceScale(scale: Float) {
+        val clamped = scale.coerceIn(0.2f, 1f)
+        if (clamped == deviceScale) return
+        deviceScale = clamped
+        applyParams(effectiveParams())
+    }
+
+    /** Calidad mínima a la que puede bajar el gobernador. */
+    fun setMinQuality(min: Float) {
+        governor.minQuality = min
+        applyParams(effectiveParams())
+    }
+
+    /**
+     * Limita los fotogramas por segundo (p. ej. 30 en hardware modesto: mitad de CPU y GPU, menos
+     * calor). 0 o un valor ≥ al de la pantalla no tienen efecto.
+     */
+    fun setMaxFps(fps: Int) {
+        val clamped = fps.coerceIn(0, 240)
+        if (clamped == maxFps) return
+        maxFps = clamped
+        governor.targetFrameSeconds = if (clamped > 0) 1f / clamped else 0f
+    }
+
+    private fun effectiveParams(): SceneParams = userParams.copy(quality = governor.quality, deviceScale = deviceScale)
 
     /**
      * Activa o desactiva el gobernador de calidad. Desactivado, las escenas usan siempre la
@@ -141,7 +179,7 @@ class VisualizerEngine(
     fun setAutoQuality(enabled: Boolean) {
         if (governor.enabled == enabled) return
         governor.enabled = enabled
-        applyParams(userParams.copy(quality = governor.quality))
+        applyParams(effectiveParams())
     }
 
     private fun applyParams(effective: SceneParams) {
@@ -168,14 +206,24 @@ class VisualizerEngine(
 
     // ---- Render ----
 
-    /** Avanza la simulación un frame. Llamar desde el hilo de render antes de [draw]. */
-    fun onFrame(nowNanos: Long) {
+    /**
+     * Avanza la simulación un frame. Llamar desde el hilo de render en cada vsync, antes de [draw].
+     * Devuelve `false` si este vsync se salta por el tope de fps: entonces no hay que redibujar.
+     */
+    fun onFrame(nowNanos: Long): Boolean {
+        if (maxFps > 0 && lastRenderedNanos != 0L) {
+            val minIntervalNanos = (1_000_000_000L / maxFps * 0.75).toLong()
+            if (nowNanos - lastRenderedNanos < minIntervalNanos) return false
+        }
+        lastRenderedNanos = nowNanos
+        measureFps(nowNanos)
+
         val rawDt = if (lastFrameNanos == 0L) 1f / 60f else (nowNanos - lastFrameNanos) / 1e9f
         val dt = rawDt.coerceIn(0.001f, 0.1f)
         lastFrameNanos = nowNanos
 
         // El gobernador decide con la duración real del frame (una pausa larga no cuenta como tardío).
-        governor.onFrame(rawDt)?.let { q -> applyParams(userParams.copy(quality = q)) }
+        governor.onFrame(rawDt)?.let { q -> applyParams(userParams.copy(quality = q, deviceScale = deviceScale)) }
 
         val frame = pickFrame(nowNanos, dt)
         lastShown = frame
@@ -189,6 +237,22 @@ class VisualizerEngine(
                 out.onDetach()
                 outgoing = null
             }
+        }
+        return true
+    }
+
+    private fun measureFps(nowNanos: Long) {
+        if (fpsWindowStartNanos == 0L) {
+            fpsWindowStartNanos = nowNanos
+            fpsWindowFrames = 0
+            return
+        }
+        fpsWindowFrames++
+        val elapsed = nowNanos - fpsWindowStartNanos
+        if (elapsed >= 1_000_000_000L) {
+            _fps.value = fpsWindowFrames * 1e9f / elapsed
+            fpsWindowStartNanos = nowNanos
+            fpsWindowFrames = 0
         }
     }
 
