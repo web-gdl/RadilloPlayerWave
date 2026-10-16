@@ -168,3 +168,25 @@ jobs:
             --title "RadilloPlayerWave $VERSION" \
             --notes-file notes.md \
             --latest
+
+      # Solo se conserva la última versión publicada: así nadie descarga un APK antiguo por error.
+      - name: Borrar versiones anteriores
+        if: success() && github.event_name != 'pull_request'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(grep -oE 'versionName = "[^"]+"' app/build.gradle.kts | cut -d'"' -f2)
+          KEEP="v$VERSION"
+          gh api "repos/${{ github.repository }}/releases?per_page=100" --jq '.[].tag_name' | while read -r tag; do
+            if [ -n "$tag" ] && [ "$tag" != "$KEEP" ]; then
+              echo "Borrando $tag"
+              gh release delete "$tag" --repo "${{ github.repository }}" --yes --cleanup-tag || true
+            fi
+          done
+          # Etiquetas sueltas sin release (de compilaciones antiguas).
+          git ls-remote --tags origin | awk '{print $2}' | sed 's#refs/tags/##' | grep -v '\^{}' | while read -r tag; do
+            if [ -n "$tag" ] && [ "$tag" != "$KEEP" ]; then
+              gh api -X DELETE "repos/${{ github.repository }}/git/refs/tags/$tag" || true
+            fi
+          done
