@@ -35,6 +35,19 @@ Hilo de render (Compose: withFrameNanos → VisualizerEngine.onFrame)           
 Estados del motor (`DataState`): `LIVE` (audio real alineado), `IDLE` (pausa: el último
 frame decae), `SYNTHETIC` (reproduciendo sin PCM fiable: movimiento ambiental y aviso en la UI).
 
+## Gobernador de calidad (Fase 4)
+
+`QualityGovernor` (Kotlin puro) recibe la duración real de cada frame desde `VisualizerEngine.onFrame`
+y mantiene un factor `quality` ∈ [0,3, 1]. El periodo de refresco se estima como el menor `dt`
+observado (desde 60 Hz hasta 144 Hz, nunca se alarga); un frame es tardío si dura más que
+`max(1,6 × periodo, 22 ms)`. Por cada ventana de 60 frames: ≥ 20 % tardíos → `quality × 0,75`;
+ninguno tardío durante 4 ventanas seguidas → `quality × 1,2`, y si esa subida provoca jank, la
+siguiente exige el doble de ventanas buenas (hasta 32). Cambios de escena, de tamaño y pausas
+(dt > 250 ms) abren un periodo de gracia de 1,5 s. El motor combina los parámetros del usuario con
+la calidad en `SceneParams.quality`; las escenas escalan sus recuentos con `effectiveDensity =
+density × quality` y reconstruyen sus buffers al cambiar. El ajuste «Calidad automática» lo
+desactiva (calidad fija en 1) y la hoja de ajustes muestra el detalle vigente.
+
 Marcas temporales: `AudioProcessor.StreamMetadata.positionOffsetUs` fija la referencia en cada
 `flush` (seek); dentro de una pista los frames se eligen por posición exacta y, de paso, se
 mide la latencia real del `AudioTrack`, que sirve de respaldo cuando las marcas dejan de ser
@@ -88,7 +101,7 @@ com.radillo.playerwave.player.service MediaLibraryService, notificación, public
 com.radillo.playerwave.player.audiofx AudioEffectsHub, AudioEffectsController
 com.radillo.playerwave.player.audiotap PcmTapAudioProcessor, TapAudioSource, RenderersFactory
 com.radillo.playerwave.visualizer.analysis FFT, bandas, onsets, AudioFrame
-com.radillo.playerwave.visualizer.engine Scene, SceneRegistry, params
-com.radillo.playerwave.visualizer.scenes CanvasScene, SpectrumBars, Oscilloscope, Rings
+com.radillo.playerwave.visualizer.engine Scene, SceneRegistry, params, VisualizerEngine, QualityGovernor, Palettes
+com.radillo.playerwave.visualizer.scenes CanvasScene, SpectrumBars, Oscilloscope, Rings, Particles, Tunnel, LineField, Ambient
 com.radillo.playerwave.visualizer.render VisualizerSurface (Compose Canvas)
 ```

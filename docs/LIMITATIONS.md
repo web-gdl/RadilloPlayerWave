@@ -31,7 +31,16 @@ el coste de mantenimiento.
   latencias de Bluetooth muy variables.
 - El tap de PCM solo recibe audio de 16 bits o float; las fuentes de alta resolución se convierten
   a 16 bits antes de la cadena (comportamiento por defecto del sink), por lo que siempre hay datos.
-- Las escenas usan Compose Canvas; las escenas 3D (OpenGL ES) llegan en la Fase 5.
+- Las escenas usan Compose Canvas; la escena de terreno 3D (OpenGL ES) llega en la Fase 5.
+- El **gobernador de calidad** solo puede medir la fluidez del propio bucle de render: si el
+  dispositivo va lento por otra app o por ahorro de energía, también reducirá el detalle. Asume
+  pantallas de al menos 60 Hz; en una pantalla forzada a 30 Hz bajará la calidad al mínimo sin
+  necesidad (se puede desactivar en los ajustes del visualizador). El detalle se recupera despacio
+  a propósito (varios segundos sin tirones) para no oscilar.
+- Las escenas **Partículas** y **Campo de líneas** son las más costosas en pantallas grandes con
+  densidad alta (hasta 800 partículas o ~3 000 segmentos por frame); el gobernador las reduce
+  primero. **Ambiente** usa mezcla aditiva (`BlendMode.Plus`); en Android 7–8 (API 24–27) se
+  traduce a `PorterDuff.ADD`, con un resultado equivalente.
 
 ## Reproducción (Fase 1)
 
@@ -76,8 +85,12 @@ el coste de mantenimiento.
 - **Fase 2 (MVP):** motor de visualización y escenas Espectro/Osciloscopio/Anillos;
   compilado y probado en CI (FFT, bandas, suavizado/AGC/onsets, anillo PCM, analizador,
   historial de frames, procesador de audio con Robolectric).
-- **Fase 3 (actual, 0.4.0):** favoritos, listas, búsqueda, temporizador de apagado, ecualizador,
+- **Fase 3 (0.4.0):** favoritos, listas, búsqueda, temporizador de apagado, ecualizador,
   ajustes (tema, colores de carátula) y disposición adaptativa; compilado y probado en CI
   (repositorio de favoritos/listas con Room en memoria y Robolectric).
-- Pendiente de prueba manual en dispositivo por parte del usuario (sincronía, rendimiento,
-  ecualizador en hardware real).
+- **Fase 4 (actual, 0.5.0):** escenas Partículas, Túnel, Campo de líneas y Ambiente, y gobernador
+  de calidad; compilado y probado en CI (gobernador con frames lentos/rápidos/pausas y pantallas
+  de 120 Hz; ciclo de vida y simulación de las siete escenas con frames reales, sintéticos y
+  tamaños extremos).
+- Pendiente de prueba manual en dispositivo por parte del usuario (sincronía, rendimiento de
+  cada escena, comportamiento del gobernador, ecualizador en hardware real).

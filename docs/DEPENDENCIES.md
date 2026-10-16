@@ -29,7 +29,8 @@ Ninguna dependencia es GPL/LGPL. Todas son Apache-2.0 salvo que se indique.
 | Robolectric | 4.17 | MIT | Tests |
 
 La Fase 3 no añade dependencias: el ecualizador y el refuerzo de graves usan
-`android.media.audiofx` (plataforma) y el acento de carátula, `androidx.palette`.
+`android.media.audiofx` (plataforma) y el acento de carátula, `androidx.palette`. La Fase 4
+tampoco: las escenas nuevas y el gobernador de calidad son Kotlin puro sobre Compose Canvas.
 
 ## Recursos gráficos
 

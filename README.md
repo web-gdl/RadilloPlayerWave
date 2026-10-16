@@ -3,13 +3,15 @@
 Reproductor de música local para Android centrado en visualizaciones reactivas al audio.
 Nombre provisional: comprobar disponibilidad de marca antes de cualquier uso comercial.
 
-**Estado: Fase 3 (0.4.0).** Biblioteca de música local (canciones, álbumes, artistas, carpetas y
+**Estado: Fase 4 (0.5.0).** Biblioteca de música local (canciones, álbumes, artistas, carpetas y
 listas), favoritos, búsqueda, reproducción en segundo plano con notificación y pantalla bloqueada,
 cola y mini reproductor, temporizador de apagado, ecualizador y refuerzo de graves del
 dispositivo (solo cuando existen de verdad), tema claro/oscuro con acento de la carátula,
 disposición adaptada a pantallas anchas, y el **visualizador**: análisis de audio en tiempo real
-(sin micrófono) con tres escenas originales — Espectro, Osciloscopio y Anillos —, modo inmersivo,
-paletas y ajustes de sensibilidad, intensidad, velocidad, densidad y sincronía.
+(sin micrófono) con siete escenas originales — Espectro, Osciloscopio, Anillos, Partículas, Túnel,
+Campo de líneas y Ambiente —, modo inmersivo, paletas, ajustes de sensibilidad, intensidad,
+velocidad, densidad y sincronía, y un gobernador de calidad que reduce el detalle cuando el
+dispositivo no mantiene la fluidez.
 
 **APK:** cada *push* a `main` compila en GitHub Actions y publica el APK de depuración en
 **Releases**: <https://github.com/web-gdl/RadilloPlayerWave/releases/latest> (archivo
