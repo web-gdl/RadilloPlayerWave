@@ -66,7 +66,7 @@ class VisualizerFragment : Fragment(R.layout.fragment_visualizer), ChromeMode {
 
         collectWhenStarted(viewModel.settings) { s ->
             chips.forEach { (id, chip) -> chip.isSelected = id == s.sceneId }
-            b.root.isKeepScreenOn = s.keepScreenOn
+            b.root.keepScreenOn = s.keepScreenOn
         }
         collectWhenStarted(combine(viewModel.playbackState, viewModel.dataState) { p, d -> p to d }) { (p, d) ->
             val track = p.currentTrack
