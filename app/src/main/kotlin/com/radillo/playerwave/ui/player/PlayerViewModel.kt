@@ -1,7 +1,6 @@
 package com.radillo.playerwave.ui.player
 
 import android.content.Context
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.radillo.playerwave.core.ui.ArtworkAccentExtractor
@@ -46,7 +45,7 @@ class PlayerViewModel @Inject constructor(
     val sleepRemainingMs: StateFlow<Long?> = sleepTimer.remainingMs
 
     /** Color dominante de la carátula actual, si el ajuste está activo y hay carátula. */
-    val accent: StateFlow<Color?> = combine(
+    val accent: StateFlow<Int?> = combine(
         playback.state.map { it.currentTrack?.albumArtUri }.distinctUntilChanged(),
         appSettings.settings.map { it.artworkColors }.distinctUntilChanged(),
     ) { uri, enabled -> if (enabled) uri else null }

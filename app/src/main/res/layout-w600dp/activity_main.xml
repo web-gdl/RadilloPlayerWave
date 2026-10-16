@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pantallas anchas (autoestéreo 1024×600, tabletas, móvil en horizontal): raíl lateral. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/window_background"
+    android:fitsSystemWindows="true"
+    android:orientation="horizontal">
+
+    <LinearLayout
+        android:id="@+id/navBar"
+        android:layout_width="@dimen/nav_rail"
+        android:layout_height="match_parent"
+        android:background="@color/surface"
+        android:gravity="center_vertical"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/navLibrary"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/nav_rail"
+            android:background="@drawable/bg_nav_item"
+            android:drawableTop="@drawable/ic_library_music"
+            android:drawablePadding="4dp"
+            android:drawableTint="@color/nav_item"
+            android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="@string/nav_library"
+            android:textColor="@color/nav_item"
+            android:textSize="@dimen/text_secondary" />
+        <TextView
+            android:id="@+id/navNowPlaying"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/nav_rail"
+            android:background="@drawable/bg_nav_item"
+            android:drawableTop="@drawable/ic_play_circle"
+            android:drawablePadding="4dp"
+            android:drawableTint="@color/nav_item"
+            android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="@string/nav_now_playing"
+            android:textColor="@color/nav_item"
+            android:textSize="@dimen/text_secondary" />
+        <TextView
+            android:id="@+id/navVisualizer"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/nav_rail"
+            android:background="@drawable/bg_nav_item"
+            android:drawableTop="@drawable/ic_graphic_eq"
+            android:drawablePadding="4dp"
+            android:drawableTint="@color/nav_item"
+            android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="@string/nav_visualizer"
+            android:textColor="@color/nav_item"
+            android:textSize="@dimen/text_secondary" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/mainColumn"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:id="@+id/content"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <include
+            android:id="@+id/miniPlayer"
+            layout="@layout/view_mini_player" />
+    </LinearLayout>
+</LinearLayout>

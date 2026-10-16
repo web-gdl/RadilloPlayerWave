@@ -2,7 +2,7 @@ package com.radillo.playerwave.core.model
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
-/** Preferencias generales de la aplicación (DataStore). */
+/** Preferencias generales de la aplicación (SharedPreferences). */
 data class AppSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     /** Tiñe el acento de la interfaz con el color dominante de la carátula en reproducción. */

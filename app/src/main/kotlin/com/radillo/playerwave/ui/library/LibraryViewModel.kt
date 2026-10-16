@@ -11,6 +11,7 @@ import com.radillo.playerwave.data.collections.PlaylistRepository
 import com.radillo.playerwave.data.library.LibraryRepository
 import com.radillo.playerwave.player.engine.PlaybackController
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -37,8 +38,19 @@ class LibraryViewModel @Inject constructor(
     val nowPlayingId: StateFlow<Long?> =
         playback.state.map { it.currentTrack?.id }.stateIn(viewModelScope, sharing, null)
 
+    /** Pestaña seleccionada (sobrevive a rotaciones). */
+    val selectedTab = MutableStateFlow(LibraryTab.SONGS)
+    private var scannedOnce = false
+
     fun rescan() {
         viewModelScope.launch { repository.rescan() }
+    }
+
+    /** Escanea una vez por proceso, al conceder el permiso o al abrir la biblioteca. */
+    fun ensureScanned() {
+        if (scannedOnce) return
+        scannedOnce = true
+        rescan()
     }
 
     fun playAll(tracks: List<Track>, startIndex: Int) = playback.playQueue(tracks, startIndex)
@@ -61,3 +73,9 @@ class LibraryViewModel @Inject constructor(
         viewModelScope.launch { playlistRepository.deletePlaylist(id) }
     }
 }
+
+/** Id reservado para la lista virtual de favoritos. */
+const val FAVORITES_PLAYLIST_ID = -1L
+
+/** Pestañas de la biblioteca. */
+enum class LibraryTab { SONGS, ALBUMS, ARTISTS, FOLDERS, PLAYLISTS }

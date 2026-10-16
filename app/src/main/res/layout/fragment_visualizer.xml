@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- El visualizador dibuja en su SurfaceView con hilo propio; los controles son vistas planas encima. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FF000000">
+
+    <com.radillo.playerwave.visualizer.render.VisualizerSurfaceView
+        android:id="@+id/surface"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <LinearLayout
+        android:id="@+id/overlayTop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:background="@drawable/bg_overlay"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/space_s"
+        android:paddingTop="@dimen/space_s"
+        android:paddingEnd="@dimen/space_s"
+        android:paddingBottom="@dimen/space_s">
+
+        <HorizontalScrollView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/sceneChips"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <ImageButton
+            android:id="@+id/btnTune"
+            style="@style/IconButton"
+            android:contentDescription="@string/vis_settings"
+            android:src="@drawable/ic_tune"
+            android:tint="#FFFFFFFF" />
+
+        <ImageButton
+            android:id="@+id/btnFullscreen"
+            style="@style/IconButton"
+            android:contentDescription="@string/vis_fullscreen"
+            android:src="@drawable/ic_fullscreen"
+            android:tint="#FFFFFFFF" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/overlayBottom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@drawable/bg_overlay"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="@dimen/space_s">
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#CCFFFFFF"
+            android:textSize="@dimen/text_secondary"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/trackTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="1"
+            android:textColor="#FFFFFFFF"
+            android:textSize="@dimen/text_title"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/trackSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="1"
+            android:textColor="#B3FFFFFF"
+            android:textSize="@dimen/text_secondary" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btnPrevious"
+                style="@style/IconButton"
+                android:contentDescription="@string/action_previous"
+                android:src="@drawable/ic_skip_previous"
+                android:tint="#FFFFFFFF" />
+
+            <ImageButton
+                android:id="@+id/btnPlay"
+                style="@style/IconButton"
+                android:layout_marginStart="@dimen/space_l"
+                android:layout_marginEnd="@dimen/space_l"
+                android:contentDescription="@string/action_play"
+                android:src="@drawable/ic_play"
+                android:tint="#FFFFFFFF" />
+
+            <ImageButton
+                android:id="@+id/btnNext"
+                style="@style/IconButton"
+                android:contentDescription="@string/action_next"
+                android:src="@drawable/ic_skip_next"
+                android:tint="#FFFFFFFF" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

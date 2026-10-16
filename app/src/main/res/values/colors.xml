@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="window_background">#F6F7FB</color>
+    <!-- Tema claro (los equipos de coche usan el oscuro por defecto: ver MainActivity). -->
+    <color name="window_background">#F4F5F8</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_alt">#E6E9EF</color>
+    <color name="text_primary">#12141A</color>
+    <color name="text_secondary">#596070</color>
+    <color name="accent">#0A7FB8</color>
+    <color name="on_accent">#FFFFFF</color>
+    <color name="divider">#D5D9E1</color>
+    <color name="selected_bg">#D3ECF7</color>
+    <color name="overlay_scrim">#99000000</color>
     <color name="ic_launcher_background">#0B0D12</color>
 </resources>

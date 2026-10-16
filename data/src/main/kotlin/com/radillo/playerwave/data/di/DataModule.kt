@@ -11,8 +11,8 @@ import com.radillo.playerwave.data.library.db.RadilloDatabase
 import com.radillo.playerwave.data.settings.AppSettingsRepository
 import com.radillo.playerwave.data.settings.AudioEffectsSettingsAdapter
 import com.radillo.playerwave.data.settings.AudioEffectsSettingsRepository
-import com.radillo.playerwave.data.settings.DataStoreAppSettingsRepository
-import com.radillo.playerwave.data.settings.DataStoreVisualizerSettingsRepository
+import com.radillo.playerwave.data.settings.PrefsAppSettingsRepository
+import com.radillo.playerwave.data.settings.PrefsVisualizerSettingsRepository
 import com.radillo.playerwave.data.settings.VisualizerSettingsRepository
 import dagger.Binds
 import dagger.Module
@@ -48,7 +48,7 @@ abstract class DataBindsModule {
 
     @Binds
     @Singleton
-    abstract fun bindVisualizerSettings(impl: DataStoreVisualizerSettingsRepository): VisualizerSettingsRepository
+    abstract fun bindVisualizerSettings(impl: PrefsVisualizerSettingsRepository): VisualizerSettingsRepository
 
     @Binds
     @Singleton
@@ -56,7 +56,7 @@ abstract class DataBindsModule {
 
     @Binds
     @Singleton
-    abstract fun bindAppSettings(impl: DataStoreAppSettingsRepository): AppSettingsRepository
+    abstract fun bindAppSettings(impl: PrefsAppSettingsRepository): AppSettingsRepository
 
     @Binds
     @Singleton

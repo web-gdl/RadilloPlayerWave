@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Autoestéreo 1024×600 a 160 dpi (1 dp = 1 px) y tabletas: objetivos táctiles grandes y texto
+         legible al volante. -->
+    <dimen name="text_headline">28sp</dimen>
+    <dimen name="text_title">22sp</dimen>
+    <dimen name="text_body">20sp</dimen>
+    <dimen name="text_secondary">16sp</dimen>
+    <dimen name="touch">64dp</dimen>
+    <dimen name="touch_large">88dp</dimen>
+    <dimen name="top_bar">64dp</dimen>
+    <dimen name="nav_bar">72dp</dimen>
+    <dimen name="nav_rail">112dp</dimen>
+    <dimen name="row_height">76dp</dimen>
+    <dimen name="art_row">60dp</dimen>
+    <dimen name="mini_player">76dp</dimen>
+    <dimen name="button_height">56dp</dimen>
+    <dimen name="chip_height">52dp</dimen>
+</resources>

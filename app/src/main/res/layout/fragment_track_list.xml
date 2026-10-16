@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lista genérica de pistas: detalle de álbum/artista/carpeta, lista, búsqueda y cola. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout style="@style/TopBar">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            style="@style/IconButton"
+            android:contentDescription="@string/action_back"
+            android:src="@drawable/ic_arrow_back" />
+
+        <TextView
+            android:id="@+id/title"
+            style="@style/Text.Title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_s"
+            android:layout_weight="1" />
+
+        <EditText
+            android:id="@+id/searchField"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:hint="@string/search_hint"
+            android:imeOptions="actionSearch|flagNoExtractUi"
+            android:importantForAutofill="no"
+            android:inputType="text"
+            android:maxLines="1"
+            android:textSize="@dimen/text_body"
+            android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/btnClear"
+            style="@style/IconButton"
+            android:contentDescription="@string/action_clear"
+            android:src="@drawable/ic_close"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/actions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/space_l"
+        android:paddingEnd="@dimen/space_l"
+        android:paddingBottom="@dimen/space_s">
+
+        <TextView
+            android:id="@+id/btnPlayAll"
+            style="@style/FlatButton"
+            android:layout_marginEnd="@dimen/space_s"
+            android:drawableStart="@drawable/ic_play"
+            android:drawablePadding="@dimen/space_s"
+            android:drawableTint="@color/on_accent"
+            android:text="@string/action_play_all" />
+
+        <TextView
+            android:id="@+id/btnShuffle"
+            style="@style/FlatButton.Secondary"
+            android:drawableStart="@drawable/ic_shuffle"
+            android:drawablePadding="@dimen/space_s"
+            android:drawableTint="@color/text_primary"
+            android:text="@string/action_shuffle" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="@dimen/space_s"
+            android:scrollbars="vertical" />
+
+        <TextView
+            android:id="@+id/empty"
+            style="@style/Text.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="@dimen/space_xl"
+            android:visibility="gone" />
+    </FrameLayout>
+</LinearLayout>

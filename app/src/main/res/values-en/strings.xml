@@ -179,6 +179,7 @@
     <string name="diag_yes">Yes</string>
     <string name="diag_no">No</string>
 
+    <string name="cd_more">More options</string>
     <plurals name="track_count">
         <item quantity="one">%d song</item>
         <item quantity="other">%d songs</item>

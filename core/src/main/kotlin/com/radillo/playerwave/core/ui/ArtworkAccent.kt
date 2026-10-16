@@ -5,7 +5,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.LruCache
-import androidx.compose.ui.graphics.Color
 import androidx.palette.graphics.Palette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -19,11 +18,12 @@ class ArtworkAccentExtractor(private val context: Context) {
 
     private val cache = LruCache<String, Int>(64)
 
-    suspend fun accentFor(artworkUri: String): Color? {
-        cache.get(artworkUri)?.let { return if (it == NONE) null else Color(it) }
+    /** Color ARGB de acento, o null si no hay carátula utilizable. */
+    suspend fun accentFor(artworkUri: String): Int? {
+        cache.get(artworkUri)?.let { return if (it == NONE) null else it }
         val argb = withContext(Dispatchers.IO) { extract(artworkUri) }
         cache.put(artworkUri, argb ?: NONE)
-        return argb?.let { Color(it) }
+        return argb
     }
 
     private fun extract(uriString: String): Int? {

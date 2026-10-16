@@ -1,6 +1,6 @@
 package com.radillo.playerwave.core.model
 
-/** Preferencias del visualizador, persistidas en DataStore. */
+/** Preferencias del visualizador, persistidas en SharedPreferences. */
 data class VisualizerSettings(
     val sceneId: String = "spectrum",
     val sensitivity: Float = 1f,
