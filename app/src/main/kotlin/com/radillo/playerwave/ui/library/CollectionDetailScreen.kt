@@ -104,10 +104,10 @@ fun CollectionDetailScreen(
             )
         },
     ) { padding ->
+        val sample = tracks.firstOrNull()
         val header: (@Composable () -> Unit)? =
-            if (viewModel.kind == CollectionKind.ALBUM && tracks.isNotEmpty()) {
-                val sample = tracks.first()
-                @Composable { AlbumHeader(sample) }
+            if (viewModel.kind == CollectionKind.ALBUM && sample != null) {
+                { AlbumHeader(sample) }
             } else {
                 null
             }
