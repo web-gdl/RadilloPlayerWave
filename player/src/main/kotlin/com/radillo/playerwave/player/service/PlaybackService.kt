@@ -49,6 +49,8 @@ class PlaybackService : MediaLibraryService() {
 
         val builder = MediaLibrarySession.Builder(this, player, LibraryCallback())
         sessionActivityIntent()?.let(builder::setSessionActivity)
+        // Usar proveedor de notificación para mantener foreground service activo en background
+        setMediaNotificationProvider(PlaybackNotificationProvider(this))
         session = builder.build()
     }
 
