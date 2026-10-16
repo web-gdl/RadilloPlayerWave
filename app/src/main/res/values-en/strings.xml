@@ -62,6 +62,65 @@
     <string name="permission_retry">Try again</string>
     <string name="permission_open_settings">Open app settings</string>
 
+    <!-- Phase 3: playlists, favorites, search -->
+    <string name="tab_playlists">Playlists</string>
+    <string name="action_search">Search</string>
+    <string name="nav_settings">Settings</string>
+    <string name="favorites_title">Favorites</string>
+    <string name="favorites_empty">No favorites yet.\nTap the heart on a song to see it here.</string>
+    <string name="playlist_new">New playlist</string>
+    <string name="playlist_new_hint">Create a playlist to group songs</string>
+    <string name="playlist_rename">Rename</string>
+    <string name="playlist_delete">Delete playlist</string>
+    <string name="playlist_name_hint">Playlist name</string>
+    <string name="playlist_empty">This playlist is empty.\nAdd songs from a song’s menu.</string>
+    <string name="action_create">Create</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_save">Save</string>
+    <string name="action_clear">Clear</string>
+    <string name="action_close">Close</string>
+    <string name="action_add_favorite">Add to favorites</string>
+    <string name="action_remove_favorite">Remove from favorites</string>
+    <string name="action_add_to_playlist">Add to playlist</string>
+    <string name="action_move_up">Move up</string>
+    <string name="action_move_down">Move down</string>
+    <string name="action_remove_from_playlist">Remove from playlist</string>
+    <string name="search_hint">Song, artist or album</string>
+    <string name="search_prompt">Type to search your music</string>
+    <string name="search_no_results">No results</string>
+
+    <!-- Phase 3: sleep timer -->
+    <string name="sleep_timer">Sleep timer</string>
+    <string name="sleep_timer_remaining">Music will stop in %s</string>
+    <string name="sleep_timer_minutes">%d minutes</string>
+    <string name="sleep_timer_cancel">Cancel timer</string>
+
+    <!-- Phase 3: equalizer -->
+    <string name="equalizer_title">Equalizer</string>
+    <string name="eq_enable">Enable equalizer</string>
+    <string name="eq_presets">Presets</string>
+    <string name="eq_bands">Bands</string>
+    <string name="eq_bass_boost">Bass boost</string>
+    <string name="eq_reset">Reset</string>
+    <string name="eq_needs_playback">Start playback to set up the equalizer.\nEffects are applied to the player’s audio session.</string>
+    <string name="eq_unavailable">This device doesn’t offer a compatible equalizer.\nRadilloPlayerWave doesn’t simulate effects it can’t really apply.</string>
+
+    <!-- Phase 3: settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme">Theme</string>
+    <string name="theme_system">Follow system</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_artwork_colors">Artwork colors</string>
+    <string name="settings_artwork_colors_hint">Tint the interface with the dominant color of the playing artwork</string>
+    <string name="settings_audio">Audio</string>
+    <string name="settings_about">About</string>
+    <string name="settings_version">Version %s</string>
+    <string name="settings_privacy">Everything runs on the device: no accounts, no ads, no telemetry.</string>
+    <string name="settings_licenses">Third-party licenses</string>
+    <string name="settings_licenses_intro">RadilloPlayerWave includes these open-source libraries:</string>
+
     <plurals name="track_count">
         <item quantity="one">%d song</item>
         <item quantity="other">%d songs</item>

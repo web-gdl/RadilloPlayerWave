@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.radillo.playerwave.core.model.Album
 import com.radillo.playerwave.core.model.Artist
 import com.radillo.playerwave.core.model.Folder
+import com.radillo.playerwave.core.model.Playlist
 import com.radillo.playerwave.core.model.Track
+import com.radillo.playerwave.data.collections.PlaylistRepository
 import com.radillo.playerwave.data.library.LibraryRepository
 import com.radillo.playerwave.player.engine.PlaybackController
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,6 +21,7 @@ import javax.inject.Inject
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
     private val repository: LibraryRepository,
+    private val playlistRepository: PlaylistRepository,
     private val playback: PlaybackController,
 ) : ViewModel() {
 
@@ -28,6 +31,8 @@ class LibraryViewModel @Inject constructor(
     val albums: StateFlow<List<Album>> = repository.albums.stateIn(viewModelScope, sharing, emptyList())
     val artists: StateFlow<List<Artist>> = repository.artists.stateIn(viewModelScope, sharing, emptyList())
     val folders: StateFlow<List<Folder>> = repository.folders.stateIn(viewModelScope, sharing, emptyList())
+    val playlists: StateFlow<List<Playlist>> = playlistRepository.playlists.stateIn(viewModelScope, sharing, emptyList())
+    val favoriteCount: StateFlow<Int> = playlistRepository.favoriteCount.stateIn(viewModelScope, sharing, 0)
     val isScanning: StateFlow<Boolean> = repository.isScanning
     val nowPlayingId: StateFlow<Long?> =
         playback.state.map { it.currentTrack?.id }.stateIn(viewModelScope, sharing, null)
@@ -44,6 +49,15 @@ class LibraryViewModel @Inject constructor(
         playback.playQueue(tracks, tracks.indices.random())
     }
 
-    fun addToQueue(track: Track) = playback.addToQueue(listOf(track))
-    fun playNext(track: Track) = playback.playNext(listOf(track))
+    fun createPlaylist(name: String) {
+        viewModelScope.launch { playlistRepository.createPlaylist(name) }
+    }
+
+    fun renamePlaylist(id: Long, name: String) {
+        viewModelScope.launch { playlistRepository.renamePlaylist(id, name) }
+    }
+
+    fun deletePlaylist(id: Long) {
+        viewModelScope.launch { playlistRepository.deletePlaylist(id) }
+    }
 }

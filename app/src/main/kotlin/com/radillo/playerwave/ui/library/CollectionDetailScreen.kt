@@ -18,6 +18,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -70,9 +73,6 @@ class CollectionDetailViewModel @Inject constructor(
         playback.setShuffle(true)
         playback.playQueue(list, list.indices.random())
     }
-    fun playNext(track: Track) = playback.playNext(listOf(track))
-    fun addToQueue(track: Track) = playback.addToQueue(listOf(track))
-
     companion object {
         const val ARG_KIND = "kind"
         const val ARG_KEY = "key"
@@ -88,6 +88,7 @@ fun CollectionDetailScreen(
 ) {
     val tracks by viewModel.tracks.collectAsStateWithLifecycle()
     val nowPlayingId by viewModel.nowPlayingId.collectAsStateWithLifecycle()
+    var menuTrack by remember { mutableStateOf<Track?>(null) }
     val title = viewModel.title.ifBlank {
         stringResource(if (viewModel.kind == CollectionKind.ARTIST) R.string.unknown_artist else R.string.unknown_album)
     }
@@ -117,11 +118,14 @@ fun CollectionDetailScreen(
                 nowPlayingId = nowPlayingId,
                 onPlay = viewModel::play,
                 onShuffle = viewModel::shuffle,
-                onPlayNext = viewModel::playNext,
-                onAddToQueue = viewModel::addToQueue,
+                onMenu = { menuTrack = it },
                 header = header,
             )
         }
+    }
+
+    menuTrack?.let { track ->
+        TrackActionsSheet(track = track, onDismiss = { menuTrack = null })
     }
 }
 

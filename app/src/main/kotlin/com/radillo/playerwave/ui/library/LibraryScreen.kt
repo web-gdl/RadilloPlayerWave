@@ -19,10 +19,16 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -34,8 +40,8 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -58,6 +64,7 @@ import com.radillo.playerwave.R
 import com.radillo.playerwave.core.model.Album
 import com.radillo.playerwave.core.model.Artist
 import com.radillo.playerwave.core.model.Folder
+import com.radillo.playerwave.core.model.Playlist
 import com.radillo.playerwave.core.model.Track
 import com.radillo.playerwave.core.ui.components.ArtworkImage
 import com.radillo.playerwave.core.ui.components.TrackRow
@@ -67,6 +74,7 @@ enum class LibraryTab(val labelRes: Int) {
     ALBUMS(R.string.tab_albums),
     ARTISTS(R.string.tab_artists),
     FOLDERS(R.string.tab_folders),
+    PLAYLISTS(R.string.tab_playlists),
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -75,30 +83,42 @@ fun LibraryScreen(
     onOpenAlbum: (Album) -> Unit,
     onOpenArtist: (Artist) -> Unit,
     onOpenFolder: (Folder) -> Unit,
+    onOpenPlaylist: (Long) -> Unit,
+    onOpenSearch: () -> Unit,
+    onOpenSettings: () -> Unit,
     viewModel: LibraryViewModel = hiltViewModel(),
 ) {
     val tracks by viewModel.tracks.collectAsStateWithLifecycle()
     val albums by viewModel.albums.collectAsStateWithLifecycle()
     val artists by viewModel.artists.collectAsStateWithLifecycle()
     val folders by viewModel.folders.collectAsStateWithLifecycle()
+    val playlists by viewModel.playlists.collectAsStateWithLifecycle()
+    val favoriteCount by viewModel.favoriteCount.collectAsStateWithLifecycle()
     val isScanning by viewModel.isScanning.collectAsStateWithLifecycle()
     val nowPlayingId by viewModel.nowPlayingId.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableIntStateOf(0) }
+    var menuTrack by remember { mutableStateOf<Track?>(null) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.nav_library)) },
                 actions = {
+                    IconButton(onClick = onOpenSearch) {
+                        Icon(Icons.Rounded.Search, contentDescription = stringResource(R.string.action_search))
+                    }
                     IconButton(onClick = viewModel::rescan, enabled = !isScanning) {
                         Icon(Icons.Rounded.Refresh, contentDescription = stringResource(R.string.action_rescan))
+                    }
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.nav_settings))
                     }
                 },
             )
         },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
-            TabRow(selectedTabIndex = tab) {
+            ScrollableTabRow(selectedTabIndex = tab, edgePadding = 8.dp) {
                 LibraryTab.entries.forEachIndexed { index, item ->
                     Tab(
                         selected = tab == index,
@@ -115,33 +135,45 @@ fun LibraryScreen(
                     nowPlayingId = nowPlayingId,
                     onPlay = { index -> viewModel.playAll(tracks, index) },
                     onShuffle = { viewModel.shuffleAll(tracks) },
-                    onPlayNext = viewModel::playNext,
-                    onAddToQueue = viewModel::addToQueue,
+                    onMenu = { menuTrack = it },
                     isScanning = isScanning,
                 )
                 LibraryTab.ALBUMS -> AlbumGrid(albums, onOpenAlbum)
                 LibraryTab.ARTISTS -> ArtistList(artists, onOpenArtist)
                 LibraryTab.FOLDERS -> FolderList(folders, onOpenFolder)
+                LibraryTab.PLAYLISTS -> PlaylistsTab(
+                    playlists = playlists,
+                    favoriteCount = favoriteCount,
+                    onOpen = onOpenPlaylist,
+                    onCreate = viewModel::createPlaylist,
+                    onRename = viewModel::renamePlaylist,
+                    onDelete = viewModel::deletePlaylist,
+                )
             }
         }
     }
+
+    menuTrack?.let { track ->
+        TrackActionsSheet(track = track, onDismiss = { menuTrack = null })
+    }
 }
 
+/**
+ * Lista de canciones con cabecera de acciones. `onMenu` abre la hoja de acciones de la pista.
+ */
 @Composable
 fun SongsList(
     tracks: List<Track>,
     nowPlayingId: Long?,
     onPlay: (Int) -> Unit,
     onShuffle: () -> Unit,
-    onPlayNext: (Track) -> Unit,
-    onAddToQueue: (Track) -> Unit,
+    onMenu: (Track) -> Unit,
     isScanning: Boolean = false,
+    emptyText: String = stringResource(if (isScanning) R.string.empty_scanning else R.string.empty_no_music),
     header: (@Composable () -> Unit)? = null,
 ) {
     if (tracks.isEmpty()) {
-        EmptyState(
-            text = stringResource(if (isScanning) R.string.empty_scanning else R.string.empty_no_music),
-        )
+        EmptyState(text = emptyText)
         return
     }
     LazyColumn(contentPadding = PaddingValues(bottom = 24.dp)) {
@@ -172,25 +204,12 @@ fun SongsList(
         }
         items(tracks.size, key = { tracks[it].id }) { index ->
             val track = tracks[index]
-            var menuOpen by remember { mutableStateOf(false) }
-            Box {
-                TrackRow(
-                    track = track,
-                    highlighted = track.id == nowPlayingId,
-                    onClick = { onPlay(index) },
-                    onMore = { menuOpen = true },
-                )
-                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_play_next)) },
-                        onClick = { menuOpen = false; onPlayNext(track) },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_add_to_queue)) },
-                        onClick = { menuOpen = false; onAddToQueue(track) },
-                    )
-                }
-            }
+            TrackRow(
+                track = track,
+                highlighted = track.id == nowPlayingId,
+                onClick = { onPlay(index) },
+                onMore = { onMenu(track) },
+            )
         }
     }
 }
@@ -256,12 +275,93 @@ private fun FolderList(folders: List<Folder>, onOpen: (Folder) -> Unit) {
 }
 
 @Composable
-private fun IconRow(icon: @Composable () -> Unit, title: String, subtitle: String, onClick: () -> Unit) {
+private fun PlaylistsTab(
+    playlists: List<Playlist>,
+    favoriteCount: Int,
+    onOpen: (Long) -> Unit,
+    onCreate: (String) -> Unit,
+    onRename: (Long, String) -> Unit,
+    onDelete: (Long) -> Unit,
+) {
+    var creating by remember { mutableStateOf(false) }
+    var renaming by remember { mutableStateOf<Playlist?>(null) }
+
+    LazyColumn(contentPadding = PaddingValues(bottom = 24.dp)) {
+        item {
+            IconRow(
+                icon = { Icon(Icons.Rounded.Favorite, null, tint = MaterialTheme.colorScheme.secondary) },
+                title = stringResource(R.string.favorites_title),
+                subtitle = pluralStringResource(R.plurals.track_count, favoriteCount, favoriteCount),
+                onClick = { onOpen(FAVORITES_PLAYLIST_ID) },
+            )
+        }
+        item {
+            IconRow(
+                icon = { Icon(Icons.Rounded.Add, null, tint = MaterialTheme.colorScheme.primary) },
+                title = stringResource(R.string.playlist_new),
+                subtitle = stringResource(R.string.playlist_new_hint),
+                onClick = { creating = true },
+            )
+        }
+        items(playlists, key = { it.id }) { playlist ->
+            var menuOpen by remember { mutableStateOf(false) }
+            Box {
+                IconRow(
+                    icon = { Icon(Icons.AutoMirrored.Rounded.QueueMusic, null, tint = MaterialTheme.colorScheme.primary) },
+                    title = playlist.name,
+                    subtitle = pluralStringResource(R.plurals.track_count, playlist.trackCount, playlist.trackCount),
+                    onClick = { onOpen(playlist.id) },
+                    trailing = {
+                        IconButton(onClick = { menuOpen = true }) {
+                            Icon(Icons.Rounded.MoreVert, contentDescription = null)
+                        }
+                    },
+                )
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.playlist_rename)) },
+                        onClick = { menuOpen = false; renaming = playlist },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.playlist_delete)) },
+                        onClick = { menuOpen = false; onDelete(playlist.id) },
+                    )
+                }
+            }
+        }
+    }
+
+    if (creating) {
+        PlaylistNameDialog(
+            titleRes = R.string.playlist_new,
+            initial = "",
+            onConfirm = { onCreate(it); creating = false },
+            onDismiss = { creating = false },
+        )
+    }
+    renaming?.let { playlist ->
+        PlaylistNameDialog(
+            titleRes = R.string.playlist_rename,
+            initial = playlist.name,
+            onConfirm = { onRename(playlist.id, it); renaming = null },
+            onDismiss = { renaming = null },
+        )
+    }
+}
+
+@Composable
+private fun IconRow(
+    icon: @Composable () -> Unit,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    trailing: (@Composable () -> Unit)? = null,
+) {
     Row(
         Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 14.dp),
+            .padding(start = 20.dp, end = if (trailing == null) 20.dp else 4.dp, top = 14.dp, bottom = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         icon()
@@ -275,6 +375,7 @@ private fun IconRow(icon: @Composable () -> Unit, title: String, subtitle: Strin
                 maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
         }
+        trailing?.invoke()
     }
 }
 
@@ -289,3 +390,6 @@ fun EmptyState(text: String) {
         )
     }
 }
+
+/** Id reservado para la lista virtual de favoritos. */
+const val FAVORITES_PLAYLIST_ID = -1L

@@ -3,9 +3,15 @@ package com.radillo.playerwave.data.di
 import android.content.ContentResolver
 import android.content.Context
 import androidx.room.Room
+import com.radillo.playerwave.data.collections.PlaylistRepository
+import com.radillo.playerwave.data.collections.PlaylistRepositoryImpl
 import com.radillo.playerwave.data.library.LibraryRepository
 import com.radillo.playerwave.data.library.LibraryRepositoryImpl
 import com.radillo.playerwave.data.library.db.RadilloDatabase
+import com.radillo.playerwave.data.settings.AppSettingsRepository
+import com.radillo.playerwave.data.settings.AudioEffectsSettingsAdapter
+import com.radillo.playerwave.data.settings.AudioEffectsSettingsRepository
+import com.radillo.playerwave.data.settings.DataStoreAppSettingsRepository
 import com.radillo.playerwave.data.settings.DataStoreVisualizerSettingsRepository
 import com.radillo.playerwave.data.settings.VisualizerSettingsRepository
 import dagger.Binds
@@ -43,4 +49,16 @@ abstract class DataBindsModule {
     @Binds
     @Singleton
     abstract fun bindVisualizerSettings(impl: DataStoreVisualizerSettingsRepository): VisualizerSettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPlaylistRepository(impl: PlaylistRepositoryImpl): PlaylistRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAppSettings(impl: DataStoreAppSettingsRepository): AppSettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAudioEffectsSettings(impl: AudioEffectsSettingsAdapter): AudioEffectsSettingsRepository
 }

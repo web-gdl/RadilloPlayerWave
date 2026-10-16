@@ -13,6 +13,7 @@ import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import com.radillo.playerwave.player.audiofx.AudioEffectsHub
 import com.radillo.playerwave.player.audiotap.AudioTapHub
 import com.radillo.playerwave.player.audiotap.RadilloRenderersFactory
 import com.radillo.playerwave.player.engine.MediaItemMapper
@@ -46,13 +47,21 @@ class PlaybackService : MediaLibraryService() {
         // El tap de PCM alimenta al visualizador sin permisos de micrófono. El offload de audio
         // queda deshabilitado (valor por defecto): con offload el PCM no pasa por los AudioProcessor.
         val renderersFactory = RadilloRenderersFactory(this, AudioTapHub.newProcessor())
-        return ExoPlayer.Builder(this, renderersFactory)
+        val player = ExoPlayer.Builder(this, renderersFactory)
             // handleAudioFocus = true: pausa en llamadas y cede el foco a otras apps.
             .setAudioAttributes(audioAttributes, true)
             // Pausa al desconectar auriculares.
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
+        // El ecualizador de la plataforma se liga al id de sesión de audio del reproductor.
+        AudioEffectsHub.onSessionId(player.audioSessionId)
+        player.addListener(object : Player.Listener {
+            override fun onAudioSessionIdChanged(audioSessionId: Int) {
+                AudioEffectsHub.onSessionId(audioSessionId)
+            }
+        })
+        return player
     }
 
     private fun sessionActivityIntent(): PendingIntent? {
@@ -82,6 +91,7 @@ class PlaybackService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
+        AudioEffectsHub.onSessionId(0)
         session?.run {
             player.release()
             release()

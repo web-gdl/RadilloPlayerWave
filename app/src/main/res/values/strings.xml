@@ -64,6 +64,65 @@
     <string name="permission_retry">Volver a intentar</string>
     <string name="permission_open_settings">Abrir ajustes de la aplicación</string>
 
+    <!-- Fase 3: listas, favoritos, búsqueda -->
+    <string name="tab_playlists">Listas</string>
+    <string name="action_search">Buscar</string>
+    <string name="nav_settings">Ajustes</string>
+    <string name="favorites_title">Favoritos</string>
+    <string name="favorites_empty">Aún no hay favoritos.\nMarca canciones con el corazón para verlas aquí.</string>
+    <string name="playlist_new">Nueva lista</string>
+    <string name="playlist_new_hint">Crea una lista para agrupar canciones</string>
+    <string name="playlist_rename">Cambiar nombre</string>
+    <string name="playlist_delete">Eliminar lista</string>
+    <string name="playlist_name_hint">Nombre de la lista</string>
+    <string name="playlist_empty">Esta lista está vacía.\nAñade canciones desde el menú de cada canción.</string>
+    <string name="action_create">Crear</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_save">Guardar</string>
+    <string name="action_clear">Borrar</string>
+    <string name="action_close">Cerrar</string>
+    <string name="action_add_favorite">Añadir a favoritos</string>
+    <string name="action_remove_favorite">Quitar de favoritos</string>
+    <string name="action_add_to_playlist">Añadir a una lista</string>
+    <string name="action_move_up">Subir</string>
+    <string name="action_move_down">Bajar</string>
+    <string name="action_remove_from_playlist">Quitar de la lista</string>
+    <string name="search_hint">Canción, artista o álbum</string>
+    <string name="search_prompt">Escribe para buscar en tu música</string>
+    <string name="search_no_results">Sin resultados</string>
+
+    <!-- Fase 3: temporizador de apagado -->
+    <string name="sleep_timer">Temporizador de apagado</string>
+    <string name="sleep_timer_remaining">La música se detendrá en %s</string>
+    <string name="sleep_timer_minutes">%d minutos</string>
+    <string name="sleep_timer_cancel">Cancelar temporizador</string>
+
+    <!-- Fase 3: ecualizador -->
+    <string name="equalizer_title">Ecualizador</string>
+    <string name="eq_enable">Activar ecualizador</string>
+    <string name="eq_presets">Preajustes</string>
+    <string name="eq_bands">Bandas</string>
+    <string name="eq_bass_boost">Refuerzo de graves</string>
+    <string name="eq_reset">Restablecer</string>
+    <string name="eq_needs_playback">Inicia la reproducción para configurar el ecualizador.\nLos efectos se aplican a la sesión de audio del reproductor.</string>
+    <string name="eq_unavailable">Este dispositivo no ofrece un ecualizador compatible.\nRadilloPlayerWave no simula efectos que no puede aplicar de verdad.</string>
+
+    <!-- Fase 3: ajustes -->
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_appearance">Apariencia</string>
+    <string name="settings_theme">Tema</string>
+    <string name="theme_system">Según el sistema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Oscuro</string>
+    <string name="settings_artwork_colors">Colores de la carátula</string>
+    <string name="settings_artwork_colors_hint">Tiñe la interfaz con el color dominante de la carátula en reproducción</string>
+    <string name="settings_audio">Audio</string>
+    <string name="settings_about">Acerca de</string>
+    <string name="settings_version">Versión %s</string>
+    <string name="settings_privacy">Todo funciona en el dispositivo: sin cuentas, sin anuncios y sin telemetría.</string>
+    <string name="settings_licenses">Licencias de terceros</string>
+    <string name="settings_licenses_intro">RadilloPlayerWave incluye estas bibliotecas de código abierto:</string>
+
     <plurals name="track_count">
         <item quantity="one">%d canción</item>
         <item quantity="other">%d canciones</item>
