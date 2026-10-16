@@ -44,8 +44,8 @@
             android:orientation="vertical">
 
             <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="@dimen/nav_icon"
+                android:layout_height="@dimen/nav_icon"
                 android:duplicateParentState="true"
                 android:importantForAccessibility="no"
                 android:scaleType="fitCenter"
@@ -76,8 +76,8 @@
             android:orientation="vertical">
 
             <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="@dimen/nav_icon"
+                android:layout_height="@dimen/nav_icon"
                 android:duplicateParentState="true"
                 android:importantForAccessibility="no"
                 android:scaleType="fitCenter"
@@ -108,8 +108,8 @@
             android:orientation="vertical">
 
             <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="@dimen/nav_icon"
+                android:layout_height="@dimen/nav_icon"
                 android:duplicateParentState="true"
                 android:importantForAccessibility="no"
                 android:scaleType="fitCenter"

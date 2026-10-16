@@ -52,7 +52,8 @@
         <item name="android:layout_width">@dimen/touch</item>
         <item name="android:layout_height">@dimen/touch</item>
         <item name="android:background">?android:attr/selectableItemBackgroundBorderless</item>
-        <item name="android:scaleType">center</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:padding">@dimen/icon_pad</item>
         <item name="android:tint">@color/icon</item>
     </style>
 

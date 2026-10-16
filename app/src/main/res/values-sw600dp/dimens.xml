@@ -16,4 +16,7 @@
     <dimen name="mini_player">76dp</dimen>
     <dimen name="button_height">56dp</dimen>
     <dimen name="chip_height">52dp</dimen>
+    <dimen name="icon_pad">16dp</dimen>
+    <dimen name="play_pad">22dp</dimen>
+    <dimen name="nav_icon">36dp</dimen>
 </resources>

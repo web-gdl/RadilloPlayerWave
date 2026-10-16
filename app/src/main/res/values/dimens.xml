@@ -20,4 +20,7 @@
     <dimen name="space_l">16dp</dimen>
     <dimen name="space_xl">24dp</dimen>
     <dimen name="corner">6dp</dimen>
+    <dimen name="icon_pad">12dp</dimen>
+    <dimen name="play_pad">16dp</dimen>
+    <dimen name="nav_icon">26dp</dimen>
 </resources>

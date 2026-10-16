@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import com.radillo.playerwave.R
 import com.radillo.playerwave.core.ui.ArtworkLoader
 import com.radillo.playerwave.core.util.formatDuration
@@ -19,15 +20,22 @@ import com.radillo.playerwave.ui.common.subtitle
 import com.radillo.playerwave.ui.common.visibleIf
 import com.radillo.playerwave.ui.effects.EqualizerFragment
 import com.radillo.playerwave.ui.navigator
+import com.radillo.playerwave.ui.visualizer.VisualizerViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 /** Pantalla «Reproduciendo»: carátula, progreso, controles, favorito, temporizador, ecualizador y cola. */
 @AndroidEntryPoint
 class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
 
+    private companion object {
+        const val KEY_ART_VISUALIZER = "now_playing_visualizer"
+    }
+
     override val hidesMiniPlayer: Boolean get() = true
 
     private val viewModel: PlayerViewModel by activityViewModels()
+    /** Aplica escena, paleta y perfil al motor aunque no se haya abierto la pestaña Visualizador. */
+    private val visualizer: VisualizerViewModel by viewModels()
     private var binding: FragmentNowPlayingBinding? = null
     private var dragging = false
     private var lastArt: String? = null
@@ -44,6 +52,15 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
         b.btnSleep.setOnClickListener { showSleepDialog() }
         b.btnEqualizer.setOnClickListener { navigator.push(EqualizerFragment()) }
         b.btnQueue.setOnClickListener { navigator.push(QueueFragment()) }
+
+        // El recuadro de la carátula alterna con el visualizador en vivo (un toque cambia).
+        b.artVisualizer.setEngine(visualizer.engine)
+        showVisualizerInArt(prefs().getBoolean(KEY_ART_VISUALIZER, true))
+        b.artFrame.setOnClickListener {
+            val next = b.artVisualizer.visibility != View.VISIBLE
+            prefs().edit().putBoolean(KEY_ART_VISUALIZER, next).apply()
+            showVisualizerInArt(next)
+        }
         b.seek.onUserChange(
             onChange = { progress ->
                 val duration = viewModel.state.value.durationMs
@@ -92,7 +109,7 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
         b.trackSubtitle.text = track.subtitle(requireContext())
         if (lastArt != track.albumArtUri) {
             lastArt = track.albumArtUri
-            ArtworkLoader.get(requireContext()).load(b.art, track.albumArtUri, b.art.layoutParams.width, R.drawable.tile_note)
+            ArtworkLoader.get(requireContext()).load(b.art, track.albumArtUri, b.artFrame.layoutParams.width, R.drawable.tile_note)
         }
         b.btnPlay.setImageResource(if (state.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
         b.btnPlay.contentDescription = getString(if (state.isPlaying) R.string.action_pause else R.string.action_play)
@@ -105,6 +122,15 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
             b.seek.progress = (state.positionMs * 1000L / duration).toInt().coerceIn(0, 1000)
             b.position.text = formatDuration(state.positionMs)
         }
+    }
+
+    private fun prefs() = requireContext().getSharedPreferences("ui_state", android.content.Context.MODE_PRIVATE)
+
+    /** Visualizador o carátula en el recuadro. Oculto, el SurfaceView libera su superficie y su hilo. */
+    private fun showVisualizerInArt(show: Boolean) {
+        val b = binding ?: return
+        b.artVisualizer.visibleIf(show)
+        b.art.visibleIf(!show)
     }
 
     private fun showSleepDialog() {
