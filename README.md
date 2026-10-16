@@ -11,8 +11,12 @@ disposición adaptada a pantallas anchas, y el **visualizador**: análisis de au
 (sin micrófono) con tres escenas originales — Espectro, Osciloscopio y Anillos —, modo inmersivo,
 paletas y ajustes de sensibilidad, intensidad, velocidad, densidad y sincronía.
 
-**APK:** cada *push* a `main` compila en GitHub Actions; el APK de depuración se descarga desde
-**Actions ▸ ejecución ▸ Artifacts ▸ RadilloPlayerWave-debug-apk**.
+**APK:** cada *push* a `main` compila en GitHub Actions y publica el APK de depuración en
+**Releases**: <https://github.com/web-gdl/RadilloPlayerWave/releases/latest> (archivo
+`RadilloPlayerWave-debug.apk`; liga directa:
+<https://github.com/web-gdl/RadilloPlayerWave/releases/latest/download/RadilloPlayerWave-debug.apk>).
+También queda como artefacto de la ejecución (**Actions ▸ ejecución ▸ Artifacts**), con 30 días
+de caducidad. Mientras el repositorio sea privado hace falta tener la sesión de GitHub iniciada.
 
 ## Requisitos
 
