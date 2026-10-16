@@ -15,48 +15,99 @@
         android:background="@color/surface"
         android:gravity="center_vertical"
         android:orientation="vertical">
-        <TextView
+        <LinearLayout
             android:id="@+id/navLibrary"
             android:layout_width="match_parent"
             android:layout_height="@dimen/nav_rail"
             android:background="@drawable/bg_nav_item"
-            android:drawableTop="@drawable/ic_library_music"
-            android:drawablePadding="4dp"
-            android:drawableTint="@color/nav_item"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:text="@string/nav_library"
-            android:textColor="@color/nav_item"
-            android:textSize="@dimen/text_secondary" />
-        <TextView
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:duplicateParentState="true"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_library_music"
+                android:tint="@color/nav_item" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:duplicateParentState="true"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text="@string/nav_library"
+                android:textColor="@color/nav_item"
+                android:textSize="@dimen/text_secondary" />
+        </LinearLayout>
+        <LinearLayout
             android:id="@+id/navNowPlaying"
             android:layout_width="match_parent"
             android:layout_height="@dimen/nav_rail"
             android:background="@drawable/bg_nav_item"
-            android:drawableTop="@drawable/ic_play_circle"
-            android:drawablePadding="4dp"
-            android:drawableTint="@color/nav_item"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:text="@string/nav_now_playing"
-            android:textColor="@color/nav_item"
-            android:textSize="@dimen/text_secondary" />
-        <TextView
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:duplicateParentState="true"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_play_circle"
+                android:tint="@color/nav_item" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:duplicateParentState="true"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text="@string/nav_now_playing"
+                android:textColor="@color/nav_item"
+                android:textSize="@dimen/text_secondary" />
+        </LinearLayout>
+        <LinearLayout
             android:id="@+id/navVisualizer"
             android:layout_width="match_parent"
             android:layout_height="@dimen/nav_rail"
             android:background="@drawable/bg_nav_item"
-            android:drawableTop="@drawable/ic_graphic_eq"
-            android:drawablePadding="4dp"
-            android:drawableTint="@color/nav_item"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:text="@string/nav_visualizer"
-            android:textColor="@color/nav_item"
-            android:textSize="@dimen/text_secondary" />
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:duplicateParentState="true"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_graphic_eq"
+                android:tint="@color/nav_item" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:duplicateParentState="true"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text="@string/nav_visualizer"
+                android:textColor="@color/nav_item"
+                android:textSize="@dimen/text_secondary" />
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout

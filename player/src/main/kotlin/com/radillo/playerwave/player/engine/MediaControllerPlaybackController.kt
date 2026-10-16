@@ -48,6 +48,26 @@ class MediaControllerPlaybackController @Inject constructor(
     private val pending = ArrayDeque<(MediaController) -> Unit>()
     private var progressJob: Job? = null
 
+    /**
+     * Copia del reloj de reproducción para el visualizador. `MediaController` solo se puede usar
+     * desde el hilo principal, pero el visualizador dibuja en su propio hilo: el hilo principal
+     * publica aquí la última posición conocida y el instante en que se leyó, y [positionUs]
+     * la extrapola sin tocar el controlador.
+     */
+    private class ClockSnapshot(val positionMs: Long, val atNanos: Long, val playing: Boolean, val hasMedia: Boolean, val speed: Float)
+
+    @Volatile private var clock = ClockSnapshot(0L, 0L, playing = false, hasMedia = false, speed = 1f)
+
+    private fun updateClock(player: Player) {
+        clock = ClockSnapshot(
+            positionMs = player.currentPosition.coerceAtLeast(0L),
+            atNanos = System.nanoTime(),
+            playing = player.isPlaying,
+            hasMedia = player.mediaItemCount > 0,
+            speed = player.playbackParameters.speed,
+        )
+    }
+
     private val listener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) {
             if (events.containsAny(
@@ -59,6 +79,7 @@ class MediaControllerPlaybackController @Inject constructor(
                     Player.EVENT_REPEAT_MODE_CHANGED,
                     Player.EVENT_POSITION_DISCONTINUITY,
                     Player.EVENT_MEDIA_METADATA_CHANGED,
+                    Player.EVENT_PLAYBACK_PARAMETERS_CHANGED,
                 )
             ) {
                 publish(player)
@@ -101,6 +122,7 @@ class MediaControllerPlaybackController @Inject constructor(
     }
 
     private fun publish(player: Player) {
+        updateClock(player)
         val queue = readQueue(player)
         val index = player.currentMediaItemIndex
         val current = player.currentMediaItem?.let(MediaItemMapper::toTrack)
@@ -147,21 +169,24 @@ class MediaControllerPlaybackController @Inject constructor(
         progressJob = scope.launch {
             while (isActive) {
                 val c = controller ?: break
+                updateClock(c)
                 _state.update { it.copy(positionMs = c.currentPosition.coerceAtLeast(0L)) }
                 delay(500)
             }
         }
     }
 
-    // ---- PlaybackClock (hilo principal, llamado en cada frame de render) ----
+    // ---- PlaybackClock (cualquier hilo: lo llama el hilo de render del visualizador) ----
 
     override fun positionUs(): Long? {
-        val c = controller ?: return null
-        if (c.mediaItemCount == 0) return null
-        return c.currentPosition * 1000L
+        val c = clock
+        if (!c.hasMedia) return null
+        var ms = c.positionMs
+        if (c.playing) ms += ((System.nanoTime() - c.atNanos) / 1_000_000L * c.speed).toLong()
+        return ms * 1000L
     }
 
-    override fun isPlaying(): Boolean = controller?.isPlaying == true
+    override fun isPlaying(): Boolean = clock.playing
 
     // ---- Comandos ----
 

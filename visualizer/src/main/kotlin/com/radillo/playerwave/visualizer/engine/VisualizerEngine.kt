@@ -287,12 +287,12 @@ class VisualizerEngine(
     }
 
     private fun pickFrame(nowNanos: Long, dt: Float): AudioFrame {
-        val playing = clock.isPlaying()
+        val playing = safeIsPlaying()
         val stale = nowNanos - lastRealFrameNanos > STALE_NANOS
         val unavailable = source.status.value == AudioSourceStatus.UNAVAILABLE
 
         if (!stale && !unavailable) {
-            val position = clock.positionUs()?.let { it + syncOffsetUs }
+            val position = safePositionUs()?.let { it + syncOffsetUs }
             val selection = history.select(position, nowNanos, latencyNanos)
             if (selection != null) {
                 if (selection.matchedByTimestamp) {
@@ -305,11 +305,24 @@ class VisualizerEngine(
         }
         return if (playing && (unavailable || stale)) {
             _dataState.value = DataState.SYNTHETIC
-            synthetic.ambient(dt, clock.positionUs() ?: 0L)
+            synthetic.ambient(dt, safePositionUs() ?: 0L)
         } else {
             _dataState.value = DataState.IDLE
             synthetic.decay(lastShown, dt)
         }
+    }
+
+    // Red de seguridad: un reloj que falle no debe dejar la pantalla sin dibujar.
+    private fun safeIsPlaying(): Boolean = try {
+        clock.isPlaying()
+    } catch (_: RuntimeException) {
+        false
+    }
+
+    private fun safePositionUs(): Long? = try {
+        clock.positionUs()
+    } catch (_: RuntimeException) {
+        null
     }
 
     /**
