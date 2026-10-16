@@ -26,11 +26,16 @@ Hilo de análisis (Dispatchers.Default, solo con una superficie en primer plano)
   → suavizado ataque/liberación → bass/mid/treble, RMS, pico, formas de onda L/R
   ──▶ FrameHistory (frame + instante de llegada, ~3 s)
                                                                                            │
-Hilo de render (Compose: withFrameNanos → VisualizerEngine.onFrame)                        ▼
+Hilo de render propio (VisualizerSurfaceView → VisualizerEngine.render(canvas, now))       ▼
   PlaybackClock.positionUs() + desplazamiento manual → FrameHistory.select():
      por marca temporal (misma pista) o por instante de llegada − latencia estimada (cambio de pista)
-  → Scene.update(frame, dt) → Scene.draw(DrawScope)   (buffers preasignados; fundido entre escenas con saveLayer)
+  → Scene.update(frame, dt) → Scene.draw(android.graphics.Canvas)
+     (buffers, Paint y Shader preasignados; lotes drawLines; fundido entre escenas a través del fondo)
 ```
+
+Desde la Fase B (adaptación al coche) el visualizador no usa Compose: dibuja en un `SurfaceView`
+con `lockHardwareCanvas` (GPU) o `lockCanvas` (software) desde su propio hilo, con tope de fps
+(30 por defecto en gama baja). Un frame lento del visualizador no toca el hilo principal.
 
 Estados del motor (`DataState`): `LIVE` (audio real alineado), `IDLE` (pausa: el último
 frame decae), `SYNTHETIC` (reproduciendo sin PCM fiable: movimiento ambiental y aviso en la UI).
@@ -60,7 +65,7 @@ comparables (transición automática entre pistas).
 | Tap de PCM vía `AudioProcessor` en vez de `android.media.audiofx.Visualizer` | `Visualizer` exige `RECORD_AUDIO` incluso para la propia sesión y devuelve datos degradados o nulos en muchos dispositivos. El tap no necesita permisos y entrega el PCM exacto. |
 | Offload de audio deshabilitado | Con offload/passthrough los `AudioProcessor` no reciben PCM. |
 | FFT propia en Kotlin | Evita dependencias de DSP con licencias que revisar; 2048 puntos a 60 Hz es trivial. |
-| Compose Canvas para escenas 2D; OpenGL ES 3.0 para 3D | Canvas basta para el MVP y simplifica el ciclo de vida; GL se añade cuando lo exige la escena. |
+| `android.graphics.Canvas` en `SurfaceView` con hilo propio para las escenas (antes Compose Canvas) | Independencia del hilo principal, tope de fps y lotes `drawLines`; funciona por hardware en Android ≥ 8 real y por software en el resto. OpenGL ES 2.0 (Mali-450) queda para una posible escena 3D futura. |
 | `MediaLibraryService` de Media3 | Notificación, pantalla bloqueada, auriculares y Bluetooth sin código propio. |
 | Sin color dinámico (Material You) | La identidad visual debe ser estable y coherente con las escenas. El único acento variable es el de la carátula en reproducción (Palette), opcional y ajustado en saturación/luminosidad para conservar el contraste. |
 | Ecualizador con `android.media.audiofx` ligado al `audioSessionId` del ExoPlayer | Es el único ecualizador verificable sin reimplementar DSP. Si el dispositivo no expone bandas, la UI lo dice y no simula nada. El efecto se crea solo cuando está activado; en reposo se sondea la disponibilidad y se libera. |

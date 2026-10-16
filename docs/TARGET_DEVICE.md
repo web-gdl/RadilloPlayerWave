@@ -1,8 +1,8 @@
 # Dispositivo objetivo: autoestéreo MTK 8227L (1 GB RAM, Mali-450, 1024×600)
 
 Adaptación de RadilloPlayerWave a una unidad Android de coche de gama baja.
-Estado: **Opción 1 aprobada por el usuario** (música en memoria interna y USB). Fase A hecha;
-B, C y D pendientes.
+Estado: **Opción 1 aprobada por el usuario** (música en memoria interna y USB). Fases A y B
+hechas; C y D pendientes.
 
 ## 1. Qué es realmente este hardware y qué implica
 
@@ -247,3 +247,24 @@ los volúmenes USB.
 
 Los iconos propios en lugar de `material-icons-extended` pasan a la Fase C: R8 ya elimina los no
 usados en release y la UI Compose actual desaparece en esa fase.
+
+### Fase B (hecha, 0.7.0-faseB)
+
+- El módulo `visualizer` ya no usa Compose: paletas en ARGB (`Argb` con `withAlpha`/`lerp`),
+  `Scene.draw(android.graphics.Canvas)`, `CanvasScene` con `Paint`/`Shader` creados en
+  `rebuild` y nunca por frame.
+- Las siete escenas portadas a `android.graphics`. Lotes: estelas de partículas (un `drawLines`
+  por color), raíles del túnel (uno por anillo) y campo de líneas (uno por columna: de ~1 300
+  llamadas por frame a 26–56). Ambiente mantiene la mezcla aditiva (`PorterDuff.ADD`) limitada al
+  radio de cada mancha.
+- `VisualizerEngine`: un cerrojo protege el estado de escenas (configuración desde el hilo
+  principal, render desde su hilo); `render(canvas, now)` avanza y dibuja; el fundido entre
+  escenas es «a través del fondo» (un rectángulo translúcido, sin `saveLayer`).
+- `VisualizerSurfaceView`: `SurfaceView` con hilo de render propio (`THREAD_PRIORITY_DISPLAY`),
+  `lockHardwareCanvas` cuando el Android real es ≥ 8.0 y respaldo por software si falla, espaciado
+  de frames según el tope de fps, análisis encendido/apagado con la superficie. La UI Compose
+  actual lo envuelve con `AndroidView` hasta la Fase C.
+- Pruebas: `ScenesUpdateTest` ejercita también `draw()` de todas las escenas con el lienzo stub,
+  incluido el tamaño 1024×600.
+
+`core` conserva Compose hasta la Fase C porque la UI actual depende de su tema y componentes.

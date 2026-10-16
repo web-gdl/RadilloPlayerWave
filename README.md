@@ -15,7 +15,7 @@ dispositivo no mantiene la fluidez.
 
 **Dispositivo objetivo:** autoestéreo Android MTK 8227L (Cortex-A7 32 bits, Mali-450, 1 GB RAM,
 1024×600 a 160 dpi). La adaptación se describe en `docs/TARGET_DEVICE.md` y avanza por fases
-(A: cimientos ✅ · B: visualizador en SurfaceView · C: UI en Vistas · D: coche). La app sigue
+(A: cimientos ✅ · B: visualizador en SurfaceView ✅ · C: UI en Vistas · D: coche). La app sigue
 funcionando en teléfonos y tabletas.
 
 **APK:** cada *push* a `main` compila en GitHub Actions un APK **release** (R8, recursos
@@ -65,7 +65,7 @@ app/         Ensamblaje: Application (Hilt), MainActivity, navegación, recursos
 core/        Modelos de dominio, tema (claro/oscuro, acento de carátula), tipografía, formas
 data/        Biblioteca (MediaStore + Room), favoritos y listas (Room), ajustes (DataStore)
 player/      ExoPlayer, MediaSession, servicio, tap de PCM (audiotap), efectos (audiofx), temporizador
-visualizer/  Análisis (FFT, bandas, onsets), motor de escenas, escenas, render
+visualizer/  Análisis (FFT, bandas, onsets), motor, escenas sobre Canvas, SurfaceView con hilo de render
 docs/        Arquitectura, dependencias y licencias, limitaciones
 ```
 
