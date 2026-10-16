@@ -14,22 +14,31 @@ core ──▶ (solo AndroidX/Compose)
 `player` las implementa o las alimenta. Añadir una escena nueva es crear una clase que
 implemente `Scene` y registrarla; el motor de reproducción no cambia.
 
-## Flujo de audio → visual
+## Flujo de audio → visual (implementado en la Fase 2)
 
 ```
 ExoPlayer (hilo de reproducción)
-  └─ PcmTapAudioProcessor.queueInput()  ── copia sin bloquear ──▶ RingBuffer
-                                                                      │
-Hilo de análisis (Dispatchers.Default)                                ▼
-  ventana Hann 2048 → FFT radix-2 → magnitudes → bandas log → RMS/pico → onsets
-  → suavizado attack/release → AGC lento ──▶ StateFlow<AudioFrame>
-                                                                      │
-Hilo de render (Compose frame clock / GL thread)                      ▼
-  Scene.update(frame, dt) → Scene.draw(...)   (sin asignaciones por frame)
+  └─ PcmTapAudioProcessor.queueInput()  ── copia little-endian → float, sin bloquear ──▶ PcmRingBuffer (SPSC)
+                                                                                           │ señal (Channel CONFLATED)
+Hilo de análisis (Dispatchers.Default, solo con una superficie en primer plano)            ▼
+  TapAudioSource.blocks → AudioAnalyzer: ventana Hann 2048 → FFT radix-2 → magnitudes → bandas log (64)
+  → escala dB (−60..0) → AGC lento → OnsetDetector (flujo espectral, umbral adaptativo)
+  → suavizado ataque/liberación → bass/mid/treble, RMS, pico, formas de onda L/R
+  ──▶ FrameHistory (frame + instante de llegada, ~3 s)
+                                                                                           │
+Hilo de render (Compose: withFrameNanos → VisualizerEngine.onFrame)                        ▼
+  PlaybackClock.positionUs() + desplazamiento manual → FrameHistory.select():
+     por marca temporal (misma pista) o por instante de llegada − latencia estimada (cambio de pista)
+  → Scene.update(frame, dt) → Scene.draw(DrawScope)   (buffers preasignados; fundido entre escenas con saveLayer)
 ```
 
-Si el tap no entrega datos, `AudioSource.status` pasa a `UNAVAILABLE` y el motor emite
-frames `synthetic = true`; las escenas degradan a animación lenta y la UI lo indica.
+Estados del motor (`DataState`): `LIVE` (audio real alineado), `IDLE` (pausa: el último
+frame decae), `SYNTHETIC` (reproduciendo sin PCM fiable: movimiento ambiental y aviso en la UI).
+
+Marcas temporales: `AudioProcessor.StreamMetadata.positionOffsetUs` fija la referencia en cada
+`flush` (seek); dentro de una pista los frames se eligen por posición exacta y, de paso, se
+mide la latencia real del `AudioTrack`, que sirve de respaldo cuando las marcas dejan de ser
+comparables (transición automática entre pistas).
 
 ## Decisiones técnicas
 
@@ -50,17 +59,18 @@ frames `synthetic = true`; las escenas degradan a animación lenta y la UI lo in
 com.radillo.playerwave               app: Application, MainActivity
 com.radillo.playerwave.ui            cáscara de navegación
 com.radillo.playerwave.ui.library    pantallas de biblioteca               [Fase 1]
-com.radillo.playerwave.ui.nowplaying reproductor                            [Fase 1]
-com.radillo.playerwave.ui.visualizer pantalla inmersiva y ajustes           [Fase 2]
+com.radillo.playerwave.ui.player     reproductor, cola, mini reproductor
+com.radillo.playerwave.ui.visualizer pantalla del visualizador, inmersivo, ajustes
+com.radillo.playerwave.di            módulo Hilt del motor de visualización
 com.radillo.playerwave.core.model    Track, Album, Artist, Folder, Playlist
 com.radillo.playerwave.core.ui.theme tema, colores, tipografía, formas
-com.radillo.playerwave.data.library  MediaStore scanner, Room, repositorio  [Fase 1]
-com.radillo.playerwave.data.settings DataStore                              [Fase 1]
+com.radillo.playerwave.data.library  MediaStore scanner, Room, repositorio
+com.radillo.playerwave.data.settings ajustes del visualizador (DataStore)
 com.radillo.playerwave.player.engine PlaybackController, estado
-com.radillo.playerwave.player.service MediaLibraryService, notificación     [Fase 1]
-com.radillo.playerwave.player.audiotap PcmTapAudioProcessor                 [Fase 2]
+com.radillo.playerwave.player.service MediaLibraryService, notificación
+com.radillo.playerwave.player.audiotap PcmTapAudioProcessor, TapAudioSource, RenderersFactory
 com.radillo.playerwave.visualizer.analysis FFT, bandas, onsets, AudioFrame
 com.radillo.playerwave.visualizer.engine Scene, SceneRegistry, params
-com.radillo.playerwave.visualizer.scenes escenas concretas                  [Fase 2+]
-com.radillo.playerwave.visualizer.render Canvas / GL                        [Fase 2+]
+com.radillo.playerwave.visualizer.scenes CanvasScene, SpectrumBars, Oscilloscope, Rings
+com.radillo.playerwave.visualizer.render VisualizerSurface (Compose Canvas)
 ```

@@ -19,8 +19,19 @@ el coste de mantenimiento.
   que además solo captura apps que lo permitan explícitamente. Queda fuera de alcance.
 - Si un dispositivo fuerza offload de audio o no entrega PCM al `AudioProcessor`, las escenas
   pasan a modo de respaldo (animación no sincronizada) y la UI lo indica.
-- Con salida Bluetooth puede haber un desfase de 100-300 ms entre imagen y sonido; se añade
-  un ajuste de sincronía manual en la Fase 2.
+- Con salida Bluetooth puede haber un desfase de 100-300 ms entre imagen y sonido: el motor lo
+  compensa alineando por posición de reproducción y, además, el ajuste «Sincronía imagen/sonido»
+  permite corregirlo a mano (−300..+800 ms).
+- El análisis asigna arrays nuevos por frame (~9 KB a 60 Hz) en el hilo de análisis; el render no
+  asigna memoria por frame. Si en un dispositivo concreto se observa jank, el primer sospechoso es
+  este punto (se puede pasar a doble buffer).
+- Si una canción cambia por transición automática (sin seek), la cadena de audio no se vacía y las
+  marcas temporales dejan de coincidir con la nueva posición: el motor pasa al respaldo por
+  latencia estimada hasta el siguiente seek o pista. Visualmente es imperceptible salvo con
+  latencias de Bluetooth muy variables.
+- El tap de PCM solo recibe audio de 16 bits o float; las fuentes de alta resolución se convierten
+  a 16 bits antes de la cadena (comportamiento por defecto del sink), por lo que siempre hay datos.
+- Las escenas usan Compose Canvas; las escenas 3D (OpenGL ES) llegan en la Fase 5.
 
 ## Reproducción (Fase 1)
 
@@ -36,6 +47,8 @@ el coste de mantenimiento.
 ## Estado por fase
 
 - **Fase 0:** esqueleto; compilado en CI.
-- **Fase 1 (actual):** biblioteca y reproducción; compilado y probado en CI (unitarias +
-  Robolectric para permisos, mapeo de MediaItem y ciclo de vida del servicio).
-- Pendiente de prueba manual en dispositivo por parte del usuario.
+- **Fase 1:** biblioteca y reproducción; compilado y probado en CI.
+- **Fase 2 (actual, MVP):** motor de visualización y escenas Espectro/Osciloscopio/Anillos;
+  compilado y probado en CI (FFT, bandas, suavizado/AGC/onsets, anillo PCM, analizador,
+  historial de frames, procesador de audio con Robolectric).
+- Pendiente de prueba manual en dispositivo por parte del usuario (sincronía, rendimiento).
