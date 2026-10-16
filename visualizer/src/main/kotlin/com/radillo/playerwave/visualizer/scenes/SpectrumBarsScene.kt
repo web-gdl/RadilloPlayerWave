@@ -1,13 +1,12 @@
 package com.radillo.playerwave.visualizer.scenes
 
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.drawscope.DrawScope
+import android.graphics.Canvas
+import android.graphics.LinearGradient
+import android.graphics.Paint
+import android.graphics.RadialGradient
+import android.graphics.Shader
 import com.radillo.playerwave.visualizer.analysis.AudioFrame
+import com.radillo.playerwave.visualizer.engine.Argb
 import kotlin.math.exp
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -25,10 +24,10 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Espectro") {
     private var peakVelocity = FloatArray(barCount)
     private var targets = FloatArray(barCount)
 
-    private var barBrush: Brush = SolidColor(Color.White)
-    private var glowBrush: Brush = SolidColor(Color.White)
-    private var haloBrush: Brush = SolidColor(Color.Transparent)
-    private var capColor: Color = Color.White
+    private val barPaint = fillPaint()
+    private val glowPaint = fillPaint()
+    private val haloPaint = fillPaint()
+    private val capPaint = fillPaint()
 
     private var bassGlow = 0f
     private var flash = 0f
@@ -47,7 +46,7 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Espectro") {
             peakVelocity = FloatArray(barCount)
             targets = FloatArray(barCount)
         }
-        capColor = palette.accent
+        capPaint.color = palette.accent
         if (!hasSize) return
         val w = width.toFloat()
         val h = height.toFloat()
@@ -56,20 +55,19 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Espectro") {
         gap = max(2f, w * 0.0045f)
         leftPadding = w * 0.04f
         barWidth = ((w - leftPadding * 2f) - gap * (barCount - 1)) / barCount
-        barBrush = Brush.verticalGradient(
-            colors = palette.colors,
-            startY = baseline - maxBarHeight,
-            endY = baseline,
+        val colors = palette.colors
+        // De agudo (arriba) a grave (abajo): el degradado va de la cima de la barra a la base.
+        val vertical = IntArray(colors.size) { colors[colors.size - 1 - it] }
+        barPaint.fillShader = LinearGradient(0f, baseline - maxBarHeight, 0f, baseline, vertical, null, Shader.TileMode.CLAMP)
+        glowPaint.fillShader = LinearGradient(
+            0f, baseline - maxBarHeight, 0f, baseline,
+            intArrayOf(Argb.withAlpha(colors.last(), 0.55f), Argb.withAlpha(colors.first(), 0f)),
+            null, Shader.TileMode.CLAMP,
         )
-        glowBrush = Brush.verticalGradient(
-            colors = listOf(palette.colors.last().copy(alpha = 0.55f), palette.colors.first().copy(alpha = 0.0f)),
-            startY = baseline - maxBarHeight,
-            endY = baseline,
-        )
-        haloBrush = Brush.radialGradient(
-            colors = listOf(palette.colors.first().copy(alpha = 0.55f), Color.Transparent),
-            center = Offset(w * 0.5f, baseline),
-            radius = w * 0.65f,
+        haloPaint.fillShader = RadialGradient(
+            w * 0.5f, baseline, w * 0.65f,
+            intArrayOf(Argb.withAlpha(colors.first(), 0.55f), Argb.TRANSPARENT),
+            null, Shader.TileMode.CLAMP,
         )
     }
 
@@ -101,52 +99,36 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Espectro") {
         flash = max(flash * exp(-deltaSeconds * 7f), frame.onset)
     }
 
-    override fun draw(scope: DrawScope) = with(scope) {
+    override fun draw(canvas: Canvas) {
         if (!hasSize || barWidth <= 0f) return
         val intensity = params.intensity.coerceIn(0.1f, 2f)
-        val w = size.width
+        val w = width.toFloat()
 
         // Halo de graves tras las barras.
-        drawCircle(
-            brush = haloBrush,
-            radius = w * (0.35f + 0.45f * bassGlow),
-            center = Offset(w * 0.5f, baseline),
-            alpha = (0.25f + 0.55f * bassGlow) * intensity.coerceAtMost(1f),
-        )
+        haloPaint.alpha = alpha255((0.25f + 0.55f * bassGlow) * intensity.coerceAtMost(1f))
+        canvas.drawCircle(w * 0.5f, baseline, w * (0.35f + 0.45f * bassGlow), haloPaint)
 
         val minHeight = barWidth * 0.5f
-        val glowAlpha = (0.16f + 0.45f * flash) * intensity.coerceAtMost(1f)
-        val corner = CornerRadius(barWidth * 0.5f, barWidth * 0.5f)
+        glowPaint.alpha = alpha255((0.16f + 0.45f * flash) * intensity.coerceAtMost(1f))
+        capPaint.alpha = alpha255(0.85f)
+        val radius = barWidth * 0.5f
+        val capHeight = max(2f, barWidth * 0.22f)
         for (i in 0 until barCount) {
             val x = leftPadding + i * (barWidth + gap)
             val barHeight = max(minHeight, levels[i] * maxBarHeight * intensity)
             val top = baseline - barHeight
 
             // Resplandor (más ancho, translúcido).
-            drawRoundRect(
-                brush = glowBrush,
-                topLeft = Offset(x - barWidth * 0.45f, top - barWidth * 0.6f),
-                size = Size(barWidth * 1.9f, barHeight + barWidth * 1.2f),
-                cornerRadius = corner,
-                alpha = glowAlpha,
+            canvas.drawRoundRect(
+                x - barWidth * 0.45f, top - barWidth * 0.6f,
+                x + barWidth * 1.45f, baseline + barWidth * 0.6f,
+                radius, radius, glowPaint,
             )
             // Barra.
-            drawRoundRect(
-                brush = barBrush,
-                topLeft = Offset(x, top),
-                size = Size(barWidth, barHeight),
-                cornerRadius = corner,
-            )
+            canvas.drawRoundRect(x, top, x + barWidth, baseline, radius, radius, barPaint)
             // Capuchón de pico.
-            val capHeight = max(2f, barWidth * 0.22f)
             val capTop = baseline - max(minHeight, peaks[i] * maxBarHeight * intensity) - capHeight * 1.6f
-            drawRoundRect(
-                color = capColor,
-                topLeft = Offset(x, capTop),
-                size = Size(barWidth, capHeight),
-                cornerRadius = corner,
-                alpha = 0.85f,
-            )
+            canvas.drawRoundRect(x, capTop, x + barWidth, capTop + capHeight, radius, radius, capPaint)
         }
     }
 

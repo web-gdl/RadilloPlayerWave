@@ -1,15 +1,11 @@
 package com.radillo.playerwave.visualizer.scenes
 
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
+import android.graphics.Canvas
+import android.graphics.Path
+import android.graphics.RadialGradient
+import android.graphics.Shader
 import com.radillo.playerwave.visualizer.analysis.AudioFrame
+import com.radillo.playerwave.visualizer.engine.Argb
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.max
@@ -37,10 +33,11 @@ class RingsScene : CanvasScene(id = ID, displayName = "Anillos") {
     private var centerX = 0f
     private var centerY = 0f
     private var baseRadius = 0f
-    private var coreBrush: Brush = SolidColor(Color.Transparent)
-    private var strokes = Array(3) { Stroke(width = 2f, cap = StrokeCap.Round, join = StrokeJoin.Round) }
-    private var glowStrokes = Array(3) { Stroke(width = 8f, cap = StrokeCap.Round, join = StrokeJoin.Round) }
-    private var pulseStroke = Stroke(width = 2f)
+    private val corePaint = fillPaint()
+    private val ringPaint = strokePaint(2f)
+    private val glowPaint = strokePaint(8f)
+    private val pulsePaint = strokePaint(2f, rounded = false)
+    private val widths = FloatArray(3) { 2f }
     private val bases = FloatArray(3)
     private val energies = FloatArray(3)
 
@@ -53,14 +50,15 @@ class RingsScene : CanvasScene(id = ID, displayName = "Anillos") {
         bases[1] = baseRadius * 0.47f
         bases[2] = baseRadius * 0.63f
         val unit = max(1.5f, baseRadius * 0.012f)
-        val widths = floatArrayOf(unit * 2.6f, unit * 1.8f, unit * 1.1f)
-        strokes = Array(3) { Stroke(width = widths[it], cap = StrokeCap.Round, join = StrokeJoin.Round) }
-        glowStrokes = Array(3) { Stroke(width = widths[it] * 4f, cap = StrokeCap.Round, join = StrokeJoin.Round) }
-        pulseStroke = Stroke(width = unit * 1.2f)
-        coreBrush = Brush.radialGradient(
-            colors = listOf(palette.accent.copy(alpha = 0.95f), palette.colors.first().copy(alpha = 0.35f), Color.Transparent),
-            center = Offset(centerX, centerY),
-            radius = baseRadius * 0.28f,
+        widths[0] = unit * 2.6f
+        widths[1] = unit * 1.8f
+        widths[2] = unit * 1.1f
+        pulsePaint.strokeWidth = unit * 1.2f
+        pulsePaint.color = palette.accent
+        corePaint.fillShader = RadialGradient(
+            centerX, centerY, baseRadius * 0.28f,
+            intArrayOf(Argb.withAlpha(palette.accent, 0.95f), Argb.withAlpha(palette.colors.first(), 0.35f), Argb.TRANSPARENT),
+            null, Shader.TileMode.CLAMP,
         )
     }
 
@@ -108,18 +106,14 @@ class RingsScene : CanvasScene(id = ID, displayName = "Anillos") {
         core += ((frame.rms * sensitivity).coerceIn(0f, 1f) - core) * smoothing(deltaSeconds, 14f)
     }
 
-    override fun draw(scope: DrawScope) = with(scope) {
+    override fun draw(canvas: Canvas) {
         if (!hasSize) return
         val intensity = params.intensity.coerceIn(0.1f, 2f)
         val colors = palette.colors
 
         // Núcleo.
-        drawCircle(
-            brush = coreBrush,
-            radius = baseRadius * 0.28f * (0.75f + 0.5f * core),
-            center = Offset(centerX, centerY),
-            alpha = (0.5f + 0.5f * core).coerceAtMost(1f),
-        )
+        corePaint.alpha = alpha255((0.5f + 0.5f * core).coerceAtMost(1f))
+        canvas.drawCircle(centerX, centerY, baseRadius * 0.28f * (0.75f + 0.5f * core), corePaint)
 
         // Anillos, del exterior al interior para que los graves queden encima.
         for (r in rings.indices.reversed()) {
@@ -127,8 +121,14 @@ class RingsScene : CanvasScene(id = ID, displayName = "Anillos") {
             val color = colors[min(r, colors.lastIndex)]
             val radius = bases[r] * (1f + 0.18f * ring.energy * intensity)
             buildRing(ring, radius)
-            drawPath(path, color = color, alpha = 0.22f + 0.25f * ring.energy, style = glowStrokes[r])
-            drawPath(path, color = color, alpha = 0.75f + 0.25f * ring.energy, style = strokes[r])
+            glowPaint.strokeWidth = widths[r] * 4f
+            glowPaint.color = color
+            glowPaint.alpha = alpha255(0.22f + 0.25f * ring.energy)
+            canvas.drawPath(path, glowPaint)
+            ringPaint.strokeWidth = widths[r]
+            ringPaint.color = color
+            ringPaint.alpha = alpha255(0.75f + 0.25f * ring.energy)
+            canvas.drawPath(path, ringPaint)
         }
 
         // Ondas expansivas.
@@ -136,13 +136,13 @@ class RingsScene : CanvasScene(id = ID, displayName = "Anillos") {
             if (age < 0f) continue
             val t = age / PULSE_LIFE
             val radius = bases[0] * (1f + 1.4f * t)
-            val alpha = (1f - t) * (1f - t) * 0.7f
-            drawCircle(color = palette.accent, radius = radius, center = Offset(centerX, centerY), alpha = alpha, style = pulseStroke)
+            pulsePaint.alpha = alpha255((1f - t) * (1f - t) * 0.7f)
+            canvas.drawCircle(centerX, centerY, radius, pulsePaint)
         }
     }
 
     private fun buildRing(ring: Ring, radius: Float) {
-        path.reset()
+        path.rewind()
         val n = ring.vertexCount
         val step = (2.0 * PI / n).toFloat()
         for (v in 0 until n) {

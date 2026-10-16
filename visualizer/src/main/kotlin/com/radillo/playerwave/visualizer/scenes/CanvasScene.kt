@@ -1,5 +1,7 @@
 package com.radillo.playerwave.visualizer.scenes
 
+import android.graphics.Paint
+import android.graphics.Shader
 import com.radillo.playerwave.visualizer.engine.Palettes
 import com.radillo.playerwave.visualizer.engine.RenderBackend
 import com.radillo.playerwave.visualizer.engine.Scene
@@ -8,9 +10,9 @@ import com.radillo.playerwave.visualizer.engine.VisualPalette
 import kotlin.math.exp
 
 /**
- * Base para escenas dibujadas con Compose Canvas: guarda parámetros, paleta y tamaño, y
- * ofrece utilidades de suavizado. Las subclases implementan [update] y [draw] sin asignar
- * memoria por frame (los buffers se crean en [rebuild]).
+ * Base para escenas dibujadas con `android.graphics.Canvas`: guarda parámetros, paleta y tamaño,
+ * y ofrece utilidades de suavizado y pinceles. Las subclases implementan [update] y [draw] sin
+ * asignar memoria por frame (los buffers, pinceles y degradados se crean en [rebuild]).
  */
 abstract class CanvasScene(
     override val id: String,
@@ -51,7 +53,7 @@ abstract class CanvasScene(
 
     override fun onDetach() = Unit
 
-    /** Reconstruye buffers y pinceles dependientes de tamaño, densidad o paleta. */
+    /** Reconstruye buffers, pinceles y degradados dependientes de tamaño, densidad o paleta. */
     protected abstract fun rebuild()
 
     protected val hasSize: Boolean get() = width > 0 && height > 0
@@ -72,5 +74,31 @@ abstract class CanvasScene(
             val b = values[minOf(i + 1, values.size - 1)]
             return a + (b - a) * f
         }
+
+        /** Pincel de relleno con antialias. */
+        fun fillPaint(): Paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+
+        /** Pincel de trazo con antialias y extremos/uniones redondeados. */
+        fun strokePaint(width: Float, rounded: Boolean = true): Paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeWidth = width
+            if (rounded) {
+                strokeCap = Paint.Cap.ROUND
+                strokeJoin = Paint.Join.ROUND
+            }
+        }
+
+        /** Alfa en [0, 1] → 0..255 para `Paint.alpha`. */
+        fun alpha255(alpha: Float): Int = (alpha.coerceIn(0f, 1f) * 255f + 0.5f).toInt()
+
+        /**
+         * `Paint.setShader` devuelve el `Shader` (no `void`), así que Kotlin no genera una propiedad
+         * asignable; esta extensión permite `paint.fillShader = gradient`.
+         */
+        var Paint.fillShader: Shader?
+            get() = shader
+            set(value) {
+                setShader(value)
+            }
     }
 }

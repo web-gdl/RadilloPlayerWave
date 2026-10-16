@@ -1,9 +1,6 @@
 package com.radillo.playerwave.visualizer.engine
 
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import android.graphics.Canvas
 import com.radillo.playerwave.visualizer.analysis.AnalyzerConfig
 import com.radillo.playerwave.visualizer.analysis.AudioAnalyzer
 import com.radillo.playerwave.visualizer.analysis.AudioFrame
@@ -27,11 +24,17 @@ enum class DataState { LIVE, IDLE, SYNTHETIC }
 /**
  * Motor de visualización. Une tres piezas que no se conocen entre sí:
  * - el análisis (coroutine en `Dispatchers.Default`, alimentada por [AudioSource]),
- * - la lógica visual (las [Scene]s, actualizadas en el hilo de render),
- * - el renderizado (quien llame a [onFrame] y [draw], normalmente [VisualizerSurface]).
+ * - la lógica visual (las [Scene]s),
+ * - el renderizado (quien llame a [render] con un lienzo, normalmente el hilo de render de
+ *   `VisualizerSurfaceView`).
  *
  * El análisis solo corre mientras hay al menos una superficie adjunta ([attach]/[detach]).
- * Las escenas se crean desde el [SceneRegistry]; cambiar de escena hace un fundido cruzado.
+ * Las escenas se crean desde el [SceneRegistry]; cambiar de escena hace un fundido a través del
+ * fondo (sin capas fuera de pantalla, aptas para GPUs modestas).
+ *
+ * Hilos: la configuración llega del hilo principal y el render de su propio hilo; todo el estado
+ * de escenas se protege con un único cerrojo, de modo que ninguna escena se toca desde dos hilos
+ * a la vez.
  */
 class VisualizerEngine(
     private val source: AudioSource,
@@ -43,6 +46,7 @@ class VisualizerEngine(
     private val analyzer = AudioAnalyzer(analyzerConfig)
     private val history = FrameHistory()
     private val synthetic = SyntheticFrameSource(analyzerConfig)
+    private val lock = Any()
 
     private var analysisJob: Job? = null
     private var attachedSurfaces = 0
@@ -69,15 +73,14 @@ class VisualizerEngine(
     private var fpsWindowFrames = 0
 
     /** Tope de fotogramas por segundo; 0 = sin tope (el de la pantalla). */
-    private var maxFps = 0
-    private var lastRenderedNanos = 0L
+    @Volatile private var maxFps = 0
     private var deviceScale = 1f
 
-    // ---- Estado de render (solo hilo de render) ----
+    // ---- Estado de render (protegido por `lock`) ----
     private var scene: Scene? = null
     private var outgoing: Scene? = null
     private var transition = 1f
-    /** Parámetros elegidos por el usuario (quality siempre 1) y los efectivos (con la calidad del gobernador). */
+    /** Parámetros elegidos por el usuario (quality y deviceScale siempre 1) y los efectivos. */
     private var userParams = SceneParams()
     private var params = SceneParams()
     private var width = 0
@@ -86,24 +89,36 @@ class VisualizerEngine(
     private var lastShown: AudioFrame = synthetic.silent()
     private var latencyNanos = DEFAULT_LATENCY_NANOS
     private var syncOffsetUs = 0L
-    private var layerBounds = Rect.Zero
-    private val layerPaint = Paint()
 
     /** Latencia estimada entre el análisis y el sonido, en ms (diagnóstico). */
     val estimatedLatencyMs: Int get() = (latencyNanos / 1_000_000L).toInt()
 
+    /**
+     * Intervalo mínimo entre frames en nanosegundos según el tope de fps, o 0 si no hay tope.
+     * El hilo de render lo usa para espaciar los frames.
+     */
+    val minFrameIntervalNanos: Long
+        get() {
+            val fps = maxFps
+            return if (fps > 0) 1_000_000_000L / fps else 0L
+        }
+
     // ---- Ciclo de vida ----
 
     fun attach() {
-        attachedSurfaces++
-        if (analysisJob == null) startAnalysis()
+        synchronized(lock) {
+            attachedSurfaces++
+            if (analysisJob == null) startAnalysis()
+        }
     }
 
     fun detach() {
-        attachedSurfaces = (attachedSurfaces - 1).coerceAtLeast(0)
-        if (attachedSurfaces == 0) {
-            analysisJob?.cancel()
-            analysisJob = null
+        synchronized(lock) {
+            attachedSurfaces = (attachedSurfaces - 1).coerceAtLeast(0)
+            if (attachedSurfaces == 0) {
+                analysisJob?.cancel()
+                analysisJob = null
+            }
         }
     }
 
@@ -120,43 +135,51 @@ class VisualizerEngine(
         }
     }
 
-    // ---- Configuración (hilo de render / principal) ----
+    // ---- Configuración (cualquier hilo) ----
 
     fun setScene(id: String) {
-        if (id == scene?.id) return
-        val next = registry.create(id) ?: return
-        next.onAttach(params)
-        if (width > 0 && height > 0) next.onResize(width, height)
-        val previous = scene
-        if (previous != null) {
-            outgoing?.onDetach()
-            outgoing = previous
-            transition = 0f
+        synchronized(lock) {
+            if (id == scene?.id) return
+            val next = registry.create(id) ?: return
+            next.onAttach(params)
+            if (width > 0 && height > 0) next.onResize(width, height)
+            val previous = scene
+            if (previous != null) {
+                outgoing?.onDetach()
+                outgoing = previous
+                transition = 0f
+            }
+            scene = next
+            _currentSceneId.value = id
+            governor.reset()
         }
-        scene = next
-        _currentSceneId.value = id
-        governor.reset()
     }
 
     fun setParams(newParams: SceneParams) {
-        val normalized = newParams.copy(quality = 1f, deviceScale = 1f)
-        if (normalized == userParams) return
-        userParams = normalized
-        applyParams(effectiveParams())
+        synchronized(lock) {
+            val normalized = newParams.copy(quality = 1f, deviceScale = 1f)
+            if (normalized == userParams) return
+            userParams = normalized
+            applyParams(effectiveParams())
+        }
     }
 
     /** Factor fijo del perfil del dispositivo (0.6 en gama baja) que reduce la densidad de las escenas. */
     fun setDeviceScale(scale: Float) {
-        val clamped = scale.coerceIn(0.2f, 1f)
-        if (clamped == deviceScale) return
-        deviceScale = clamped
-        applyParams(effectiveParams())
+        synchronized(lock) {
+            val clamped = scale.coerceIn(0.2f, 1f)
+            if (clamped == deviceScale) return
+            deviceScale = clamped
+            applyParams(effectiveParams())
+        }
     }
 
     /** Calidad mínima a la que puede bajar el gobernador. */
     fun setMinQuality(min: Float) {
-        governor.minQuality = min
-        applyParams(effectiveParams())
+        synchronized(lock) {
+            governor.minQuality = min
+            applyParams(effectiveParams())
+        }
     }
 
     /**
@@ -164,23 +187,44 @@ class VisualizerEngine(
      * calor). 0 o un valor ≥ al de la pantalla no tienen efecto.
      */
     fun setMaxFps(fps: Int) {
-        val clamped = fps.coerceIn(0, 240)
-        if (clamped == maxFps) return
-        maxFps = clamped
-        governor.targetFrameSeconds = if (clamped > 0) 1f / clamped else 0f
+        synchronized(lock) {
+            val clamped = fps.coerceIn(0, 240)
+            if (clamped == maxFps) return
+            maxFps = clamped
+            governor.targetFrameSeconds = if (clamped > 0) 1f / clamped else 0f
+        }
     }
-
-    private fun effectiveParams(): SceneParams = userParams.copy(quality = governor.quality, deviceScale = deviceScale)
 
     /**
      * Activa o desactiva el gobernador de calidad. Desactivado, las escenas usan siempre la
      * densidad elegida por el usuario.
      */
     fun setAutoQuality(enabled: Boolean) {
-        if (governor.enabled == enabled) return
-        governor.enabled = enabled
-        applyParams(effectiveParams())
+        synchronized(lock) {
+            if (governor.enabled == enabled) return
+            governor.enabled = enabled
+            applyParams(effectiveParams())
+        }
     }
+
+    fun setSyncOffsetMs(ms: Int) {
+        synchronized(lock) {
+            syncOffsetUs = ms.toLong() * 1_000L
+        }
+    }
+
+    fun onResize(widthPx: Int, heightPx: Int) {
+        synchronized(lock) {
+            if (widthPx == width && heightPx == height) return
+            width = widthPx
+            height = heightPx
+            scene?.onResize(widthPx, heightPx)
+            outgoing?.onResize(widthPx, heightPx)
+            governor.reset()
+        }
+    }
+
+    private fun effectiveParams(): SceneParams = userParams.copy(quality = governor.quality, deviceScale = deviceScale)
 
     private fun applyParams(effective: SceneParams) {
         if (effective == params) return
@@ -190,34 +234,21 @@ class VisualizerEngine(
         outgoing?.onParamsChanged(effective)
     }
 
-    fun setSyncOffsetMs(ms: Int) {
-        syncOffsetUs = ms.toLong() * 1_000L
-    }
-
-    fun onResize(widthPx: Int, heightPx: Int) {
-        if (widthPx == width && heightPx == height) return
-        width = widthPx
-        height = heightPx
-        layerBounds = Rect(0f, 0f, widthPx.toFloat(), heightPx.toFloat())
-        scene?.onResize(widthPx, heightPx)
-        outgoing?.onResize(widthPx, heightPx)
-        governor.reset()
-    }
-
-    // ---- Render ----
+    // ---- Render (hilo de render) ----
 
     /**
-     * Avanza la simulación un frame. Llamar desde el hilo de render en cada vsync, antes de [draw].
-     * Devuelve `false` si este vsync se salta por el tope de fps: entonces no hay que redibujar.
+     * Avanza la simulación y dibuja un frame completo (fondo, fundido y escena) en [canvas].
+     * [nowNanos] es `System.nanoTime()` al empezar el frame.
      */
-    fun onFrame(nowNanos: Long): Boolean {
-        if (maxFps > 0 && lastRenderedNanos != 0L) {
-            val minIntervalNanos = (1_000_000_000L / maxFps * 0.75).toLong()
-            if (nowNanos - lastRenderedNanos < minIntervalNanos) return false
+    fun render(canvas: Canvas, nowNanos: Long) {
+        synchronized(lock) {
+            step(nowNanos)
+            draw(canvas)
         }
-        lastRenderedNanos = nowNanos
-        measureFps(nowNanos)
+    }
 
+    private fun step(nowNanos: Long) {
+        measureFps(nowNanos)
         val rawDt = if (lastFrameNanos == 0L) 1f / 60f else (nowNanos - lastFrameNanos) / 1e9f
         val dt = rawDt.coerceIn(0.001f, 0.1f)
         lastFrameNanos = nowNanos
@@ -238,7 +269,6 @@ class VisualizerEngine(
                 outgoing = null
             }
         }
-        return true
     }
 
     private fun measureFps(nowNanos: Long) {
@@ -282,25 +312,26 @@ class VisualizerEngine(
         }
     }
 
-    /** Dibuja fondo, escena saliente (fundido) y escena actual. */
-    fun draw(scope: DrawScope) {
+    /**
+     * Fondo, escena y fundido. El cambio de escena se hace «a través del fondo»: la escena saliente
+     * se oscurece y la nueva emerge de la oscuridad, con un solo rectángulo translúcido por frame
+     * en vez de capas fuera de pantalla.
+     */
+    private fun draw(canvas: Canvas) {
         val palette = Palettes.byId(params.paletteId)
-        scope.drawRect(color = palette.background)
+        canvas.drawColor(palette.background)
         val current = scene ?: return
         val out = outgoing
         if (out == null || transition >= 1f) {
-            current.draw(scope)
+            current.draw(canvas)
             return
         }
-        scope.drawIntoCanvas { canvas ->
-            layerPaint.alpha = 1f - transition
-            canvas.saveLayer(layerBounds, layerPaint)
-            out.draw(scope)
-            canvas.restore()
-            layerPaint.alpha = transition
-            canvas.saveLayer(layerBounds, layerPaint)
-            current.draw(scope)
-            canvas.restore()
+        if (transition < 0.5f) {
+            out.draw(canvas)
+            canvas.drawColor(Argb.withAlpha(palette.background, transition * 2f))
+        } else {
+            current.draw(canvas)
+            canvas.drawColor(Argb.withAlpha(palette.background, (1f - transition) * 2f))
         }
     }
 

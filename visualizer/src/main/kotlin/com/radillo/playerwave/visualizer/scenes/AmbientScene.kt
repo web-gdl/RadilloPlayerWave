@@ -1,13 +1,13 @@
 package com.radillo.playerwave.visualizer.scenes
 
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.withTransform
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
+import android.graphics.RadialGradient
+import android.graphics.Shader
 import com.radillo.playerwave.visualizer.analysis.AudioFrame
+import com.radillo.playerwave.visualizer.engine.Argb
 import kotlin.math.cos
 import kotlin.math.exp
 import kotlin.math.max
@@ -20,15 +20,18 @@ import kotlin.math.sin
  * en trayectorias lentas; cada una escucha un tramo del espectro y respira con él. Es la escena
  * más tranquila y la menos costosa: pensada para dejarla de fondo y para cuando los datos de
  * audio son de respaldo, porque el movimiento sintético también la hace vivir.
+ *
+ * La mezcla aditiva (`PorterDuff.ADD`) se limita al radio de cada mancha; el resto del fondo no
+ * se toca, así que la tasa de relleno sigue siendo baja en GPUs modestas.
  */
 class AmbientScene : CanvasScene(id = ID, displayName = "Ambiente") {
 
     private var blobCount = 0
     private var energy = FloatArray(0)
     private var radii = FloatArray(0)
-    private var brushes = Array<Brush>(0) { SolidColor(Color.Transparent) }
-    private var vignette: Brush = SolidColor(Color.Transparent)
-    private var halo: Brush = SolidColor(Color.Transparent)
+    private var blobPaints = Array(0) { Paint() }
+    private val haloPaint = fillPaint().apply { setXfermode(PorterDuffXfermode(PorterDuff.Mode.ADD)) }
+    private val vignettePaint = fillPaint()
     private var haloRadius = 0f
     private var centerX = 0f
     private var centerY = 0f
@@ -42,6 +45,7 @@ class AmbientScene : CanvasScene(id = ID, displayName = "Ambiente") {
         if (newCount != blobCount) {
             blobCount = newCount
             energy = FloatArray(blobCount)
+            blobPaints = Array(blobCount) { fillPaint().apply { setXfermode(PorterDuffXfermode(PorterDuff.Mode.ADD)) } }
         }
         if (!hasSize) return
         centerX = width * 0.5f
@@ -49,24 +53,24 @@ class AmbientScene : CanvasScene(id = ID, displayName = "Ambiente") {
         val base = min(width, height).toFloat()
         val colors = palette.colors
         radii = FloatArray(blobCount) { i -> base * (0.30f + 0.22f * ((i * 7) % 5) / 4f) }
-        brushes = Array(blobCount) { i ->
+        for (i in 0 until blobCount) {
             val color = colors[i % colors.size]
-            Brush.radialGradient(
-                colors = listOf(color.copy(alpha = 0.85f), color.copy(alpha = 0.28f), Color.Transparent),
-                center = Offset.Zero,
-                radius = radii[i],
+            blobPaints[i].fillShader = RadialGradient(
+                0f, 0f, radii[i],
+                intArrayOf(Argb.withAlpha(color, 0.85f), Argb.withAlpha(color, 0.28f), Argb.TRANSPARENT),
+                null, Shader.TileMode.CLAMP,
             )
         }
         haloRadius = base * 0.5f
-        halo = Brush.radialGradient(
-            colors = listOf(palette.accent.copy(alpha = 0.5f), Color.Transparent),
-            center = Offset(centerX, centerY),
-            radius = haloRadius,
+        haloPaint.fillShader = RadialGradient(
+            centerX, centerY, haloRadius,
+            intArrayOf(Argb.withAlpha(palette.accent, 0.5f), Argb.TRANSPARENT),
+            null, Shader.TileMode.CLAMP,
         )
-        vignette = Brush.radialGradient(
-            colors = listOf(Color.Transparent, Color.Transparent, palette.background.copy(alpha = 0.75f)),
-            center = Offset(centerX, centerY),
-            radius = max(width, height) * 0.72f,
+        vignettePaint.fillShader = RadialGradient(
+            centerX, centerY, max(width, height) * 0.72f,
+            intArrayOf(Argb.TRANSPARENT, Argb.TRANSPARENT, Argb.withAlpha(palette.background, 0.75f)),
+            floatArrayOf(0f, 0.55f, 1f), Shader.TileMode.CLAMP,
         )
     }
 
@@ -96,7 +100,7 @@ class AmbientScene : CanvasScene(id = ID, displayName = "Ambiente") {
         flash = max(flash * exp(-deltaSeconds * 2.5f), if (frame.synthetic) 0f else frame.onset * 0.8f)
     }
 
-    override fun draw(scope: DrawScope) = with(scope) {
+    override fun draw(canvas: Canvas) {
         if (!hasSize) return
         val intensity = params.intensity.coerceIn(0.1f, 2f)
         val w = width.toFloat()
@@ -108,30 +112,19 @@ class AmbientScene : CanvasScene(id = ID, displayName = "Ambiente") {
             val py = centerY + cos(time * f2 + i * 0.9f) * h * 0.30f
             val e = energy[i]
             val scale = 0.75f + 0.6f * e * intensity
-            val alpha = ((0.20f + 0.5f * e) * (0.6f + 0.4f * rms)).coerceIn(0f, 1f)
-            withTransform({
-                translate(px, py)
-                scale(scale, scale, Offset.Zero)
-            }) {
-                drawCircle(
-                    brush = brushes[i],
-                    radius = radii[i],
-                    center = Offset.Zero,
-                    alpha = alpha,
-                    blendMode = BlendMode.Plus,
-                )
-            }
+            val paint = blobPaints[i]
+            paint.alpha = alpha255(((0.20f + 0.5f * e) * (0.6f + 0.4f * rms)).coerceIn(0f, 1f))
+            canvas.save()
+            canvas.translate(px, py)
+            canvas.scale(scale, scale)
+            canvas.drawCircle(0f, 0f, radii[i], paint)
+            canvas.restore()
         }
         if (flash > 0.02f) {
-            drawCircle(
-                brush = halo,
-                radius = haloRadius * (0.8f + 0.4f * flash),
-                center = Offset(centerX, centerY),
-                alpha = flash * 0.6f,
-                blendMode = BlendMode.Plus,
-            )
+            haloPaint.alpha = alpha255(flash * 0.6f)
+            canvas.drawCircle(centerX, centerY, haloRadius * (0.8f + 0.4f * flash), haloPaint)
         }
-        drawRect(brush = vignette)
+        canvas.drawRect(0f, 0f, w, h, vignettePaint)
     }
 
     companion object {

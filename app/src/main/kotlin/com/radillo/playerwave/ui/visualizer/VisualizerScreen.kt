@@ -61,7 +61,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.radillo.playerwave.R
 import com.radillo.playerwave.core.model.VisualizerSettings
 import com.radillo.playerwave.visualizer.engine.DataState
-import com.radillo.playerwave.visualizer.render.VisualizerSurface
+
 import com.radillo.playerwave.visualizer.scenes.AmbientScene
 import com.radillo.playerwave.visualizer.scenes.LineFieldScene
 import com.radillo.playerwave.visualizer.scenes.OscilloscopeScene

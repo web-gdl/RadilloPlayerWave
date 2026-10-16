@@ -1,6 +1,6 @@
 package com.radillo.playerwave.visualizer.engine
 
-import androidx.compose.ui.graphics.drawscope.DrawScope
+import android.graphics.Canvas
 import com.radillo.playerwave.visualizer.analysis.AudioFrame
 
 /** Backend de render que necesita una escena. */
@@ -29,7 +29,9 @@ data class SceneParams(
  * [AudioFrame]s y el tiempo transcurrido.
  *
  * Ciclo: [onAttach] → ([onResize] | [update] | [draw])* → [onDetach].
- * [update] y [draw] se llaman en el hilo de render; no deben asignar memoria por frame.
+ * Todos los métodos se llaman bajo el cerrojo del motor, desde el hilo de render o el principal,
+ * nunca a la vez. [update] y [draw] no deben asignar memoria por frame: los buffers, `Paint`
+ * y `Shader` se crean en la construcción o al reconstruir por tamaño/paleta/densidad.
  */
 interface Scene {
     val id: String
@@ -42,8 +44,8 @@ interface Scene {
     fun update(frame: AudioFrame, deltaSeconds: Float)
     fun onDetach()
 
-    /** Render para escenas [RenderBackend.CANVAS]. Las escenas GL ignoran este método. */
-    fun draw(scope: DrawScope)
+    /** Render para escenas [RenderBackend.CANVAS] sobre un lienzo de Android (hardware o software). */
+    fun draw(canvas: Canvas)
 }
 
 /** Fábrica registrada en el [SceneRegistry]; permite crear escenas perezosamente. */

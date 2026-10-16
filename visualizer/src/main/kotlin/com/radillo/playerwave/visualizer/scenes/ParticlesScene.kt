@@ -1,12 +1,10 @@
 package com.radillo.playerwave.visualizer.scenes
 
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.DrawScope
+import android.graphics.Canvas
+import android.graphics.RadialGradient
+import android.graphics.Shader
 import com.radillo.playerwave.visualizer.analysis.AudioFrame
+import com.radillo.playerwave.visualizer.engine.Argb
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.exp
@@ -23,6 +21,8 @@ import kotlin.random.Random
  * medios las hacen girar en remolino y los agudos las agitan. Los transitorios lanzan ráfagas.
  *
  * Todo el estado vive en arrays planos preasignados; `update` y `draw` no asignan memoria.
+ * Las estelas se dibujan por lotes (`drawLines`, una llamada por color); los puntos, uno a uno
+ * para conservar su tamaño y su fundido individuales.
  */
 class ParticlesScene : CanvasScene(id = ID, displayName = "Partículas") {
 
@@ -38,6 +38,10 @@ class ParticlesScene : CanvasScene(id = ID, displayName = "Partículas") {
     private var colorIndex = IntArray(0)
     private var cursor = 0
 
+    // Lotes de estelas: un buffer (x0,y0,x1,y1 por segmento) por color de la paleta.
+    private var trailBuffers = Array(0) { FloatArray(0) }
+    private var trailCounts = IntArray(0)
+
     private val random = Random(7)
     private val bandCache = FloatArray(BAND_SLOTS)
     private var emitAccumulator = 0f
@@ -47,7 +51,10 @@ class ParticlesScene : CanvasScene(id = ID, displayName = "Partículas") {
     private var unit = 1f
     private var margin = 0f
     private var glowRadius = 0f
-    private var glowBrush: Brush = SolidColor(Color.Transparent)
+    private val glowPaint = fillPaint()
+    private val dotPaint = fillPaint()
+    private val sparkPaint = fillPaint()
+    private val trailPaint = strokePaint(2f)
 
     private var bass = 0f
     private var mid = 0f
@@ -57,7 +64,8 @@ class ParticlesScene : CanvasScene(id = ID, displayName = "Partículas") {
 
     override fun rebuild() {
         val newCapacity = (260f * params.effectiveDensity).roundToInt().coerceIn(40, 800)
-        if (newCapacity != capacity) {
+        val colorCount = palette.colors.size
+        if (newCapacity != capacity || trailBuffers.size != colorCount) {
             capacity = newCapacity
             x = FloatArray(capacity)
             y = FloatArray(capacity)
@@ -68,18 +76,21 @@ class ParticlesScene : CanvasScene(id = ID, displayName = "Partículas") {
             sizes = FloatArray(capacity)
             hue = FloatArray(capacity)
             colorIndex = IntArray(capacity)
+            trailBuffers = Array(colorCount) { FloatArray(capacity * 4) }
+            trailCounts = IntArray(colorCount)
             cursor = 0
         }
+        sparkPaint.color = palette.accent
         if (!hasSize) return
         centerX = width * 0.5f
         centerY = height * 0.5f
         unit = min(width, height) / 720f
         margin = 40f * unit
         glowRadius = min(width, height) * 0.22f
-        glowBrush = Brush.radialGradient(
-            colors = listOf(palette.accent.copy(alpha = 0.55f), palette.colors.first().copy(alpha = 0.25f), Color.Transparent),
-            center = Offset(centerX, centerY),
-            radius = glowRadius,
+        glowPaint.fillShader = RadialGradient(
+            centerX, centerY, glowRadius,
+            intArrayOf(Argb.withAlpha(palette.accent, 0.55f), Argb.withAlpha(palette.colors.first(), 0.25f), Argb.TRANSPARENT),
+            null, Shader.TileMode.CLAMP,
         )
     }
 
@@ -166,18 +177,39 @@ class ParticlesScene : CanvasScene(id = ID, displayName = "Partículas") {
         colorIndex[slot] = (hu * (palette.colors.size - 1)).roundToInt().coerceIn(0, palette.colors.size - 1)
     }
 
-    override fun draw(scope: DrawScope) = with(scope) {
+    override fun draw(canvas: Canvas) {
         if (!hasSize) return
         val colors = palette.colors
         val intensity = sqrt(params.intensity.coerceIn(0.1f, 2f))
 
-        drawCircle(
-            brush = glowBrush,
-            radius = glowRadius * (0.55f + 0.7f * bass + 0.4f * flash),
-            center = Offset(centerX, centerY),
-            alpha = (0.30f + 0.5f * bass + 0.3f * flash).coerceAtMost(1f),
-        )
+        glowPaint.alpha = alpha255((0.30f + 0.5f * bass + 0.3f * flash).coerceAtMost(1f))
+        canvas.drawCircle(centerX, centerY, glowRadius * (0.55f + 0.7f * bass + 0.4f * flash), glowPaint)
 
+        // Estelas por lotes: un drawLines por color.
+        for (c in trailCounts.indices) trailCounts[c] = 0
+        val k = 0.045f
+        for (i in 0 until capacity) {
+            if (life[i] <= 0f) continue
+            val c = colorIndex[i]
+            val buf = trailBuffers[c]
+            val n = trailCounts[c]
+            val o = n * 4
+            buf[o] = x[i] - vx[i] * k
+            buf[o + 1] = y[i] - vy[i] * k
+            buf[o + 2] = x[i]
+            buf[o + 3] = y[i]
+            trailCounts[c] = n + 1
+        }
+        trailPaint.strokeWidth = unit * 3.2f * intensity
+        for (c in trailCounts.indices) {
+            val n = trailCounts[c]
+            if (n == 0) continue
+            trailPaint.color = colors[c]
+            trailPaint.alpha = alpha255(0.30f)
+            canvas.drawLines(trailBuffers[c], 0, n * 4, trailPaint)
+        }
+
+        // Puntos, con tamaño y fundido individuales.
         for (i in 0 until capacity) {
             val l = life[i]
             if (l <= 0f) continue
@@ -189,21 +221,12 @@ class ParticlesScene : CanvasScene(id = ID, displayName = "Partículas") {
             val e = bandCache[(hue[i] * (BAND_SLOTS - 1)).toInt()]
             val alpha = (fadeIn * fadeOut * (0.5f + 0.5f * e)).coerceIn(0f, 1f)
             val radius = sizes[i] * (0.7f + 0.9f * e) * intensity
-            val color = colors[colorIndex[i]]
-            val px = x[i]
-            val py = y[i]
-            val k = 0.045f
-            drawLine(
-                color = color,
-                start = Offset(px - vx[i] * k, py - vy[i] * k),
-                end = Offset(px, py),
-                strokeWidth = radius * 1.1f,
-                cap = StrokeCap.Round,
-                alpha = alpha * 0.45f,
-            )
-            drawCircle(color = color, radius = radius, center = Offset(px, py), alpha = alpha)
+            dotPaint.color = colors[colorIndex[i]]
+            dotPaint.alpha = alpha255(alpha)
+            canvas.drawCircle(x[i], y[i], radius, dotPaint)
             if (flash > 0.3f && e > 0.6f) {
-                drawCircle(color = palette.accent, radius = radius * 0.45f, center = Offset(px, py), alpha = alpha * flash)
+                sparkPaint.alpha = alpha255(alpha * flash)
+                canvas.drawCircle(x[i], y[i], radius * 0.45f, sparkPaint)
             }
         }
     }

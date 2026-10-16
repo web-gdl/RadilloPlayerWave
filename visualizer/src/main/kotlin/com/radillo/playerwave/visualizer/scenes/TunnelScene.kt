@@ -1,16 +1,11 @@
 package com.radillo.playerwave.visualizer.scenes
 
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.translate
+import android.graphics.Canvas
+import android.graphics.Path
+import android.graphics.RadialGradient
+import android.graphics.Shader
 import com.radillo.playerwave.visualizer.analysis.AudioFrame
+import com.radillo.playerwave.visualizer.engine.Argb
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.exp
@@ -24,8 +19,8 @@ import kotlin.math.sin
  * Escena E: túnel. Anillos poligonales avanzan hacia la cámara desde un punto de fuga que
  * deriva lentamente; la velocidad sigue al nivel RMS, el espectro deforma el contorno de todos
  * los anillos (simetría espejo) y la torsión crece con la cercanía, formando una espiral. Ocho
- * raíles unen los anillos consecutivos para dar sensación de profundidad; los transitorios
- * encienden el fondo del túnel.
+ * raíles unen los anillos consecutivos para dar sensación de profundidad (un `drawLines` por
+ * anillo); los transitorios encienden el fondo del túnel.
  */
 class TunnelScene : CanvasScene(id = ID, displayName = "Túnel") {
 
@@ -42,16 +37,17 @@ class TunnelScene : CanvasScene(id = ID, displayName = "Túnel") {
     private var prevY = FloatArray(VERTICES)
     private var curX = FloatArray(VERTICES)
     private var curY = FloatArray(VERTICES)
+    private val railBuffer = FloatArray(VERTICES / RAIL_STEP * 4)
 
     private var centerX = 0f
     private var centerY = 0f
     private var baseRadius = 0f
     private var strokeUnit = 1.5f
     private var glowRadius = 0f
-    private var glowBrush: Brush = SolidColor(Color.Transparent)
-    // Trazos por tramos de profundidad, creados en rebuild (Stroke es inmutable).
-    private var ringStrokes = Array(STROKE_BUCKETS) { Stroke(width = 2f, cap = StrokeCap.Round, join = StrokeJoin.Round) }
-    private var haloStrokes = Array(STROKE_BUCKETS) { Stroke(width = 6f, cap = StrokeCap.Round, join = StrokeJoin.Round) }
+    private val glowPaint = fillPaint()
+    private val ringPaint = strokePaint(2f)
+    private val haloPaint = strokePaint(6f)
+    private val railPaint = strokePaint(1f, rounded = false)
 
     private var driftT = 0f
     private var rms = 0f
@@ -72,15 +68,12 @@ class TunnelScene : CanvasScene(id = ID, displayName = "Túnel") {
         centerY = height * 0.5f
         baseRadius = min(width, height) * 0.5f
         strokeUnit = max(1.2f, baseRadius * 0.01f)
-        ringStrokes = Array(STROKE_BUCKETS) { b ->
-            Stroke(width = strokeUnit * (0.6f + 2.6f * b / (STROKE_BUCKETS - 1)), cap = StrokeCap.Round, join = StrokeJoin.Round)
-        }
-        haloStrokes = Array(STROKE_BUCKETS) { b -> Stroke(width = ringStrokes[b].width * 3f, cap = StrokeCap.Round, join = StrokeJoin.Round) }
+        railPaint.strokeWidth = strokeUnit * 0.6f
         glowRadius = baseRadius * 0.4f
-        glowBrush = Brush.radialGradient(
-            colors = listOf(palette.accent.copy(alpha = 0.9f), palette.colors.last().copy(alpha = 0.35f), Color.Transparent),
-            center = Offset.Zero,
-            radius = glowRadius,
+        glowPaint.fillShader = RadialGradient(
+            0f, 0f, glowRadius,
+            intArrayOf(Argb.withAlpha(palette.accent, 0.9f), Argb.withAlpha(palette.colors.last(), 0.35f), Argb.TRANSPARENT),
+            null, Shader.TileMode.CLAMP,
         )
     }
 
@@ -118,7 +111,7 @@ class TunnelScene : CanvasScene(id = ID, displayName = "Túnel") {
         var nearest = (farthest + ringCount - 1) % ringCount
         while (z[nearest] < Z_NEAR && guard < ringCount) {
             z[nearest] += Z_FAR - Z_NEAR
-            colorIndex[nearest] = colorIndex[(farthest) % ringCount] + 1
+            colorIndex[nearest] = colorIndex[farthest % ringCount] + 1
             farthest = nearest
             nearest = (farthest + ringCount - 1) % ringCount
             guard++
@@ -126,21 +119,18 @@ class TunnelScene : CanvasScene(id = ID, displayName = "Túnel") {
         driftT += deltaSeconds * 0.35f * params.speed
     }
 
-    override fun draw(scope: DrawScope) = with(scope) {
+    override fun draw(canvas: Canvas) {
         if (!hasSize) return
         val colors = palette.colors
         val intensity = params.intensity.coerceIn(0.1f, 2f)
         val vanishX = centerX + sin(driftT * 0.9f) * width * 0.05f
         val vanishY = centerY + cos(driftT * 0.7f) * height * 0.05f
 
-        translate(vanishX, vanishY) {
-            drawCircle(
-                brush = glowBrush,
-                radius = glowRadius * (0.6f + 0.5f * bass + 0.6f * flash),
-                center = Offset.Zero,
-                alpha = (0.45f + 0.55f * flash).coerceAtMost(1f),
-            )
-        }
+        canvas.save()
+        canvas.translate(vanishX, vanishY)
+        glowPaint.alpha = alpha255((0.45f + 0.55f * flash).coerceAtMost(1f))
+        canvas.drawCircle(0f, 0f, glowRadius * (0.6f + 0.5f * bass + 0.6f * flash), glowPaint)
+        canvas.restore()
 
         val step = (2.0 * PI / VERTICES).toFloat()
         var hasPrev = false
@@ -169,24 +159,32 @@ class TunnelScene : CanvasScene(id = ID, displayName = "Túnel") {
             }
             path.close()
 
-            val bucket = (depth * (STROKE_BUCKETS - 1)).roundToInt().coerceIn(0, STROKE_BUCKETS - 1)
+            val strokeWidth = strokeUnit * (0.6f + 2.6f * depth)
             if (depth > 0.45f) {
-                drawPath(path, color = color, alpha = alpha * 0.25f, style = haloStrokes[bucket])
+                haloPaint.strokeWidth = strokeWidth * 3f
+                haloPaint.color = color
+                haloPaint.alpha = alpha255(alpha * 0.25f)
+                canvas.drawPath(path, haloPaint)
             }
-            drawPath(path, color = color, alpha = alpha, style = ringStrokes[bucket])
+            ringPaint.strokeWidth = strokeWidth
+            ringPaint.color = color
+            ringPaint.alpha = alpha255(alpha)
+            canvas.drawPath(path, ringPaint)
 
             if (hasPrev) {
                 var v = 0
+                var o = 0
                 while (v < VERTICES) {
-                    drawLine(
-                        color = color,
-                        start = Offset(prevX[v], prevY[v]),
-                        end = Offset(curX[v], curY[v]),
-                        strokeWidth = strokeUnit * 0.6f,
-                        alpha = alpha * 0.35f,
-                    )
+                    railBuffer[o] = prevX[v]
+                    railBuffer[o + 1] = prevY[v]
+                    railBuffer[o + 2] = curX[v]
+                    railBuffer[o + 3] = curY[v]
+                    o += 4
                     v += RAIL_STEP
                 }
+                railPaint.color = color
+                railPaint.alpha = alpha255(alpha * 0.35f)
+                canvas.drawLines(railBuffer, 0, o, railPaint)
             }
             val tx = prevX; prevX = curX; curX = tx
             val ty = prevY; prevY = curY; curY = ty
@@ -198,7 +196,6 @@ class TunnelScene : CanvasScene(id = ID, displayName = "Túnel") {
         const val ID = "tunnel"
         private const val VERTICES = 64
         private const val RAIL_STEP = 8
-        private const val STROKE_BUCKETS = 8
         private const val Z_NEAR = 0.05f
         private const val Z_FAR = 1.0f
         private const val Z_SCALE = 0.07f

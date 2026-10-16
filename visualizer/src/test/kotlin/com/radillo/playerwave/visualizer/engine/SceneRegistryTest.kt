@@ -1,6 +1,6 @@
 package com.radillo.playerwave.visualizer.engine
 
-import androidx.compose.ui.graphics.drawscope.DrawScope
+import android.graphics.Canvas
 import com.google.common.truth.Truth.assertThat
 import com.radillo.playerwave.visualizer.analysis.AudioFrame
 import org.junit.Test
@@ -16,7 +16,7 @@ class SceneRegistryTest {
         override fun onResize(widthPx: Int, heightPx: Int) = Unit
         override fun update(frame: AudioFrame, deltaSeconds: Float) = Unit
         override fun onDetach() { attached = false }
-        override fun draw(scope: DrawScope) = Unit
+        override fun draw(canvas: Canvas) = Unit
     }
 
     @Test

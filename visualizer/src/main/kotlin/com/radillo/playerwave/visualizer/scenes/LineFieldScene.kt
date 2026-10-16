@@ -1,11 +1,8 @@
 package com.radillo.playerwave.visualizer.scenes
 
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.lerp
+import android.graphics.Canvas
 import com.radillo.playerwave.visualizer.analysis.AudioFrame
+import com.radillo.playerwave.visualizer.engine.Argb
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.exp
@@ -20,6 +17,9 @@ import kotlin.math.sqrt
  * con el tiempo; cada columna lee una banda del espectro (graves a la izquierda, agudos a la
  * derecha): cuanta más energía, más se alargan y se enderezan los segmentos y más brillan. Los
  * graves hacen rotar todo el campo y los transitorios lo estiran un instante.
+ *
+ * Dibujo por lotes: una llamada `drawLines` por columna (color, alfa y grosor comunes), en vez
+ * de una por segmento.
  */
 class LineFieldScene : CanvasScene(id = ID, displayName = "Campo de líneas") {
 
@@ -27,10 +27,12 @@ class LineFieldScene : CanvasScene(id = ID, displayName = "Campo de líneas") {
     private var rows = 0
     private var angle = FloatArray(0)
     private var columnEnergy = FloatArray(0)
-    private var columnColors = Array(0) { Color.White }
+    private var columnColors = IntArray(0)
+    private var columnBuffer = FloatArray(0) // x0,y0,x1,y1 por fila de una columna
     private var cellW = 0f
     private var cellH = 0f
     private var unit = 1f
+    private val linePaint = strokePaint(2f)
 
     private var time = 0f
     private var rotation = 0f
@@ -45,13 +47,14 @@ class LineFieldScene : CanvasScene(id = ID, displayName = "Campo de líneas") {
             rows = newRows
             angle = FloatArray(cols * rows)
             columnEnergy = FloatArray(cols)
+            columnBuffer = FloatArray(rows * 4)
         }
         val colors = palette.colors
-        columnColors = Array(cols) { c ->
+        columnColors = IntArray(cols) { c ->
             val f = if (cols == 1) 0f else c / (cols - 1f) * (colors.size - 1)
             val i = f.toInt().coerceIn(0, colors.size - 1)
             val j = min(i + 1, colors.size - 1)
-            lerp(colors[i], colors[j], f - i)
+            Argb.lerp(colors[i], colors[j], f - i)
         }
         if (!hasSize || rows == 0) return
         cellW = width / cols.toFloat()
@@ -100,30 +103,32 @@ class LineFieldScene : CanvasScene(id = ID, displayName = "Campo de líneas") {
         }
     }
 
-    override fun draw(scope: DrawScope) = with(scope) {
+    override fun draw(canvas: Canvas) {
         if (!hasSize || rows == 0) return
         val intensity = params.intensity.coerceIn(0.1f, 2f)
         val baseLen = min(cellW, cellH) * 0.5f
-        var i = 0
-        for (r in 0 until rows) {
-            val cy = (r + 0.5f) * cellH
-            for (c in 0 until cols) {
-                val cx = (c + 0.5f) * cellW
-                val e = columnEnergy[c]
-                val half = baseLen * (0.35f + 0.75f * e * intensity + 0.4f * flash)
+        for (c in 0 until cols) {
+            val cx = (c + 0.5f) * cellW
+            val e = columnEnergy[c]
+            val half = baseLen * (0.35f + 0.75f * e * intensity + 0.4f * flash)
+            var o = 0
+            var i = c
+            for (r in 0 until rows) {
+                val cy = (r + 0.5f) * cellH
                 val a = angle[i]
                 val dx = cos(a) * half
                 val dy = sin(a) * half
-                drawLine(
-                    color = columnColors[c],
-                    start = Offset(cx - dx, cy - dy),
-                    end = Offset(cx + dx, cy + dy),
-                    strokeWidth = unit * (0.9f + 1.6f * e),
-                    cap = StrokeCap.Round,
-                    alpha = (0.22f + 0.7f * e + 0.15f * flash).coerceAtMost(1f),
-                )
-                i++
+                columnBuffer[o] = cx - dx
+                columnBuffer[o + 1] = cy - dy
+                columnBuffer[o + 2] = cx + dx
+                columnBuffer[o + 3] = cy + dy
+                o += 4
+                i += cols
             }
+            linePaint.strokeWidth = unit * (0.9f + 1.6f * e)
+            linePaint.color = columnColors[c]
+            linePaint.alpha = alpha255((0.22f + 0.7f * e + 0.15f * flash).coerceAtMost(1f))
+            canvas.drawLines(columnBuffer, 0, o, linePaint)
         }
     }
 
