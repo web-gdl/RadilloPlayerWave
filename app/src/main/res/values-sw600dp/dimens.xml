@@ -19,4 +19,15 @@
     <dimen name="icon_pad">16dp</dimen>
     <dimen name="play_pad">22dp</dimen>
     <dimen name="nav_icon">36dp</dimen>
+    <dimen name="transport">80dp</dimen>
+    <dimen name="transport_secondary">64dp</dimen>
+    <dimen name="play_big">104dp</dimen>
+    <dimen name="art_now_playing">380dp</dimen>
+    <dimen name="tab_height">64dp</dimen>
+    <dimen name="tab_indicator">4dp</dimen>
+    <dimen name="labeled_action_width">112dp</dimen>
+    <dimen name="labeled_action_icon">32dp</dimen>
+    <dimen name="seek_thumb">28dp</dimen>
+    <dimen name="seek_track">6dp</dimen>
+    <dimen name="mini_progress">4dp</dimen>
 </resources>

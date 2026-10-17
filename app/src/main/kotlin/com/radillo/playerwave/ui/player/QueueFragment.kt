@@ -14,6 +14,8 @@ import com.radillo.playerwave.ui.common.toRow
 import com.radillo.playerwave.ui.common.visibleIf
 import com.radillo.playerwave.ui.navigator
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 /** Cola de reproducción: tocar salta a la canción; la X la quita de la cola. */
 @AndroidEntryPoint
@@ -35,20 +37,22 @@ class QueueFragment : Fragment(R.layout.fragment_track_list), ChromeMode {
         b.btnBack.setOnClickListener { navigator.back() }
         b.empty.setText(R.string.queue_empty)
         var scrolled = false
-        collectWhenStarted(viewModel.state) { state ->
+        // Solo cuando cambia la cola o la canción actual: el estado también cambia con cada tic de
+        // progreso y rehacer miles de filas dos veces por segundo se nota en un A7.
+        val queueState = viewModel.state.map { it.queue to it.queueIndex }.distinctUntilChanged()
+        collectWhenStarted(queueState) { (queue, queueIndex) ->
             val ctx = requireContext()
-            b.title.text = getString(R.string.queue_title) + " · " +
-                resources.getQuantityString(R.plurals.track_count, state.queue.size, state.queue.size)
-            val current = state.currentTrack?.id
+            b.title.setText(R.string.queue_title)
+            b.listCount.text = resources.getQuantityString(R.plurals.track_count, queue.size, queue.size)
             adapter.submitList(
-                state.queue.mapIndexed { index, track ->
-                    track.toRow(ctx, if (index == state.queueIndex) current else null, key = "$index-${track.id}")
+                queue.mapIndexed { index, track ->
+                    track.toRow(ctx, if (index == queueIndex) track.id else null, key = "$index-${track.id}")
                 },
             )
-            b.empty.visibleIf(state.queue.isEmpty())
-            if (!scrolled && state.queueIndex > 0) {
+            b.empty.visibleIf(queue.isEmpty())
+            if (!scrolled && queueIndex > 0) {
                 scrolled = true
-                b.list.scrollToPosition(state.queueIndex)
+                b.list.scrollToPosition(queueIndex)
             }
         }
     }

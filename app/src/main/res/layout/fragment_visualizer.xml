@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- El visualizador dibuja en su SurfaceView con hilo propio; los controles son vistas planas encima. -->
+<!--
+  Visualizador. Antes, siete botones de escena tapaban la imagen y obligaban a elegir entre siete
+  (ley de Hick). Ahora: el nombre de la escena con flechas grandes para pasar a la anterior o la
+  siguiente con un toque; tocar el nombre abre la lista completa. Los controles se ocultan solos.
+-->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -20,29 +24,42 @@
         android:background="@drawable/bg_overlay"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="@dimen/space_s"
-        android:paddingTop="@dimen/space_s"
-        android:paddingEnd="@dimen/space_s"
-        android:paddingBottom="@dimen/space_s">
+        android:padding="@dimen/space_s">
 
-        <HorizontalScrollView
+        <ImageButton
+            android:id="@+id/btnScenePrevious"
+            style="@style/IconButton"
+            android:contentDescription="@string/vis_scene_previous"
+            android:src="@drawable/ic_chevron_left"
+            android:tint="#FFFFFFFF" />
+
+        <TextView
+            android:id="@+id/sceneName"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/touch"
             android:layout_weight="1"
-            android:scrollbars="none">
+            android:background="?android:attr/selectableItemBackground"
+            android:contentDescription="@string/vis_choose_scene"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="1"
+            android:textColor="#FFFFFFFF"
+            android:textSize="@dimen/text_title"
+            android:textStyle="bold" />
 
-            <LinearLayout
-                android:id="@+id/sceneChips"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal" />
-        </HorizontalScrollView>
+        <ImageButton
+            android:id="@+id/btnSceneNext"
+            style="@style/IconButton"
+            android:contentDescription="@string/vis_scene_next"
+            android:src="@drawable/ic_chevron_right"
+            android:tint="#FFFFFFFF" />
 
         <ImageButton
             android:id="@+id/btnTune"
             style="@style/IconButton"
+            android:layout_marginStart="@dimen/space_l"
             android:contentDescription="@string/vis_settings"
-            android:src="@drawable/ic_tune"
+            android:src="@drawable/ic_settings"
             android:tint="#FFFFFFFF" />
 
         <ImageButton
@@ -59,67 +76,73 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:background="@drawable/bg_overlay"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
-        android:padding="@dimen/space_s">
-
-        <TextView
-            android:id="@+id/status"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="#CCFFFFFF"
-            android:textSize="@dimen/text_secondary"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/trackTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:maxLines="1"
-            android:textColor="#FFFFFFFF"
-            android:textSize="@dimen/text_title"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/trackSubtitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:maxLines="1"
-            android:textColor="#B3FFFFFF"
-            android:textSize="@dimen/text_secondary" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/space_l"
+        android:paddingTop="@dimen/space_s"
+        android:paddingEnd="@dimen/space_l"
+        android:paddingBottom="@dimen/space_s">
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-            <ImageButton
-                android:id="@+id/btnPrevious"
-                style="@style/IconButton"
-                android:contentDescription="@string/action_previous"
-                android:src="@drawable/ic_skip_previous"
-                android:tint="#FFFFFFFF" />
+            <TextView
+                android:id="@+id/status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#CCFFFFFF"
+                android:textSize="@dimen/text_secondary"
+                android:visibility="gone" />
 
-            <ImageButton
-                android:id="@+id/btnPlay"
-                style="@style/IconButton"
-                android:layout_marginStart="@dimen/space_l"
-                android:layout_marginEnd="@dimen/space_l"
-                android:contentDescription="@string/action_play"
-                android:src="@drawable/ic_play"
-                android:tint="#FFFFFFFF" />
+            <TextView
+                android:id="@+id/trackTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#FFFFFFFF"
+                android:textSize="@dimen/text_title"
+                android:textStyle="bold" />
 
-            <ImageButton
-                android:id="@+id/btnNext"
-                style="@style/IconButton"
-                android:contentDescription="@string/action_next"
-                android:src="@drawable/ic_skip_next"
-                android:tint="#FFFFFFFF" />
+            <TextView
+                android:id="@+id/trackSubtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#B3FFFFFF"
+                android:textSize="@dimen/text_secondary" />
         </LinearLayout>
+
+        <!-- Mismos controles y tamaños que en «Reproduciendo» (consistencia). -->
+        <ImageButton
+            android:id="@+id/btnPrevious"
+            style="@style/TransportButton"
+            android:contentDescription="@string/action_previous"
+            android:src="@drawable/ic_skip_previous"
+            android:tint="#FFFFFFFF" />
+
+        <ImageButton
+            android:id="@+id/btnPlay"
+            style="@style/PlayButton"
+            android:layout_marginStart="@dimen/space_m"
+            android:layout_marginEnd="@dimen/space_m"
+            android:contentDescription="@string/action_play"
+            android:src="@drawable/ic_play" />
+
+        <ImageButton
+            android:id="@+id/btnNext"
+            style="@style/TransportButton"
+            android:contentDescription="@string/action_next"
+            android:src="@drawable/ic_skip_next"
+            android:tint="#FFFFFFFF" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
     </LinearLayout>
 </FrameLayout>

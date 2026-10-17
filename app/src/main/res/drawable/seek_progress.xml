@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Barra de progreso gruesa: se ve de un vistazo y se arrastra con el dedo en marcha. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/background" android:gravity="center_vertical|fill_horizontal" android:height="@dimen/seek_track">
+        <shape android:shape="rectangle"><solid android:color="@color/surface_alt" /><corners android:radius="@dimen/seek_track" /></shape>
+    </item>
+    <item android:id="@android:id/progress" android:gravity="center_vertical|fill_horizontal" android:height="@dimen/seek_track">
+        <clip><shape android:shape="rectangle"><solid android:color="@color/accent" /><corners android:radius="@dimen/seek_track" /></shape></clip>
+    </item>
+</layer-list>

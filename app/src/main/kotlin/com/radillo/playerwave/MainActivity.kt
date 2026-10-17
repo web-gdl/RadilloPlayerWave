@@ -25,6 +25,8 @@ import com.radillo.playerwave.ui.Navigator
 import com.radillo.playerwave.ui.Tab
 import com.radillo.playerwave.ui.common.subtitle
 import com.radillo.playerwave.ui.common.visibleIf
+import com.radillo.playerwave.ui.library.CollectionDetailFragment
+import com.radillo.playerwave.ui.library.LastCollection
 import com.radillo.playerwave.ui.library.LibraryFragment
 import com.radillo.playerwave.ui.player.NowPlayingFragment
 import com.radillo.playerwave.ui.player.PlayerViewModel
@@ -50,6 +52,9 @@ class MainActivity : FragmentActivity(), Navigator {
     private var currentTab = Tab.LIBRARY
     private var appliedTheme = ThemeMode.SYSTEM
     private var lastMiniArt: String? = null
+
+    private val uiPrefs by lazy { getSharedPreferences("ui_state", MODE_PRIVATE) }
+    private var lastMiniPlaying: Boolean? = null
 
     private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
@@ -87,6 +92,7 @@ class MainActivity : FragmentActivity(), Navigator {
         binding.miniPlayer.miniOpen.setOnClickListener { openTab(Tab.NOW_PLAYING) }
         binding.miniPlayer.miniPlay.setOnClickListener { playerViewModel.togglePlayPause() }
         binding.miniPlayer.miniNext.setOnClickListener { playerViewModel.next() }
+        binding.miniPlayer.miniPrevious.setOnClickListener { playerViewModel.previous() }
 
         supportFragmentManager.registerFragmentLifecycleCallbacks(
             object : FragmentManager.FragmentLifecycleCallbacks() {
@@ -98,7 +104,14 @@ class MainActivity : FragmentActivity(), Navigator {
         )
 
         if (savedInstanceState == null) {
-            openTab(Tab.LIBRARY)
+            // Se vuelve a la última sección usada (en el coche, casi siempre «Reproduciendo») y, en la
+            // biblioteca, a la carpeta, álbum o artista que estuviera abierto.
+            val lastTab = Tab.entries.firstOrNull { it.name == uiPrefs.getString(KEY_LAST_TAB, null) } ?: Tab.LIBRARY
+            val collection = LastCollection.read(this)
+            openTab(lastTab)
+            if (lastTab == Tab.LIBRARY && collection != null) {
+                push(CollectionDetailFragment.newInstance(collection.kind, collection.key, collection.title))
+            }
             requestNotificationPermissionOnce()
         } else {
             currentTab = Tab.entries.getOrElse(savedInstanceState.getInt(KEY_TAB)) { Tab.LIBRARY }
@@ -148,6 +161,7 @@ class MainActivity : FragmentActivity(), Navigator {
         }
         fm.beginTransaction().setReorderingAllowed(true).replace(R.id.content, fragment).commit()
         currentTab = tab
+        uiPrefs.edit().putString(KEY_LAST_TAB, tab.name).apply()
         updateNavSelection()
     }
 
@@ -188,8 +202,12 @@ class MainActivity : FragmentActivity(), Navigator {
         if (track == null) return
         mini.miniTitle.text = track.title
         mini.miniSubtitle.text = track.subtitle(this)
-        mini.miniPlay.setImageResource(if (state.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
-        mini.miniPlay.contentDescription = getString(if (state.isPlaying) R.string.action_pause else R.string.action_play)
+        mini.miniProgress.progress = if (state.durationMs > 0) (state.positionMs * 1000L / state.durationMs).toInt().coerceIn(0, 1000) else 0
+        if (lastMiniPlaying != state.isPlaying) {
+            lastMiniPlaying = state.isPlaying
+            mini.miniPlay.setImageResource(if (state.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+            mini.miniPlay.contentDescription = getString(if (state.isPlaying) R.string.action_pause else R.string.action_play)
+        }
         if (lastMiniArt != track.albumArtUri) {
             lastMiniArt = track.albumArtUri
             ArtworkLoader.get(this).load(mini.miniArt, track.albumArtUri, mini.miniArt.layoutParams.width, R.drawable.tile_note)
@@ -217,5 +235,6 @@ class MainActivity : FragmentActivity(), Navigator {
     private companion object {
         const val KEY_TAB = "tab"
         const val KEY_ASKED_NOTIFICATIONS = "asked_notifications"
+        const val KEY_LAST_TAB = "last_tab"
     }
 }

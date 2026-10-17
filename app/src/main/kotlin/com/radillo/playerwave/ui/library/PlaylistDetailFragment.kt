@@ -39,6 +39,7 @@ class PlaylistDetailFragment : Fragment(R.layout.fragment_track_list) {
             tracks = list
             adapter.submitList(list.toRows(requireContext(), nowPlaying))
             b.actions.visibleIf(list.isNotEmpty())
+            b.listCount.text = resources.getQuantityString(R.plurals.track_count, list.size, list.size)
             b.empty.setText(if (viewModel.isFavorites) R.string.favorites_empty else R.string.playlist_empty)
             b.empty.visibleIf(list.isEmpty())
         }

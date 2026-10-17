@@ -191,4 +191,49 @@
         <item quantity="one">%d álbum</item>
         <item quantity="other">%d álbumes</item>
     </plurals>
+
+    <!-- Rediseño 0.9 -->
+    <string name="action_find_new_music">Buscar música nueva</string>
+    <string name="scan_none">No hay música nueva</string>
+    <plurals name="scan_added">
+        <item quantity="one">%d canción nueva</item>
+        <item quantity="other">%d canciones nuevas</item>
+    </plurals>
+    <plurals name="scan_removed">
+        <item quantity="one">%d canción ya no está</item>
+        <item quantity="other">%d canciones ya no están</item>
+    </plurals>
+    <string name="np_up_next">A continuación: %s</string>
+    <string name="np_favorite">Favorito</string>
+    <string name="np_sleep">Temporizador</string>
+    <string name="np_equalizer">Ecualizador</string>
+    <string name="np_queue">Cola</string>
+    <string name="vis_scene_previous">Escena anterior</string>
+    <string name="vis_scene_next">Escena siguiente</string>
+    <string name="vis_choose_scene">Elegir escena</string>
+    <string name="settings_playback">Reproducción</string>
+    <string name="settings_keep_playing">Seguir sonando aunque otra app pida el audio</string>
+    <string name="settings_keep_playing_hint">Recomendado en el coche: volver al escritorio o abrir otra app no pausa la música. La navegación y las llamadas la pausan un momento y vuelve sola.</string>
+    <string name="settings_library">Biblioteca</string>
+    <string name="settings_rescan_hint">Busca canciones nuevas en la memoria interna y en las USB. Al abrir la app solo se busca si algo cambió.</string>
+    <string name="playlist_delete_confirm">¿Eliminar la lista «%s»? Las canciones no se borran del dispositivo.</string>
+    <string name="action_delete">Eliminar</string>
+    <string name="toast_added_to_queue">Añadida a la cola</string>
+    <string name="toast_play_next">Sonará a continuación</string>
+    <string name="toast_added_favorite">Añadida a favoritos</string>
+    <string name="toast_removed_favorite">Quitada de favoritos</string>
+    <string name="toast_added_to_playlist">Añadida a «%s»</string>
+    <string name="now_playing_badge">Sonando</string>
+    <string name="diag_section_render">Dibujo del visualizador</string>
+    <string name="render_auto">Automático</string>
+    <string name="render_gpu">GPU</string>
+    <string name="render_cpu">CPU</string>
+    <string name="render_now">Ahora: %s</string>
+    <string name="render_forced">Se pasó a CPU tras un cierre inesperado.</string>
+    <string name="render_hint">La CPU es más estable en equipos con Android 8–9; la GPU es más fluida si el equipo la soporta bien.</string>
+    <string name="diag_section_events">Registro de eventos</string>
+    <string name="diag_last_crash">Último cierre inesperado</string>
+    <string name="diag_no_crash">Ninguno registrado</string>
+    <string name="diag_no_events">Sin eventos todavía</string>
+    <string name="diag_clear_log">Borrar registro</string>
 </resources>

@@ -1,11 +1,10 @@
 package com.radillo.playerwave.ui.visualizer
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.LayoutInflater
 import android.view.View
-import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -24,8 +23,10 @@ import kotlinx.coroutines.flow.combine
 
 /**
  * Visualizador. La imagen la dibuja `VisualizerSurfaceView` en su propio hilo; aquí solo hay
- * controles planos encima. En modo inmersivo oculta la navegación y las barras del sistema, y los
- * controles se esconden solos a los 4 s (un toque los muestra u oculta).
+ * controles planos encima: escena actual con flechas para cambiarla (tocar el nombre abre la lista
+ * completa) y los controles de reproducción. Mientras suena, los controles se esconden solos para
+ * dejar ver la imagen (un toque los muestra u oculta). En modo inmersivo además se ocultan la
+ * navegación y las barras del sistema.
  */
 @AndroidEntryPoint
 class VisualizerFragment : Fragment(R.layout.fragment_visualizer), ChromeMode {
@@ -34,7 +35,7 @@ class VisualizerFragment : Fragment(R.layout.fragment_visualizer), ChromeMode {
     private var binding: FragmentVisualizerBinding? = null
     private val handler = Handler(Looper.getMainLooper())
     private val hideControls = Runnable { setControlsVisible(false) }
-    private val chips = mutableMapOf<String, TextView>()
+    private var playing = false
 
     private val immersive: Boolean get() = arguments?.getBoolean(ARG_IMMERSIVE) == true
     override val hidesNavigation: Boolean get() = immersive
@@ -51,21 +52,15 @@ class VisualizerFragment : Fragment(R.layout.fragment_visualizer), ChromeMode {
         b.btnFullscreen.setOnClickListener {
             if (immersive) navigator.back() else navigator.push(newInstance(immersive = true))
         }
-        b.btnPlay.setOnClickListener { viewModel.togglePlayPause() }
-        b.btnNext.setOnClickListener { viewModel.next() }
-        b.btnPrevious.setOnClickListener { viewModel.previous() }
-
-        val inflater = LayoutInflater.from(requireContext())
-        viewModel.sceneIds.forEach { id ->
-            val chip = inflater.inflate(R.layout.view_chip, b.sceneChips, false) as TextView
-            chip.setText(sceneLabelRes(id))
-            chip.setOnClickListener { viewModel.selectScene(id) }
-            b.sceneChips.addView(chip)
-            chips[id] = chip
-        }
+        b.btnPlay.setOnClickListener { viewModel.togglePlayPause(); scheduleHide() }
+        b.btnNext.setOnClickListener { viewModel.next(); scheduleHide() }
+        b.btnPrevious.setOnClickListener { viewModel.previous(); scheduleHide() }
+        b.btnScenePrevious.setOnClickListener { stepScene(-1) }
+        b.btnSceneNext.setOnClickListener { stepScene(1) }
+        b.sceneName.setOnClickListener { chooseScene() }
 
         collectWhenStarted(viewModel.settings) { s ->
-            chips.forEach { (id, chip) -> chip.isSelected = id == s.sceneId }
+            b.sceneName.setText(sceneLabelRes(s.sceneId))
             b.root.keepScreenOn = s.keepScreenOn
         }
         collectWhenStarted(combine(viewModel.playbackState, viewModel.dataState) { p, d -> p to d }) { (p, d) ->
@@ -83,6 +78,11 @@ class VisualizerFragment : Fragment(R.layout.fragment_visualizer), ChromeMode {
             if (status != null) b.status.setText(status)
             b.btnPlay.setImageResource(if (p.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
             b.btnPlay.contentDescription = getString(if (p.isPlaying) R.string.action_pause else R.string.action_play)
+            if (p.isPlaying != playing) {
+                playing = p.isPlaying
+                // En pausa los controles se quedan a la vista; sonando, se esconden solos.
+                if (playing) scheduleHide() else setControlsVisible(true)
+            }
         }
     }
 
@@ -94,8 +94,8 @@ class VisualizerFragment : Fragment(R.layout.fragment_visualizer), ChromeMode {
                 systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                 hide(WindowInsetsCompat.Type.systemBars())
             }
-            scheduleHide()
         }
+        scheduleHide()
     }
 
     override fun onPause() {
@@ -108,9 +108,33 @@ class VisualizerFragment : Fragment(R.layout.fragment_visualizer), ChromeMode {
     }
 
     override fun onDestroyView() {
-        chips.clear()
+        handler.removeCallbacks(hideControls)
         binding = null
         super.onDestroyView()
+    }
+
+    /** Escena anterior o siguiente, en bucle: un toque grande en vez de buscar en una lista. */
+    private fun stepScene(delta: Int) {
+        val ids = viewModel.sceneIds
+        if (ids.isEmpty()) return
+        val current = ids.indexOf(viewModel.settings.value.sceneId).coerceAtLeast(0)
+        viewModel.selectScene(ids[(current + delta).mod(ids.size)])
+        scheduleHide()
+    }
+
+    /** Lista completa solo cuando se pide (revelación progresiva). */
+    private fun chooseScene() {
+        val ids = viewModel.sceneIds
+        val labels = ids.map { getString(sceneLabelRes(it)) }.toTypedArray()
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.vis_choose_scene)
+            .setSingleChoiceItems(labels, ids.indexOf(viewModel.settings.value.sceneId)) { dialog, which ->
+                viewModel.selectScene(ids[which])
+                dialog.dismiss()
+            }
+            .setNegativeButton(R.string.action_close, null)
+            .show()
+        handler.removeCallbacks(hideControls)
     }
 
     private fun setControlsVisible(visible: Boolean) {
@@ -122,7 +146,7 @@ class VisualizerFragment : Fragment(R.layout.fragment_visualizer), ChromeMode {
 
     private fun scheduleHide() {
         handler.removeCallbacks(hideControls)
-        if (immersive) handler.postDelayed(hideControls, 4_000)
+        if (playing || immersive) handler.postDelayed(hideControls, if (immersive) 4_000L else 6_000L)
     }
 
     companion object {

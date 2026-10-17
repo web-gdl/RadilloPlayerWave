@@ -14,6 +14,8 @@ import com.radillo.playerwave.R
 import com.radillo.playerwave.core.device.DeviceProfile
 import com.radillo.playerwave.core.device.GpuInfo
 import com.radillo.playerwave.core.device.GpuProbe
+import com.radillo.playerwave.core.diagnostics.EventLog
+import com.radillo.playerwave.core.diagnostics.RenderMode
 import com.radillo.playerwave.data.settings.VisualizerSettingsRepository
 import com.radillo.playerwave.visualizer.engine.VisualizerEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -96,6 +98,15 @@ class DiagnosticsViewModel @Inject constructor(
             appendLine("Pantalla ${p.widthPx}x${p.heightPx} px · ${p.densityDpi} dpi · ${refreshRate?.let { String.format(Locale.ROOT, "%.0f Hz", it) } ?: "?"} · horizontal fija=${p.fixedLandscape}")
             appendLine("GPU: ${g?.renderer ?: "?"} · ${g?.vendor ?: ""} · ${g?.version ?: ""}")
             appendLine("Visualizador: ${fps.value.roundToInt()} fps de ${maxFps.value} · calidad ${(quality.value * 100).roundToInt()} %")
+            appendLine("Dibujo: elegido ${RenderMode.choice} · efectivo ${if (RenderMode.useGpu()) "GPU" else "CPU"}" + if (RenderMode.forcedCpuAfterCrash) " · CPU forzada tras un cierre" else "")
+            appendLine()
+            appendLine("— Registro —")
+            EventLog.entries().forEach { appendLine(it) }
+            EventLog.lastCrash()?.let { crash ->
+                appendLine()
+                appendLine("— Último cierre inesperado —")
+                appendLine(crash.lines().take(40).joinToString("\n"))
+            }
         }
     }
 

@@ -9,6 +9,8 @@ import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.radillo.playerwave.R
+import com.radillo.playerwave.core.diagnostics.EventLog
+import com.radillo.playerwave.core.diagnostics.RenderMode
 import com.radillo.playerwave.databinding.FragmentDiagnosticsBinding
 import com.radillo.playerwave.ui.common.collectWhenStarted
 import com.radillo.playerwave.ui.common.dp
@@ -35,6 +37,9 @@ class DiagnosticsFragment : Fragment(R.layout.fragment_diagnostics) {
 
         if (p.lowEnd) note(b.rows, getString(R.string.diag_profile_low_end, p.reasons.joinToString("; ")))
         if (p.apiSpoofed) note(b.rows, getString(R.string.diag_android_spoofed))
+
+        renderModeSection(b.rows)
+        eventsSection(b.rows)
 
         section(b.rows, R.string.diag_section_device)
         row(b.rows, R.string.diag_model).text = "${Build.MANUFACTURER} ${Build.MODEL}"
@@ -91,6 +96,75 @@ class DiagnosticsFragment : Fragment(R.layout.fragment_diagnostics) {
         collectWhenStarted(viewModel.maxFps) { max -> fps.text = getString(R.string.diag_fps_format, viewModel.fps.value, max) }
         collectWhenStarted(viewModel.quality) { q -> quality.text = "${(q * 100).roundToInt()} %" }
     }
+
+    /** GPU o CPU para el visualizador: automático por defecto, forzable si el equipo da problemas. */
+    private fun renderModeSection(container: LinearLayout) {
+        section(container, R.string.diag_section_render)
+        val ctx = requireContext()
+        val chipsRow = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL }
+        val now = TextView(ctx, null, 0, R.style.Text_Secondary)
+        val options = listOf(
+            RenderMode.Choice.AUTO to R.string.render_auto,
+            RenderMode.Choice.GPU to R.string.render_gpu,
+            RenderMode.Choice.CPU to R.string.render_cpu,
+        )
+        options.forEach { (choice, label) ->
+            (layoutInflater.inflate(R.layout.view_chip, chipsRow, false) as TextView).apply {
+                setText(label)
+                chipsRow.addView(this)
+                setOnClickListener {
+                    RenderMode.choice = choice
+                    refreshRender(options.map { it.first }, chipsRow, now)
+                }
+            }
+        }
+        container.addView(chipsRow)
+        now.setPadding(0, ctx.dp(8), 0, 0)
+        container.addView(now)
+        if (RenderMode.forcedCpuAfterCrash) note(container, getString(R.string.render_forced))
+        TextView(ctx, null, 0, R.style.Text_Secondary).apply {
+            setText(R.string.render_hint)
+            container.addView(this)
+        }
+        refreshRender(options.map { it.first }, chipsRow, now)
+    }
+
+    private fun refreshRender(choices: List<RenderMode.Choice>, row: LinearLayout, now: TextView) {
+        choices.forEachIndexed { i, c -> row.getChildAt(i)?.isSelected = c == RenderMode.choice }
+        now.text = getString(R.string.render_now, getString(if (RenderMode.useGpu()) R.string.render_gpu else R.string.render_cpu))
+    }
+
+    /** Últimos eventos (lo más reciente arriba) y la traza del último cierre inesperado. */
+    private fun eventsSection(container: LinearLayout) {
+        val ctx = requireContext()
+        section(container, R.string.diag_last_crash)
+        val crash = EventLog.lastCrash()
+        monospace(container, crash?.lines()?.take(14)?.joinToString("\n") ?: getString(R.string.diag_no_crash))
+
+        section(container, R.string.diag_section_events)
+        val events = EventLog.entries().asReversed().take(25)
+        val log = monospace(container, if (events.isEmpty()) getString(R.string.diag_no_events) else events.joinToString("\n"))
+        TextView(ctx, null, 0, R.style.FlatButton_Secondary).apply {
+            setText(R.string.diag_clear_log)
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, ctx.resources.getDimensionPixelSize(R.dimen.button_height)).apply {
+                topMargin = ctx.dp(8)
+            }
+            setOnClickListener {
+                EventLog.clear()
+                log.setText(R.string.diag_no_events)
+            }
+            container.addView(this)
+        }
+    }
+
+    private fun monospace(container: LinearLayout, text: String): TextView =
+        TextView(requireContext(), null, 0, R.style.Text_Secondary).apply {
+            this.text = text
+            typeface = android.graphics.Typeface.MONOSPACE
+            textSize = 13f
+            setTextIsSelectable(true)
+            container.addView(this)
+        }
 
     private fun section(container: LinearLayout, @StringRes title: Int) {
         TextView(requireContext(), null, 0, R.style.Text_Section).apply {

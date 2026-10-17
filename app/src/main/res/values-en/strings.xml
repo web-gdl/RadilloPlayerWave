@@ -189,4 +189,49 @@
         <item quantity="one">%d album</item>
         <item quantity="other">%d albums</item>
     </plurals>
+
+    <!-- Redesign 0.9 -->
+    <string name="action_find_new_music">Find new music</string>
+    <string name="scan_none">No new music</string>
+    <plurals name="scan_added">
+        <item quantity="one">%d new song</item>
+        <item quantity="other">%d new songs</item>
+    </plurals>
+    <plurals name="scan_removed">
+        <item quantity="one">%d song is gone</item>
+        <item quantity="other">%d songs are gone</item>
+    </plurals>
+    <string name="np_up_next">Up next: %s</string>
+    <string name="np_favorite">Favorite</string>
+    <string name="np_sleep">Sleep timer</string>
+    <string name="np_equalizer">Equalizer</string>
+    <string name="np_queue">Queue</string>
+    <string name="vis_scene_previous">Previous scene</string>
+    <string name="vis_scene_next">Next scene</string>
+    <string name="vis_choose_scene">Choose scene</string>
+    <string name="settings_playback">Playback</string>
+    <string name="settings_keep_playing">Keep playing when another app takes the audio</string>
+    <string name="settings_keep_playing_hint">Recommended in the car: going home or opening another app won’t pause the music. Navigation and calls pause it briefly and it resumes on its own.</string>
+    <string name="settings_library">Library</string>
+    <string name="settings_rescan_hint">Looks for new songs in internal storage and USB drives. On launch it only searches if something changed.</string>
+    <string name="playlist_delete_confirm">Delete the playlist “%s”? The songs stay on the device.</string>
+    <string name="action_delete">Delete</string>
+    <string name="toast_added_to_queue">Added to queue</string>
+    <string name="toast_play_next">Will play next</string>
+    <string name="toast_added_favorite">Added to favorites</string>
+    <string name="toast_removed_favorite">Removed from favorites</string>
+    <string name="toast_added_to_playlist">Added to “%s”</string>
+    <string name="now_playing_badge">Playing</string>
+    <string name="diag_section_render">Visualizer drawing</string>
+    <string name="render_auto">Automatic</string>
+    <string name="render_gpu">GPU</string>
+    <string name="render_cpu">CPU</string>
+    <string name="render_now">Now: %s</string>
+    <string name="render_forced">Switched to CPU after an unexpected close.</string>
+    <string name="render_hint">CPU is more stable on Android 8–9 units; GPU is smoother when the unit handles it well.</string>
+    <string name="diag_section_events">Event log</string>
+    <string name="diag_last_crash">Last unexpected close</string>
+    <string name="diag_no_crash">None recorded</string>
+    <string name="diag_no_events">No events yet</string>
+    <string name="diag_clear_log">Clear log</string>
 </resources>

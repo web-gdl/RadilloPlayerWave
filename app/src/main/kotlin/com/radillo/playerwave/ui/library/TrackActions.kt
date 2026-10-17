@@ -1,6 +1,8 @@
 package com.radillo.playerwave.ui.library
 
 import android.app.AlertDialog
+import android.content.Context
+import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
 import com.radillo.playerwave.R
@@ -31,10 +33,20 @@ fun Fragment.showTrackActions(
     AlertDialog.Builder(context)
         .setTitle(track.title)
         .setItems(labels.toTypedArray()) { _, which ->
+            // Cada acción confirma con un aviso breve: sin él no se sabe si el toque sirvió.
             when (which) {
-                0 -> actions.playNext(track)
-                1 -> actions.addToQueue(track)
-                2 -> actions.toggleFavorite(track)
+                0 -> {
+                    actions.playNext(track)
+                    context.toast(context.getString(R.string.toast_play_next))
+                }
+                1 -> {
+                    actions.addToQueue(track)
+                    context.toast(context.getString(R.string.toast_added_to_queue))
+                }
+                2 -> {
+                    actions.toggleFavorite(track)
+                    context.toast(context.getString(if (isFavorite) R.string.toast_removed_favorite else R.string.toast_added_favorite))
+                }
                 3 -> showPlaylistPicker(track, actions)
                 else -> extras.getOrNull(which - 4)?.run?.invoke()
             }
@@ -48,6 +60,7 @@ private fun Fragment.showPlaylistPicker(track: Track, actions: TrackActionsViewM
     val createNew: () -> Unit = {
         context.showTextInputDialog(R.string.playlist_new, "", R.string.action_create, R.string.playlist_name_hint) { name ->
             actions.createPlaylistWith(name, track)
+            context.toast(context.getString(R.string.toast_added_to_playlist, name))
         }
     }
     if (playlists.isEmpty()) {
@@ -59,8 +72,17 @@ private fun Fragment.showPlaylistPicker(track: Track, actions: TrackActionsViewM
         .setTitle(R.string.action_add_to_playlist)
         .setItems(labels.toTypedArray()) { _, which ->
             val playlist = playlists.getOrNull(which)
-            if (playlist == null) createNew() else actions.addToPlaylist(playlist.id, track)
+            if (playlist == null) {
+                createNew()
+            } else {
+                actions.addToPlaylist(playlist.id, track)
+                context.toast(context.getString(R.string.toast_added_to_playlist, playlist.name))
+            }
         }
         .setNegativeButton(R.string.action_cancel, null)
         .show()
+}
+
+internal fun Context.toast(text: String) {
+    Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
 }

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fila: la canción que suena se marca con un fondo propio (región común), no solo con color. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_activated="true" android:drawable="@color/selected_bg" />
+    <item android:drawable="@android:color/transparent" />
+</selector>

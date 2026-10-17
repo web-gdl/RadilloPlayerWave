@@ -41,9 +41,18 @@ class CollectionDetailFragment : Fragment(R.layout.fragment_track_list) {
             tracks = list
             adapter.submitList(list.toRows(requireContext(), nowPlaying))
             b.actions.visibleIf(list.isNotEmpty())
+            b.listCount.text = resources.getQuantityString(R.plurals.track_count, list.size, list.size)
             b.empty.setText(R.string.empty_scanning)
             b.empty.visibleIf(list.isEmpty())
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val args = arguments ?: return
+        val kind = args.getString(CollectionDetailViewModel.ARG_KIND)?.let { k -> CollectionKind.entries.firstOrNull { it.name == k } } ?: return
+        val key = args.getString(CollectionDetailViewModel.ARG_KEY) ?: return
+        LastCollection.save(requireContext(), kind, key, args.getString(CollectionDetailViewModel.ARG_TITLE).orEmpty())
     }
 
     companion object {

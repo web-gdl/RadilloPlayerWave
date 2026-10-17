@@ -2,13 +2,19 @@ package com.radillo.playerwave.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.radillo.playerwave.BuildConfig
-import com.radillo.playerwave.R
 import com.radillo.playerwave.core.device.DeviceProfile
 import com.radillo.playerwave.core.model.AppSettings
 import com.radillo.playerwave.core.model.ThemeMode
 import com.radillo.playerwave.data.settings.AppSettingsRepository
+import android.content.Context
+import com.radillo.playerwave.core.settings.PlaybackSettings
+import com.radillo.playerwave.data.library.LibraryRepository
+import com.radillo.playerwave.data.library.ScanResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -17,9 +23,27 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val repository: AppSettingsRepository,
+    private val library: LibraryRepository,
     val profile: DeviceProfile,
 ) : ViewModel() {
+
+    /** «Seguir sonando aunque otra app pida el audio» (lo lee el servicio de reproducción). */
+    val keepPlaying = MutableStateFlow(PlaybackSettings.keepPlayingOnFocusLoss(context, profile.fixedLandscape))
+
+    fun setKeepPlaying(enabled: Boolean) {
+        PlaybackSettings.setKeepPlayingOnFocusLoss(context, enabled)
+        keepPlaying.value = enabled
+    }
+
+    val isScanning: StateFlow<Boolean> = library.isScanning
+    private val _scanResults = MutableSharedFlow<ScanResult>(extraBufferCapacity = 1)
+    val scanResults: SharedFlow<ScanResult> = _scanResults
+
+    fun rescan() {
+        viewModelScope.launch { _scanResults.emit(library.rescan(force = true)) }
+    }
 
     val settings: StateFlow<AppSettings> =
         repository.settings.stateIn(viewModelScope, SharingStarted.Eagerly, repository.snapshot())

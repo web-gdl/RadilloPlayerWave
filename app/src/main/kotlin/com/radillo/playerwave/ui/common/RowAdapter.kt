@@ -55,10 +55,11 @@ class RowAdapter(
         b.rowTitle.text = row.title
         b.rowSubtitle.text = row.subtitle
         b.rowSubtitle.visibleIf(row.subtitle.isNotEmpty())
-        b.rowTitle.isActivated = row.highlighted
+        b.root.isActivated = row.highlighted
         b.rowTitle.setTextColor(
             b.root.context.getColor(if (row.highlighted) R.color.accent else R.color.text_primary),
         )
+        b.rowPlaying.visibleIf(row.highlighted)
         b.rowMore.visibleIf(row.showMore && onMore != null)
         val size = b.rowArt.layoutParams.width
         ArtworkLoader.get(b.root.context).load(b.rowArt, row.artUri, size, row.placeholder)

@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Móvil en vertical: carátula arriba, información, progreso, controles y extras. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -18,14 +19,14 @@
 
             <FrameLayout
                 android:id="@+id/artFrame"
-                android:layout_width="280dp"
-                android:layout_height="280dp"
-                android:layout_marginTop="@dimen/space_s"
-                android:layout_marginBottom="@dimen/space_l"
+                android:layout_width="@dimen/art_now_playing"
+                android:layout_height="@dimen/art_now_playing"
                 android:background="@color/surface_alt"
                 android:clickable="true"
                 android:contentDescription="@string/np_toggle_visualizer"
-                android:focusable="true">
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:layout_marginTop="@dimen/space_l">
 
                 <ImageView
                     android:id="@+id/art"
@@ -40,6 +41,10 @@
                     android:layout_height="match_parent"
                     android:visibility="gone" />
             </FrameLayout>
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="@dimen/space_xl" />
 
             <TextView
                 android:id="@+id/trackTitle"
@@ -62,10 +67,8 @@
 
             <SeekBar
                 android:id="@+id/seek"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/touch"
-                android:layout_marginTop="@dimen/space_m"
-                android:max="1000" />
+                style="@style/SeekBarThick"
+                android:layout_marginTop="@dimen/space_s" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -77,9 +80,21 @@
                 <TextView
                     android:id="@+id/position"
                     style="@style/Text.Secondary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <!-- Qué viene después: estado visible sin abrir la cola. -->
+                <TextView
+                    android:id="@+id/queueInfo"
+                    style="@style/Text.Secondary"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1" />
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:paddingStart="@dimen/space_m"
+                    android:paddingEnd="@dimen/space_m" />
 
                 <TextView
                     android:id="@+id/duration"
@@ -88,6 +103,7 @@
                     android:layout_height="wrap_content" />
             </LinearLayout>
 
+            <!-- Transporte por importancia: reproducir > anterior/siguiente > aleatorio/repetir. -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -97,87 +113,75 @@
 
                 <ImageButton
                     android:id="@+id/btnShuffle"
-                    style="@style/IconButton"
+                    style="@style/TransportButton.Secondary"
                     android:contentDescription="@string/action_shuffle"
                     android:src="@drawable/ic_shuffle" />
 
                 <ImageButton
                     android:id="@+id/btnPrevious"
-                    style="@style/IconButton"
+                    style="@style/TransportButton"
                     android:layout_marginStart="@dimen/space_m"
                     android:contentDescription="@string/action_previous"
                     android:src="@drawable/ic_skip_previous" />
 
                 <ImageButton
                     android:id="@+id/btnPlay"
-                    android:layout_width="@dimen/touch_large"
-                    android:layout_height="@dimen/touch_large"
+                    style="@style/PlayButton"
                     android:layout_marginStart="@dimen/space_l"
                     android:layout_marginEnd="@dimen/space_l"
-                    android:background="@drawable/bg_circle_accent"
                     android:contentDescription="@string/action_play"
-                    android:padding="@dimen/play_pad"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/ic_play"
-                    android:tint="@color/on_accent" />
+                    android:src="@drawable/ic_play" />
 
                 <ImageButton
                     android:id="@+id/btnNext"
-                    style="@style/IconButton"
+                    style="@style/TransportButton"
                     android:layout_marginEnd="@dimen/space_m"
                     android:contentDescription="@string/action_next"
                     android:src="@drawable/ic_skip_next" />
 
                 <ImageButton
                     android:id="@+id/btnRepeat"
-                    style="@style/IconButton"
+                    style="@style/TransportButton.Secondary"
                     android:contentDescription="@string/action_repeat"
                     android:src="@drawable/ic_repeat" />
             </LinearLayout>
 
+            <!-- Acciones secundarias con icono y texto: reconocer en vez de recordar qué hace cada icono. -->
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_s"
-                android:gravity="center"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="@dimen/space_l"
                 android:orientation="horizontal">
-
-                <ImageButton
+                <LinearLayout
                     android:id="@+id/btnFavorite"
-                    style="@style/IconButton"
-                    android:contentDescription="@string/action_add_favorite"
-                    android:src="@drawable/ic_favorite_border" />
-
-                <ImageButton
+                    style="@style/LabeledAction"
+                    android:contentDescription="@string/action_add_favorite">
+                    <ImageView android:id="@+id/btnFavoriteIcon" style="@style/LabeledAction.Icon" android:src="@drawable/ic_favorite_border" />
+                    <TextView android:id="@+id/btnFavoriteLabel" style="@style/LabeledAction.Label" android:text="@string/np_favorite" />
+                </LinearLayout>
+                <LinearLayout
                     android:id="@+id/btnSleep"
-                    style="@style/IconButton"
-                    android:layout_marginStart="@dimen/space_l"
-                    android:contentDescription="@string/sleep_timer"
-                    android:src="@drawable/ic_bedtime" />
-
-                <TextView
-                    android:id="@+id/sleepRemaining"
-                    style="@style/Text.Secondary"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/accent"
-                    android:visibility="gone" />
-
-                <ImageButton
+                    style="@style/LabeledAction"
+                    android:contentDescription="@string/sleep_timer">
+                    <ImageView android:id="@+id/btnSleepIcon" style="@style/LabeledAction.Icon" android:src="@drawable/ic_bedtime" />
+                    <TextView android:id="@+id/btnSleepLabel" style="@style/LabeledAction.Label" android:text="@string/np_sleep" />
+                </LinearLayout>
+                <LinearLayout
                     android:id="@+id/btnEqualizer"
-                    style="@style/IconButton"
-                    android:layout_marginStart="@dimen/space_l"
-                    android:contentDescription="@string/equalizer_title"
-                    android:src="@drawable/ic_graphic_eq" />
-
-                <ImageButton
+                    style="@style/LabeledAction"
+                    android:contentDescription="@string/equalizer_title">
+                    <ImageView android:id="@+id/btnEqualizerIcon" style="@style/LabeledAction.Icon" android:src="@drawable/ic_tune" />
+                    <TextView android:id="@+id/btnEqualizerLabel" style="@style/LabeledAction.Label" android:text="@string/np_equalizer" />
+                </LinearLayout>
+                <LinearLayout
                     android:id="@+id/btnQueue"
-                    style="@style/IconButton"
-                    android:layout_marginStart="@dimen/space_l"
-                    android:contentDescription="@string/queue_title"
-                    android:src="@drawable/ic_queue_music" />
+                    style="@style/LabeledAction"
+                    android:contentDescription="@string/queue_title">
+                    <ImageView android:id="@+id/btnQueueIcon" style="@style/LabeledAction.Icon" android:src="@drawable/ic_queue_music" />
+                    <TextView android:id="@+id/btnQueueLabel" style="@style/LabeledAction.Label" android:text="@string/np_queue" />
+                </LinearLayout>
             </LinearLayout>
-
         </LinearLayout>
     </ScrollView>
 

@@ -76,14 +76,14 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
 
         collectWhenStarted(viewModel.state, ::render)
         collectWhenStarted(viewModel.isFavorite) { fav ->
-            b.btnFavorite.setImageResource(if (fav) R.drawable.ic_favorite else R.drawable.ic_favorite_border)
+            b.btnFavoriteIcon.setImageResource(if (fav) R.drawable.ic_favorite else R.drawable.ic_favorite_border)
             b.btnFavorite.isActivated = fav
             b.btnFavorite.contentDescription = getString(if (fav) R.string.action_remove_favorite else R.string.action_add_favorite)
         }
         collectWhenStarted(viewModel.sleepRemainingMs) { remaining ->
+            // El tiempo restante sustituye a la etiqueta: el estado se ve donde se activa.
             b.btnSleep.isActivated = remaining != null
-            b.sleepRemaining.visibleIf(remaining != null)
-            if (remaining != null) b.sleepRemaining.text = formatDuration(remaining)
+            b.btnSleepLabel.text = if (remaining != null) formatDuration(remaining) else getString(R.string.np_sleep)
         }
         collectWhenStarted(viewModel.accent) { accent ->
             val color = accent ?: requireContext().getColor(R.color.accent)
@@ -96,8 +96,12 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
     override fun onDestroyView() {
         binding = null
         lastArt = null
+        lastPlaying = null
         super.onDestroyView()
     }
+
+    /** Evita repintar iconos dos veces por segundo (el estado cambia con cada tic de progreso). */
+    private var lastPlaying: Boolean? = null
 
     private fun render(state: PlaybackState) {
         val b = binding ?: return
@@ -111,8 +115,14 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
             lastArt = track.albumArtUri
             ArtworkLoader.get(requireContext()).load(b.art, track.albumArtUri, b.artFrame.layoutParams.width, R.drawable.tile_note)
         }
-        b.btnPlay.setImageResource(if (state.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
-        b.btnPlay.contentDescription = getString(if (state.isPlaying) R.string.action_pause else R.string.action_play)
+        if (lastPlaying != state.isPlaying) {
+            lastPlaying = state.isPlaying
+            b.btnPlay.setImageResource(if (state.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+            b.btnPlay.contentDescription = getString(if (state.isPlaying) R.string.action_pause else R.string.action_play)
+        }
+        val next = state.queue.getOrNull(state.queueIndex + 1)
+            ?: if (state.repeatMode == RepeatMode.ALL) state.queue.firstOrNull() else null
+        b.queueInfo.text = next?.let { getString(R.string.np_up_next, it.title) }.orEmpty()
         b.btnShuffle.isActivated = state.shuffleEnabled
         b.btnRepeat.isActivated = state.repeatMode != RepeatMode.OFF
         b.btnRepeat.setImageResource(if (state.repeatMode == RepeatMode.ONE) R.drawable.ic_repeat_one else R.drawable.ic_repeat)

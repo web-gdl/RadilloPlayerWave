@@ -122,7 +122,7 @@ class ScreenshotTest {
         (v.find("list") as RecyclerView).setupList(adapter)
         adapter.submitList(sampleRows())
         v.find("tabSongs")?.isSelected = true
-        v.text("libraryCount", "1 248 canciones")
+        v.text("libraryCount", "1248 canciones")
         return v
     }
 
@@ -138,6 +138,8 @@ class ScreenshotTest {
         (v.find("art") as? ImageView)?.setImageResource(R.drawable.tile_note)
         (v.find("btnPlay") as? ImageView)?.setImageResource(R.drawable.ic_pause)
         v.find("btnShuffle")?.isActivated = true
+        v.find("btnFavorite")?.isActivated = true
+        (v.find("btnFavoriteIcon") as? ImageView)?.setImageResource(R.drawable.ic_favorite)
         return v
     }
 
@@ -176,17 +178,26 @@ class ScreenshotTest {
         v.text("trackTitle", "Hotel California")
         v.text("trackSubtitle", "Eagles")
         v.show("status", false)
-        val chips = v.find("sceneChips") as? ViewGroup
-        listOf("Espectro", "Osciloscopio", "Anillos", "Partículas", "Túnel", "Campo de líneas", "Ambiente").forEachIndexed { i, label ->
-            val chip = LayoutInflater.from(ctx).inflate(R.layout.view_chip, chips, false) as TextView
-            chip.text = label
-            chip.isSelected = i == 0
-            chips?.addView(chip)
-        }
+        v.text("sceneName", "Espectro")
+        (v.find("btnPlay") as? ImageView)?.setImageResource(R.drawable.ic_pause)
         return v
     }
 
-    private fun settings(ctx: Context): View = LayoutInflater.from(ctx).inflate(R.layout.fragment_settings, null, false)
+    private fun settings(ctx: Context): View = LayoutInflater.from(ctx).inflate(R.layout.fragment_settings, null, false).apply {
+        find("themeSystem")?.isSelected = true
+        (find("switchKeepPlaying") as? android.widget.Switch)?.isChecked = true
+    }
+
+    private fun albumDetail(ctx: Context): View {
+        val v = LayoutInflater.from(ctx).inflate(R.layout.fragment_track_list, null, false)
+        v.text("title", "Música USB")
+        v.text("listCount", "8 canciones")
+        v.show("empty", false)
+        val adapter = RowAdapter(onClick = {}, onMore = {})
+        (v.find("list") as RecyclerView).setupList(adapter)
+        adapter.submitList(sampleRows(highlight = 3))
+        return v
+    }
 
     private fun carScreens(night: Boolean, suffix: String) {
         val ctx = themed(night)
@@ -200,22 +211,24 @@ class ScreenshotTest {
         shellView.find("mainColumn")?.background = null
         capture(shellView, 1024, 600, "car_visualizer_$suffix", underlay)
         capture(shell(ctx, settings(ctx), "navLibrary", mini = true), 1024, 600, "car_settings_$suffix")
+        capture(shell(ctx, albumDetail(ctx), "navLibrary", mini = true), 1024, 600, "car_folder_$suffix")
     }
 
     @Test
-    @Config(qualifiers = "w1024dp-h600dp-land-mdpi")
+    @Config(qualifiers = "es-w1024dp-h600dp-land-mdpi")
     fun carHeadUnit() {
         carScreens(night = true, suffix = "dark")
         carScreens(night = false, suffix = "light")
     }
 
     @Test
-    @Config(qualifiers = "w411dp-h891dp-port-xxhdpi")
+    @Config(qualifiers = "es-w411dp-h891dp-port-xxhdpi")
     fun phone() {
         val ctx = themed(night = true)
         val w = 1080
         val h = 2340
         capture(shell(ctx, library(ctx), "navLibrary", mini = true), w, h, "phone_library_dark")
         capture(shell(ctx, nowPlaying(ctx), "navNowPlaying", mini = false), w, h, "phone_now_playing_dark")
+        capture(shell(ctx, visualizer(ctx), "navVisualizer", mini = false), w, h, "phone_visualizer_dark")
     }
 }

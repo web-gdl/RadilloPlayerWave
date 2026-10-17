@@ -23,4 +23,16 @@
     <dimen name="icon_pad">12dp</dimen>
     <dimen name="play_pad">16dp</dimen>
     <dimen name="nav_icon">26dp</dimen>
+    <!-- Rediseño 0.9: controles de transporte por importancia (ley de Fitts). -->
+    <dimen name="transport">56dp</dimen>
+    <dimen name="transport_secondary">48dp</dimen>
+    <dimen name="play_big">80dp</dimen>
+    <dimen name="art_now_playing">280dp</dimen>
+    <dimen name="tab_height">48dp</dimen>
+    <dimen name="tab_indicator">3dp</dimen>
+    <dimen name="labeled_action_width">88dp</dimen>
+    <dimen name="labeled_action_icon">28dp</dimen>
+    <dimen name="seek_thumb">20dp</dimen>
+    <dimen name="seek_track">4dp</dimen>
+    <dimen name="mini_progress">3dp</dimen>
 </resources>

@@ -42,31 +42,42 @@
             android:visibility="gone" />
     </LinearLayout>
 
+    <!-- Misma cabecera que la biblioteca: número de canciones a la izquierda, acciones a la derecha. -->
     <LinearLayout
         android:id="@+id/actions"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:minHeight="@dimen/touch"
         android:orientation="horizontal"
         android:paddingStart="@dimen/space_l"
         android:paddingEnd="@dimen/space_l"
         android:paddingBottom="@dimen/space_s">
 
         <TextView
-            android:id="@+id/btnPlayAll"
-            style="@style/FlatButton"
-            android:layout_marginEnd="@dimen/space_s"
-            android:drawableStart="@drawable/ic_play"
-            android:drawablePadding="@dimen/space_s"
-            android:drawableTint="@color/on_accent"
-            android:text="@string/action_play_all" />
+            android:id="@+id/listCount"
+            style="@style/Text.Secondary"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:maxLines="1" />
 
         <TextView
             android:id="@+id/btnShuffle"
             style="@style/FlatButton.Secondary"
+            android:layout_marginEnd="@dimen/space_s"
             android:drawableStart="@drawable/ic_shuffle"
             android:drawablePadding="@dimen/space_s"
             android:drawableTint="@color/text_primary"
             android:text="@string/action_shuffle" />
+
+        <TextView
+            android:id="@+id/btnPlayAll"
+            style="@style/FlatButton"
+            android:drawableStart="@drawable/ic_play"
+            android:drawablePadding="@dimen/space_s"
+            android:drawableTint="@color/on_accent"
+            android:text="@string/action_play_all" />
     </LinearLayout>
 
     <FrameLayout

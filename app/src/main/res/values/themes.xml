@@ -95,6 +95,83 @@
         <item name="android:layout_marginEnd">@dimen/space_s</item>
     </style>
 
+    <!-- Pestaña de texto con subrayado (biblioteca). -->
+    <style name="Tab" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">@dimen/tab_height</item>
+        <item name="android:minWidth">@dimen/touch</item>
+        <item name="android:paddingStart">@dimen/space_l</item>
+        <item name="android:paddingEnd">@dimen/space_l</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">@drawable/bg_tab</item>
+        <item name="android:foreground">?android:attr/selectableItemBackground</item>
+        <item name="android:textColor">@color/tab_text</item>
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <!-- Anterior / siguiente: el control más usado después de reproducir, más grande (Fitts). -->
+    <style name="TransportButton" parent="IconButton">
+        <item name="android:layout_width">@dimen/transport</item>
+        <item name="android:layout_height">@dimen/transport</item>
+    </style>
+    <!-- Aleatorio / repetir: secundarios, más pequeños para no competir. -->
+    <style name="TransportButton.Secondary">
+        <item name="android:layout_width">@dimen/transport_secondary</item>
+        <item name="android:layout_height">@dimen/transport_secondary</item>
+    </style>
+    <style name="PlayButton" parent="">
+        <item name="android:layout_width">@dimen/play_big</item>
+        <item name="android:layout_height">@dimen/play_big</item>
+        <item name="android:background">@drawable/bg_circle_accent</item>
+        <item name="android:foreground">?android:attr/selectableItemBackgroundBorderless</item>
+        <item name="android:padding">@dimen/play_pad</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:tint">@color/on_accent</item>
+    </style>
+
+    <!-- Acción con icono y texto (reconocer en vez de recordar). -->
+    <style name="LabeledAction" parent="">
+        <item name="android:layout_width">@dimen/labeled_action_width</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">@dimen/touch</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:gravity">center</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:paddingTop">@dimen/space_s</item>
+        <item name="android:paddingBottom">@dimen/space_s</item>
+        <item name="android:background">?android:attr/selectableItemBackground</item>
+    </style>
+    <style name="LabeledAction.Icon" parent="">
+        <item name="android:layout_width">@dimen/labeled_action_icon</item>
+        <item name="android:layout_height">@dimen/labeled_action_icon</item>
+        <item name="android:duplicateParentState">true</item>
+        <item name="android:importantForAccessibility">no</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:tint">@color/icon</item>
+    </style>
+    <style name="LabeledAction.Label" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:duplicateParentState">true</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:textColor">@color/icon</item>
+        <item name="android:textSize">@dimen/text_secondary</item>
+    </style>
+
+    <style name="SeekBarThick" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/touch</item>
+        <item name="android:progressDrawable">@drawable/seek_progress</item>
+        <item name="android:thumb">@drawable/seek_thumb</item>
+        <item name="android:splitTrack">false</item>
+        <item name="android:max">1000</item>
+    </style>
+
     <style name="SettingRow" parent="">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>

@@ -1,6 +1,7 @@
 package com.radillo.playerwave.ui.settings
 
 import android.app.AlertDialog
+import android.widget.Toast
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
@@ -35,38 +36,35 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         b.rowEqualizer.setOnClickListener { navigator.push(EqualizerFragment()) }
         b.rowDiagnostics.setOnClickListener { navigator.push(DiagnosticsFragment()) }
         b.rowLicenses.setOnClickListener { showLicenses() }
+        b.rowRescan.setOnClickListener { viewModel.rescan() }
+        b.switchKeepPlaying.setOnCheckedChangeListener { button, checked -> if (button.isPressed) viewModel.setKeepPlaying(checked) }
+        collectWhenStarted(viewModel.keepPlaying) { b.switchKeepPlaying.isChecked = it }
+        collectWhenStarted(viewModel.isScanning) { scanning ->
+            b.rowRescan.isEnabled = !scanning
+            b.rowRescan.alpha = if (scanning) 0.5f else 1f
+            b.rescanHint.setText(if (scanning) R.string.empty_scanning else R.string.settings_rescan_hint)
+        }
+        collectWhenStarted(viewModel.scanResults) { result ->
+            val parts = buildList {
+                if (result.added > 0) add(resources.getQuantityString(R.plurals.scan_added, result.added, result.added))
+                if (result.removed > 0) add(resources.getQuantityString(R.plurals.scan_removed, result.removed, result.removed))
+            }
+            Toast.makeText(requireContext(), if (parts.isEmpty()) getString(R.string.scan_none) else parts.joinToString(" · "), Toast.LENGTH_SHORT).show()
+        }
         b.versionText.text = getString(R.string.app_name) + " · " + getString(R.string.settings_version, BuildConfig.VERSION_NAME)
         b.profileText.setText(if (viewModel.profile.lowEnd) R.string.diag_profile_low_end_short else R.string.diag_profile_normal)
 
-        b.themeGroup.setOnCheckedChangeListener { _, checkedId ->
-            if (!userChange) return@setOnCheckedChangeListener
-            val mode = when (checkedId) {
-                R.id.themeLight -> ThemeMode.LIGHT
-                R.id.themeDark -> ThemeMode.DARK
-                else -> ThemeMode.SYSTEM
-            }
-            viewModel.setThemeMode(mode)
-        }
+        val themeViews = mapOf(ThemeMode.SYSTEM to b.themeSystem, ThemeMode.LIGHT to b.themeLight, ThemeMode.DARK to b.themeDark)
+        themeViews.forEach { (mode, v) -> v.setOnClickListener { viewModel.setThemeMode(mode) } }
         b.switchArtworkColors.setOnCheckedChangeListener { button, checked -> if (button.isPressed) viewModel.setArtworkColors(checked) }
         b.switchLandscape.setOnCheckedChangeListener { button, checked -> if (button.isPressed) viewModel.setLockLandscape(checked) }
 
         collectWhenStarted(viewModel.settings) { s ->
-            userChange = false
-            b.themeGroup.check(
-                when (s.themeMode) {
-                    ThemeMode.SYSTEM -> R.id.themeSystem
-                    ThemeMode.LIGHT -> R.id.themeLight
-                    ThemeMode.DARK -> R.id.themeDark
-                },
-            )
-            userChange = true
+            themeViews.forEach { (mode, v) -> v.isSelected = mode == s.themeMode }
             b.switchArtworkColors.isChecked = s.artworkColors
             b.switchLandscape.isChecked = s.lockLandscape ?: viewModel.profile.fixedLandscape
         }
     }
-
-    /** Evita que la selección programática del tema se tome como un cambio del usuario. */
-    private var userChange = true
 
     private fun showLicenses() {
         val text = buildString {
