@@ -11,7 +11,7 @@ hechas, auditoría 0.9.0 hecha; D pendiente.
 | SoC | MediaTek MT8227L / AC8227L, 4× Cortex-A7 a ~1,3 GHz, **32 bits** (armeabi-v7a) | CPU en orden, sin arm64. Nada pesado en el hilo principal; pocas llamadas de dibujo por frame; builds **release con R8** (los debug son 2–4× más lentos). |
 | GPU | Mali-450 MP2 (Utgard) | **Solo OpenGL ES 2.0**: la escena de terreno 3D prevista en ES 3.0 debe rehacerse en ES 2.0 o en Canvas. Poca tasa de relleno: nada de capas fuera de pantalla (`saveLayer`), desenfoques, sombras, ni mezclas aditivas a pantalla completa. |
 | RAM | 1 GB total; ~250–400 MB libres para la app en primer plano; límite de heap por proceso típico 128–192 MB | Presupuesto: app completa ≤ 90 MB PSS con el visualizador activo; servicio de reproducción solo ≤ 40 MB. Sin `largeHeap` (no ayuda y puede ser ignorado). |
-| Android | «11 (API 30)» declarado; en estas unidades suele ser 8.1 o 9 real con la cadena de versión alterada en `build.prop` | `Build.VERSION.SDK_INT` **no es fiable**: una API «de 30» puede no existir y lanzar `NoSuchMethodError`. Detectar el nivel real por presencia de clases y no usar nada por encima de API 26 sin guardas. |
+| Android | Declara «12» (antes se pensaba «11»), pero es **8.1 real (API 27)**, confirmado con el informe de Diagnóstico: solo la cadena de versión está alterada en `build.prop` | `Build.VERSION.SDK_INT` **no es fiable**: una API «de 30» puede no existir y lanzar `NoSuchMethodError`. Detectar el nivel real por presencia de clases y no usar nada por encima de API 26 sin guardas. |
 | Pantalla | 1024×600 px, 160 dpi (mdpi real), horizontal fija | 1 dp = 1 px: la UI se diseña a tamaño real en una sola disposición horizontal. Objetivos táctiles ≥ 64 dp, texto ≥ 20 sp (uso al volante). Todos los recursos vectoriales; ningún mapa de bits por densidad. |
 | Entorno | Coche: arranque con la llave, música en USB/SD, radio y Bluetooth del propio equipo compiten por el foco de audio, teclas multimedia del volante | Escáner de carpetas USB además de MediaStore; reanudación tras el arranque (opcional); foco de audio y `KEYCODE_MEDIA_*` por MediaSession (ya presente); modo oscuro por defecto. |
 
@@ -298,6 +298,23 @@ usados en release y la UI Compose actual desaparece en esa fase.
   (44 dp en reproducir) para usarlos al volante.
 - «Reproduciendo» muestra el visualizador en vivo en el recuadro de la carátula (un toque alterna).
 - Verificado en el autoestéreo JCAC10003 / alps 8227L a 1024×600: interfaz, menú y visualizadores.
+
+### Informe de Diagnóstico del equipo real (0.10.1, 17-10-2026)
+
+| Dato | Valor medido |
+|---|---|
+| Equipo | `alps 8227L_demo`, hardware `ac8227l`, ABIs `armeabi-v7a`/`armeabi` (32 bits) |
+| Android | Dice «12», pero el nivel de API es **27 (Android 8.1)**; la detección por clases lo confirma. Solo está maquillado el nombre de la versión. |
+| Memoria | 1024 MB en total, ~390 MB libres; la app usa **62 MB** (PSS) con el visualizador, heap 28/128 MB |
+| Pantalla | 1024×600, 160 dpi, 60 Hz, horizontal fija |
+| GPU | Mali-450 MP, OpenGL ES 2.0 |
+| Visualizador | 26 de 30 fps con el gobernador al 75 % de detalle, dibujando con **CPU** (automático: gama baja y API < 29) |
+| Estabilidad | Ningún cierre inesperado registrado; cambiar el modo de dibujo GPU/CPU/automático no dio problemas |
+| Persistencia | Al reiniciar se restauró una cola de **3062 canciones**; sin reescaneo de la biblioteca al abrir |
+
+Conclusiones: el presupuesto de memoria (≤ 90 MB) se cumple con holgura; la elección de CPU para el
+visualizador en Android 8.1 es la correcta. Restaurar una cola tan grande bloqueaba el hilo
+principal ~2 s al arrancar: desde la 0.10.2 se lee en segundo plano.
 
 ### 0.9.0: auditoría y rediseño (17-10-2026)
 

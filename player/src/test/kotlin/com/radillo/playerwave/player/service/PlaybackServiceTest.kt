@@ -12,6 +12,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowLooper
 import java.io.File
 
 /**
@@ -51,12 +52,35 @@ class PlaybackServiceTest {
 
         val second = Robolectric.buildService(PlaybackService::class.java)
         val restored = second.create().get().sessionForTest()!!.player
+        // La restauración es asíncrona (no bloquea el arranque): se espera a que llegue.
+        val deadline = System.currentTimeMillis() + 5_000
+        while (restored.mediaItemCount == 0 && System.currentTimeMillis() < deadline) {
+            Thread.sleep(20)
+            ShadowLooper.idleMainLooper()
+        }
         assertThat(restored.mediaItemCount).isEqualTo(3)
         assertThat(restored.currentMediaItemIndex).isEqualTo(1)
         assertThat(restored.currentPosition).isEqualTo(42_000)
         assertThat(restored.shuffleModeEnabled).isTrue()
         assertThat(restored.repeatMode).isEqualTo(Player.REPEAT_MODE_ALL)
         assertThat(MediaItemMapper.toTrack(restored.getMediaItemAt(2))?.title).isEqualTo("Canción 3")
+        second.destroy()
+    }
+
+    @Test
+    fun `si el usuario pone algo a sonar antes de restaurar, no se pisa`() {
+        val first = Robolectric.buildService(PlaybackService::class.java)
+        val player = first.create().get().sessionForTest()!!.player
+        player.setMediaItems(listOf(track(1), track(2)).map(MediaItemMapper::toMediaItem))
+        first.destroy()
+
+        val second = Robolectric.buildService(PlaybackService::class.java)
+        val p2 = second.create().get().sessionForTest()!!.player
+        p2.setMediaItems(listOf(track(9)).map(MediaItemMapper::toMediaItem)) // antes de que llegue la restauración
+        Thread.sleep(300)
+        ShadowLooper.idleMainLooper()
+        assertThat(p2.mediaItemCount).isEqualTo(1)
+        assertThat(MediaItemMapper.toTrack(p2.getMediaItemAt(0))?.id).isEqualTo(9L)
         second.destroy()
     }
 

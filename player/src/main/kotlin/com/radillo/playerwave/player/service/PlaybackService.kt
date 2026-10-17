@@ -185,15 +185,28 @@ class PlaybackService : MediaLibraryService() {
 
     // ---- Persistencia ----
 
+    /**
+     * Restaura la cola guardada **sin bloquear el arranque**: leer el JSON y crear los MediaItem se
+     * hace en el hilo de escritura (con 3000 canciones, en el autoestéreo eran ~2 s de pantalla
+     * congelada en el hilo principal); en el principal solo se entrega la lista al reproductor.
+     * Como ese hilo es el mismo que guarda, la lectura siempre ocurre antes de cualquier guardado.
+     */
     private fun restoreState(player: ExoPlayer) {
-        val saved = store.read() ?: return
-        player.shuffleModeEnabled = saved.shuffle
-        player.repeatMode = saved.repeatMode
-        if (saved.tracks.isEmpty()) return
-        val items = saved.tracks.map(MediaItemMapper::toMediaItem)
-        // Sin prepare(): no se decodifica nada hasta que el usuario pulse reproducir.
-        player.setMediaItems(items, saved.index.coerceIn(0, items.lastIndex), saved.positionMs)
-        EventLog.log("Cola restaurada: ${items.size} canciones")
+        val started = System.currentTimeMillis()
+        writer.execute {
+            val saved = store.read() ?: return@execute
+            val items = saved.tracks.map(MediaItemMapper::toMediaItem)
+            handler.post {
+                // Si el usuario ya puso algo a sonar mientras tanto, lo suyo manda.
+                if (session == null || player.mediaItemCount > 0) return@post
+                player.shuffleModeEnabled = saved.shuffle
+                player.repeatMode = saved.repeatMode
+                if (items.isEmpty()) return@post
+                // Sin prepare(): no se decodifica nada hasta que el usuario pulse reproducir.
+                player.setMediaItems(items, saved.index.coerceIn(0, items.lastIndex), saved.positionMs)
+                EventLog.log("Cola restaurada: ${items.size} canciones (${System.currentTimeMillis() - started} ms)")
+            }
+        }
     }
 
     private fun scheduleSave() {
