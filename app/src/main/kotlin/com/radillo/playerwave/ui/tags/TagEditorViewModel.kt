@@ -15,10 +15,12 @@ import com.radillo.playerwave.data.tags.TagWriter
 import com.radillo.playerwave.player.engine.PlaybackController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -26,7 +28,8 @@ import javax.inject.Inject
 /** Estado de la pantalla. `cover` null = mostrar la carátula actual de la app (o el marcador). */
 data class EditorState(
     val track: Track? = null,
-    val supported: Boolean = true,
+    /** Motivo por el que no se puede guardar (no es MP3, etiqueta ilegible…), o null. */
+    val problem: SaveOutcome.Reason? = null,
     val cover: Bitmap? = null,
     val coverRemoved: Boolean = false,
     val saving: Boolean = false,
@@ -54,8 +57,17 @@ class TagEditorViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(EditorState())
     val state: StateFlow<EditorState> = _state
-    private val _events = MutableSharedFlow<EditorEvent>(extraBufferCapacity = 4)
-    val events: SharedFlow<EditorEvent> = _events
+    /** Canal con búfer: un evento que llega con la app en segundo plano se entrega al volver. */
+    private val _events = Channel<EditorEvent>(Channel.BUFFERED)
+    val events: Flow<EditorEvent> = _events.receiveAsFlow()
+
+    /** Valores con que se abrió el formulario (sobreviven a girar la pantalla). */
+    var initialValues: List<String>? = null
+    private var filled = false
+    /** El usuario negó el permiso de almacenamiento: se ofrece la carpeta en su lugar. */
+    private var permissionDenied = false
+    /** Ya se concedió una carpeta en este intento: si aun así no vale, no se vuelve a pedir. */
+    private var folderGrantedThisTime = false
 
     private var coverChange: CoverChange = CoverChange.Keep
     /** Última edición pedida: se reintenta tras conceder un permiso. */
@@ -67,24 +79,32 @@ class TagEditorViewModel @Inject constructor(
         viewModelScope.launch {
             val track = library.track(trackId) ?: playback.state.value.queue.firstOrNull { it.id == trackId }
             if (track == null) {
-                _state.value = EditorState(loaded = true, supported = false)
+                _state.value = EditorState(loaded = true, problem = SaveOutcome.Reason.NOT_FOUND)
                 return@launch
             }
             val info = writer.inspect(track)
             _state.value = EditorState(
                 track = track,
-                supported = info.supported,
+                problem = info.problem,
                 cover = info.embeddedCover?.let { decode(it) },
                 loaded = true,
             )
         }
     }
 
+    /** La canción para rellenar el formulario, solo la primera vez (luego manda lo escrito). */
+    fun takeInitialFill(): Track? {
+        if (filled) return null
+        val track = _state.value.track ?: return null
+        filled = true
+        return track
+    }
+
     fun pickCover(uri: Uri) {
         viewModelScope.launch {
             val bytes = writer.prepareCover(uri)
             if (bytes == null) {
-                _events.emit(EditorEvent.ImageFailed)
+                _events.send(EditorEvent.ImageFailed)
                 return@launch
             }
             coverChange = CoverChange.Replace(bytes, "image/jpeg")
@@ -100,16 +120,23 @@ class TagEditorViewModel @Inject constructor(
     fun save(title: String, artist: String, album: String, year: Int?, trackNumber: Int?) {
         val edit = TagEdit(title, artist, album, year, trackNumber, coverChange)
         pendingEdit = edit
+        folderGrantedThisTime = false
         run(edit, consentGranted = false)
     }
 
-    /** Tras conceder permiso, consentimiento o carpeta. */
+    /** Tras conceder permiso o consentimiento. */
     fun retry(consentGranted: Boolean) {
         pendingEdit?.let { run(it, consentGranted) }
     }
 
+    fun permissionDenied() {
+        permissionDenied = true
+        retry(consentGranted = false)
+    }
+
     fun folderGranted(treeUri: Uri) {
         writer.rememberFolder(treeUri)
+        folderGrantedThisTime = true
         retry(consentGranted = false)
     }
 
@@ -120,17 +147,19 @@ class TagEditorViewModel @Inject constructor(
         if (_state.value.saving) return
         _state.value = _state.value.copy(saving = true)
         viewModelScope.launch {
-            val outcome = writer.save(track, edit, consentGranted)
+            // Si es la canción que suena, el reproductor suelta el archivo mientras se reescribe.
+            if (playback.holdForEdit(track.id)) delay(HOLD_SETTLE_MS)
+            val outcome = writer.save(track, edit, consentGranted, mayAskPermission = !permissionDenied)
+            playback.refreshTrack((outcome as? SaveOutcome.Saved)?.track)
             _state.value = _state.value.copy(saving = false)
-            _events.emit(
+            _events.send(
                 when (outcome) {
-                    is SaveOutcome.Saved -> {
-                        playback.refreshTrack(outcome.track)
-                        EditorEvent.Saved
-                    }
+                    is SaveOutcome.Saved -> EditorEvent.Saved
                     SaveOutcome.NeedsWritePermission -> EditorEvent.NeedsWritePermission
                     is SaveOutcome.NeedsConsent -> EditorEvent.NeedsConsent(outcome)
-                    SaveOutcome.NeedsFolderAccess -> EditorEvent.NeedsFolderAccess
+                    // Ya se eligió una carpeta y no sirve (otra memoria): no se entra en bucle.
+                    SaveOutcome.NeedsFolderAccess ->
+                        if (folderGrantedThisTime) EditorEvent.Failed(SaveOutcome.Reason.NO_ACCESS) else EditorEvent.NeedsFolderAccess
                     is SaveOutcome.Failed -> EditorEvent.Failed(outcome.reason)
                 },
             )
@@ -154,5 +183,7 @@ class TagEditorViewModel @Inject constructor(
     companion object {
         const val ARG_TRACK_ID = "trackId"
         private const val PREVIEW_PX = 300
+        /** Margen para que el reproductor suelte el archivo antes de reescribirlo. */
+        private const val HOLD_SETTLE_MS = 400L
     }
 }

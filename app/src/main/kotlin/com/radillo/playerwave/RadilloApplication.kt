@@ -6,6 +6,7 @@ import com.radillo.playerwave.core.diagnostics.EventLog
 import com.radillo.playerwave.core.diagnostics.RenderMode
 import com.radillo.playerwave.core.ui.CoverOverrides
 import com.radillo.playerwave.data.settings.AudioEffectsSettingsRepository
+import com.radillo.playerwave.data.tags.TagWriter
 import com.radillo.playerwave.player.audiofx.AudioEffectsController
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.MainScope
@@ -19,6 +20,7 @@ class RadilloApplication : Application() {
     @Inject lateinit var audioEffects: AudioEffectsController
     @Inject lateinit var effectsSettings: AudioEffectsSettingsRepository
     @Inject lateinit var profile: DeviceProfile
+    @Inject lateinit var tagWriter: TagWriter
 
     private val scope = MainScope()
 
@@ -35,5 +37,7 @@ class RadilloApplication : Application() {
         scope.launch {
             audioEffects.apply(effectsSettings.settings.first())
         }
+        // Si una edición de etiquetas se cortó (se quitó la llave a mitad), se termina o se deshace.
+        scope.launch { tagWriter.recoverPending() }
     }
 }

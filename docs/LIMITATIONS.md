@@ -12,6 +12,29 @@
 Por debajo de API 24 no se da soporte: Media3 exige API 23 y la cuota de usuarios no justifica
 el coste de mantenimiento.
 
+## Editor de etiquetas y portada
+
+- Solo MP3 (ID3). Se escribe ID3v2.3, la versión que entienden todos los reproductores; las
+  etiquetas 2.2 y 2.4 se convierten al guardar. Los marcos no editados se conservan, salvo
+  comentarios o letras en UTF-8 de una etiqueta 2.4 (poco comunes), que se descartan.
+- Se comprueba que el contenido sea MPEG de verdad (dos tramas válidas seguidas): un archivo
+  «.mp3» que en realidad es AAC/MP4, WAV, FLAC u Ogg no se toca. Tampoco una etiqueta que no se
+  pueda leer entera (se perderían marcos).
+- Si la etiqueta nueva cabe en el hueco de la anterior, solo se reescribe ese hueco y el audio no
+  se mueve; si no, se reescribe el archivo con 8 KB de relleno para que las siguientes ediciones
+  sí quepan.
+- Antes de tocar la canción se guarda (sincronizada a disco) una copia de seguridad y un diario
+  con el CRC del antes y del después. Si la escritura falla se restaura al momento; si se corta la
+  corriente, el siguiente arranque termina o deshace la edición. Mientras quede una edición sin
+  cerrar (p. ej. con la USB retirada) no se permite otra. Hace falta espacio libre para dos copias.
+- Si la canción está sonando, el reproductor la suelta mientras se reescribe y la retoma en el
+  mismo punto.
+- Escribir en una **memoria USB** requiere conceder su carpeta raíz una vez (selector de carpetas
+  del sistema). Si el equipo no tiene selector de carpetas, solo se puede editar en la memoria
+  interna (Android ≤ 9 con el permiso de almacenamiento).
+- La miniatura que Android guarda por álbum puede tardar en renovarse; la app muestra la portada
+  nueva al momento con una copia propia.
+
 ## Visualizaciones
 
 - El análisis de audio solo cubre lo que reproduce esta app. Capturar audio de otras

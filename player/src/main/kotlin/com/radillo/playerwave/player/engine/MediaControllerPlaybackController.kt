@@ -245,17 +245,31 @@ class MediaControllerPlaybackController @Inject constructor(
         if (index in 0 until it.mediaItemCount) it.removeMediaItem(index)
     }
 
-    override fun refreshTrack(track: Track) = run {
-        val id = track.id.toString()
-        val item = MediaItemMapper.toMediaItem(track)
-        var current = false
-        for (i in 0 until it.mediaItemCount) {
-            if (it.getMediaItemAt(i).mediaId == id) {
-                it.replaceMediaItem(i, item)
-                if (i == it.currentMediaItemIndex) current = true
+    /** Canción soltada para editar su archivo (ver [holdForEdit]). */
+    private var heldTrackId: Long? = null
+
+    override fun holdForEdit(trackId: Long): Boolean {
+        val c = controller ?: return false
+        if (c.currentMediaItem?.mediaId != trackId.toString()) return false
+        heldTrackId = trackId
+        // stop(): libera el archivo y conserva cola, posición y playWhenReady.
+        c.stop()
+        return true
+    }
+
+    override fun refreshTrack(track: Track?) = run {
+        if (track != null) {
+            val id = track.id.toString()
+            val item = MediaItemMapper.toMediaItem(track)
+            for (i in 0 until it.mediaItemCount) {
+                if (it.getMediaItemAt(i).mediaId == id) it.replaceMediaItem(i, item)
             }
         }
-        if (current) it.seekTo(it.currentPosition)
+        if (heldTrackId != null) {
+            heldTrackId = null
+            // Se vuelve a abrir el archivo (ya modificado) en la misma posición; si sonaba, sigue sonando.
+            it.prepare()
+        }
     }
 
     override fun skipToQueueItem(index: Int) = run {

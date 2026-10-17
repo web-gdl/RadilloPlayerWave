@@ -20,7 +20,7 @@ import kotlin.random.Random
 class Id3Test {
 
     /** «Audio» que empieza como una trama MPEG real, con contenido pseudoaleatorio estable. */
-    private val audio: ByteArray = byteArrayOf(0xFF.toByte(), 0xFB.toByte(), 0x90.toByte(), 0x64) + Random(42).nextBytes(5_000)
+    private val audio: ByteArray = MpegFixtures.frames(12)
 
     private val jpeg = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte()) + Random(7).nextBytes(300)
 
@@ -230,6 +230,77 @@ class Id3Test {
         } finally {
             tmp.delete()
         }
+    }
+
+    @Test
+    fun `un archivo con extension mp3 que en realidad es MP4 no se toca`() {
+        val m4a = byteArrayOf(0, 0, 0, 0x20) + "ftypM4A ".toByteArray() + Random(3).nextBytes(4_000)
+        try {
+            Id3.plan(ArraySource(m4a), edit())
+            fail("Debía rechazarlo")
+        } catch (_: NotMp3Exception) {
+        }
+        val junk = Random(4).nextBytes(6_000)
+        try {
+            Id3.plan(ArraySource(junk), edit())
+            fail("Debía rechazar datos que no son MPEG")
+        } catch (_: NotMp3Exception) {
+        }
+    }
+
+    @Test
+    fun `si la etiqueta nueva cabe, se escribe en el hueco sin mover el audio`() {
+        val original = Id3.buildTag(listOf(Id3.textFrame("TIT2", "Viejo")), padding = 4_096) + audio + v1()
+        val plan = Id3.plan(ArraySource(original), edit())
+        assertTrue(plan.inPlace)
+        assertEquals(plan.layout.audioStart, plan.tag.size.toLong())
+        assertEquals(original.size.toLong(), plan.newSize)
+        // Sin hueco suficiente (portada grande): reescritura completa con relleno amplio.
+        val grow = Id3.plan(ArraySource(original), edit(cover = CoverChange.Replace(Random(9).nextBytes(20_000), "image/jpeg")))
+        assertTrue(!grow.inPlace)
+        assertTrue(grow.tag.size > 20_000 + Id3.GROW_PADDING)
+    }
+
+    @Test
+    fun `ID3v2_4 con tamanos normales en vez de synchsafe (iTunes) no pierde marcos`() {
+        val longComment = byteArrayOf(0) + "spa".toByteArray() + byteArrayOf(0) + "x".repeat(300).toByteArray()
+        val frames = listOf("COMM" to longComment, "TIT2" to (byteArrayOf(0) + "Viejo".toByteArray()), "APIC" to Id3.coverFrame(jpeg, "image/jpeg").data)
+        val body = java.io.ByteArrayOutputStream()
+        frames.forEach { (id, data) ->
+            body.write(id.toByteArray())
+            body.write(Id3.int32Bytes(data.size)) // tamaño normal: 304 = 00 00 01 30 (no synchsafe)
+            body.write(byteArrayOf(0, 0))
+            body.write(data)
+        }
+        val b = body.toByteArray()
+        val tag = byteArrayOf('I'.code.toByte(), 'D'.code.toByte(), '3'.code.toByte(), 4, 0, 0) + Id3.synchsafeBytes(b.size) + b
+        val read = Id3.read(ArraySource(tag + audio)).frames
+        assertEquals("Viejo", Id3.text(read, "TIT2"))
+        assertArrayEquals(jpeg, Id3.cover(read))
+        assertEquals(3, read.size)
+    }
+
+    @Test
+    fun `marcos ilegibles hacen que no se toque el archivo`() {
+        val body = "TIT2".toByteArray() + Id3.int32Bytes(3) + byteArrayOf(0, 0, 0, 'a'.code.toByte(), 'b'.code.toByte()) +
+            "ba!d".toByteArray() + ByteArray(20) { 7 }
+        val tag = byteArrayOf('I'.code.toByte(), 'D'.code.toByte(), '3'.code.toByte(), 3, 0, 0) + Id3.synchsafeBytes(body.size) + body
+        try {
+            Id3.plan(ArraySource(tag + audio), edit())
+            fail("Debía rechazarla")
+        } catch (_: InvalidTagException) {
+        }
+    }
+
+    @Test
+    fun `comentario UTF-8 de 2_4 se convierte en vez de perderse`() {
+        val comm = byteArrayOf(3) + "spa".toByteArray() + "desc".toByteArray() + byteArrayOf(0) + "¡Qué buena!".toByteArray(Charsets.UTF_8)
+        val tag = v24Tag(listOf("COMM" to comm))
+        val frames = Id3.read(ArraySource(tag + audio)).frames
+        val converted = frames.single { it.id == "COMM" }
+        assertEquals(1, converted.data[0].toInt())
+        assertEquals("spa", String(converted.data, 1, 3, Charsets.ISO_8859_1))
+        assertTrue(String(converted.data.copyOfRange(4, converted.data.size), Charsets.UTF_16LE).contains("¡Qué buena!"))
     }
 
     @Test

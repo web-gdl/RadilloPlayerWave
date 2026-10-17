@@ -268,4 +268,5 @@
     <string name="tag_discard_title">¿Descartar los cambios?</string>
     <string name="tag_discard">Descartar</string>
     <string name="tag_keep_editing">Seguir editando</string>
+    <string name="tag_error_pending">Una edición anterior se interrumpió (¿se apagó el equipo?) y su archivo aún no se ha podido revisar. Conecta la memoria donde estaba y vuelve a intentarlo.</string>
 </resources>

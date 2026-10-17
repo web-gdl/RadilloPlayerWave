@@ -43,8 +43,16 @@ interface PlaybackController {
     fun skipToQueueItem(index: Int)
 
     /**
-     * Actualiza en la cola los datos de una canción editada (título, portada…). Si es la que suena,
-     * se vuelve a leer desde la posición actual, porque su archivo acaba de cambiar.
+     * Antes de reescribir el archivo de una canción: si es la actual, el reproductor la suelta
+     * (`stop`, conserva cola y posición) para no leer un archivo que cambia bajo sus pies.
+     * Devuelve true si había que soltarla.
      */
-    fun refreshTrack(track: Track)
+    fun holdForEdit(trackId: Long): Boolean
+
+    /**
+     * Actualiza en la cola los datos de una canción editada (título, portada…) y, si estaba
+     * retenida por [holdForEdit], la vuelve a preparar en la misma posición. Con [track] null solo
+     * libera la retención (la edición no se guardó).
+     */
+    fun refreshTrack(track: Track?)
 }

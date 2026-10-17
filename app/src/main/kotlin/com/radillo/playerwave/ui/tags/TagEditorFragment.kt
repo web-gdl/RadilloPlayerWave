@@ -37,13 +37,13 @@ class TagEditorFragment : Fragment(R.layout.fragment_tag_editor), ChromeMode {
 
     private val viewModel: TagEditorViewModel by viewModels()
     private var binding: FragmentTagEditorBinding? = null
-    private var initialValues: List<String>? = null
 
     private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) viewModel.pickCover(uri)
     }
     private val writePermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) viewModel.retry(consentGranted = false) else toast(R.string.tag_error_permission)
+        // Si se niega, se intenta por otra vía (la carpeta), sin quedarse en un callejón sin salida.
+        if (granted) viewModel.retry(consentGranted = false) else viewModel.permissionDenied()
     }
     private val consent = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) viewModel.retry(consentGranted = true)
@@ -78,32 +78,30 @@ class TagEditorFragment : Fragment(R.layout.fragment_tag_editor), ChromeMode {
     private fun render(s: EditorState) {
         val b = binding ?: return
         val track = s.track
-        if (track != null && initialValues == null) {
-            // Solo la primera vez: después manda lo que escribe el usuario.
-            b.fieldTitle.setText(track.title)
-            b.fieldArtist.setText(track.artist)
-            b.fieldAlbum.setText(track.album)
-            b.fieldYear.setText(track.year.takeIf { it > 0 }?.toString().orEmpty())
-            b.fieldTrack.setText(track.trackNumber.takeIf { it > 0 }?.toString().orEmpty())
-            initialValues = currentValues(b)
+        viewModel.takeInitialFill()?.let { t ->
+            // Solo la primera vez (ni al girar la pantalla): después manda lo que escribe el usuario.
+            b.fieldTitle.setText(t.title)
+            b.fieldArtist.setText(t.artist)
+            b.fieldAlbum.setText(t.album)
+            b.fieldYear.setText(t.year.takeIf { it > 0 }?.toString().orEmpty())
+            b.fieldTrack.setText(t.trackNumber.takeIf { it > 0 }?.toString().orEmpty())
+            viewModel.initialValues = currentValues(b)
         }
         when {
             s.cover != null -> b.cover.setImageBitmap(s.cover)
             s.coverRemoved || track == null -> b.cover.setImageResource(R.drawable.tile_note)
             else -> ArtworkLoader.get(requireContext()).load(b.cover, track.albumArtUri, b.cover.layoutParams.width.coerceAtLeast(240), R.drawable.tile_note)
         }
-        val editable = s.loaded && s.supported && track != null
+        val editable = s.loaded && s.problem == null && track != null
         listOf<View>(b.fieldTitle, b.fieldArtist, b.fieldAlbum, b.fieldYear, b.fieldTrack, b.btnChangeCover, b.btnRemoveCover, b.cover)
             .forEach { it.isEnabled = editable && !s.saving }
         b.btnSave.isEnabled = editable && !s.saving
         b.btnSave.alpha = if (b.btnSave.isEnabled) 1f else 0.5f
         b.btnSave.setText(if (s.saving) R.string.tag_saving else R.string.action_save)
         b.saving.visibility = if (s.saving) View.VISIBLE else View.INVISIBLE
-        b.notSupported.visibleIf(s.loaded && !s.supported)
-        if (s.loaded && !s.supported) {
-            val kind = track?.fileName?.substringAfterLast('.', "")?.uppercase()?.ifEmpty { null } ?: track?.mimeType.orEmpty()
-            b.notSupported.text = getString(R.string.tag_not_mp3, kind)
-        }
+        val problem = s.problem.takeIf { s.loaded }
+        b.notSupported.visibleIf(problem != null)
+        if (problem != null) b.notSupported.text = message(problem, track?.fileName)
     }
 
     private fun currentValues(b: FragmentTagEditorBinding) =
@@ -111,7 +109,8 @@ class TagEditorFragment : Fragment(R.layout.fragment_tag_editor), ChromeMode {
 
     private fun hasChanges(): Boolean {
         val b = binding ?: return false
-        return viewModel.hasCoverChange || (initialValues != null && currentValues(b) != initialValues)
+        val initial = viewModel.initialValues
+        return viewModel.hasCoverChange || (initial != null && currentValues(b) != initial)
     }
 
     private fun save() {
@@ -164,17 +163,19 @@ class TagEditorFragment : Fragment(R.layout.fragment_tag_editor), ChromeMode {
             .show()
     }
 
+    private fun message(reason: SaveOutcome.Reason, fileName: String? = null): String = when (reason) {
+        SaveOutcome.Reason.NOT_MP3 -> getString(R.string.tag_not_mp3, fileName?.substringAfterLast('.', "")?.uppercase().orEmpty())
+        SaveOutcome.Reason.NOT_FOUND -> getString(R.string.tag_error_not_found)
+        SaveOutcome.Reason.NO_SPACE -> getString(R.string.tag_error_space)
+        SaveOutcome.Reason.INVALID_TAG -> getString(R.string.tag_error_invalid)
+        SaveOutcome.Reason.NO_ACCESS -> getString(R.string.tag_error_no_access)
+        SaveOutcome.Reason.IO -> getString(R.string.tag_error_io)
+        SaveOutcome.Reason.PENDING_RECOVERY -> getString(R.string.tag_error_pending)
+    }
+
     private fun showError(reason: SaveOutcome.Reason) {
-        val message = when (reason) {
-            SaveOutcome.Reason.NOT_MP3 -> getString(R.string.tag_not_mp3, "")
-            SaveOutcome.Reason.NOT_FOUND -> getString(R.string.tag_error_not_found)
-            SaveOutcome.Reason.NO_SPACE -> getString(R.string.tag_error_space)
-            SaveOutcome.Reason.INVALID_TAG -> getString(R.string.tag_error_invalid)
-            SaveOutcome.Reason.NO_ACCESS -> getString(R.string.tag_error_no_access)
-            SaveOutcome.Reason.IO -> getString(R.string.tag_error_io)
-        }
         AlertDialog.Builder(requireContext())
-            .setMessage(message)
+            .setMessage(message(reason, viewModel.state.value.track?.fileName))
             .setPositiveButton(R.string.action_close, null)
             .show()
     }
@@ -188,6 +189,11 @@ class TagEditorFragment : Fragment(R.layout.fragment_tag_editor), ChromeMode {
     }
 
     private fun confirmLeave() {
+        // Mientras se escribe el archivo no se sale (la escritura termina en segundos).
+        if (viewModel.state.value.saving) {
+            toast(R.string.tag_saving)
+            return
+        }
         if (!hasChanges()) {
             backGuard.isEnabled = false
             navigator.back()

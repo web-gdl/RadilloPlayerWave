@@ -73,6 +73,19 @@ class Id3Layout(
 
 class InvalidTagException(message: String) : Exception(message)
 
+/** El archivo dice ser MP3 (extensión o tipo) pero su contenido no lo es (AAC/MP4, WAV, FLAC…). */
+class NotMp3Exception(message: String) : Exception(message)
+
+/**
+ * Cómo quedará el archivo. Con [inPlace] la etiqueta nueva cabe en el hueco de la anterior (se
+ * rellena hasta medir exactamente [Id3Layout.audioStart]): solo se reescribe ese hueco y, si
+ * existe, la ID3v1 del final; **el audio no se mueve**. Si no cabe, se reescribe el archivo entero
+ * con un relleno amplio para que las próximas ediciones sí quepan.
+ */
+class RewritePlan(val tag: ByteArray, val v1: ByteArray?, val layout: Id3Layout, val inPlace: Boolean) {
+    val newSize: Long get() = tag.size + (layout.audioEnd - layout.audioStart) + (v1?.size ?: 0)
+}
+
 /**
  * Lectura y escritura de etiquetas ID3 en MP3, en Kotlin puro (sin bibliotecas ni Android).
  *
@@ -88,6 +101,8 @@ object Id3 {
     private val LATIN1: Charset = Charsets.ISO_8859_1
     private const val MAX_TAG_BYTES = 64 * 1024 * 1024
     const val PADDING = 1024
+    /** Relleno al reescribir entero: deja sitio para editar después sin mover el audio. */
+    const val GROW_PADDING = 8 * 1024
 
     /** Marcos que el editor reemplaza. */
     private val EDITED = setOf("TIT2", "TPE1", "TALB", "TYER", "TDRC", "TRCK")
@@ -147,30 +162,52 @@ object Id3 {
     private fun parseBody(major: Int, flags: Int, rawBody: ByteArray): List<Id3Frame> {
         var body = rawBody
         if (flags and 0x80 != 0 && major <= 3) body = deUnsync(body)
-        if (major == 2 && flags and 0x40 != 0) return emptyList() // compresión de 2.2: sin estándar
+        // Compresión de 2.2 (sin estándar): no se puede conservar lo que hay, así que no se toca.
+        if (major == 2 && flags and 0x40 != 0) throw InvalidTagException("Etiqueta ID3v2.2 comprimida")
         var pos = 0
         if (flags and 0x40 != 0 && major >= 3 && body.size >= 4) {
             pos = if (major == 3) 4 + int32(body, 0) else synchsafe(body, 0)
-            if (pos < 0 || pos > body.size) return emptyList()
+            if (pos < 0 || pos > body.size) throw InvalidTagException("Cabecera extendida no válida")
         }
         val tagUnsync = major == 4 && flags and 0x80 != 0
+        if (major != 4) return parseFrames(major, body, pos, tagUnsync, plainSizes = false)
+            ?: throw InvalidTagException("Marcos ID3 ilegibles")
+        // Muchos programas (iTunes, entre otros) escriben en 2.4 tamaños normales en vez de «synchsafe»:
+        // se prueba la forma correcta y, si no encaja hasta el relleno, la otra (como hace mutagen).
+        return parseFrames(major, body, pos, tagUnsync, plainSizes = false)
+            ?: parseFrames(major, body, pos, tagUnsync, plainSizes = true)
+            ?: throw InvalidTagException("Marcos ID3 ilegibles")
+    }
+
+    /**
+     * Recorre los marcos. Devuelve null si el recorrido no termina limpio (en el relleno de ceros o
+     * al final exacto): en ese caso se perderían marcos al reescribir y es mejor no tocar el archivo.
+     */
+    private fun parseFrames(major: Int, body: ByteArray, start: Int, tagUnsync: Boolean, plainSizes: Boolean): List<Id3Frame>? {
+        var pos = start
         val frames = ArrayList<Id3Frame>()
+        val headerSize = if (major == 2) 6 else 10
         while (true) {
+            if (pos + headerSize > body.size) break
+            if (body[pos].toInt() == 0) break // relleno
             if (major == 2) {
-                if (pos + 6 > body.size || body[pos].toInt() == 0) break
                 val id = String(body, pos, 3, LATIN1)
-                if (!id.all { it in 'A'..'Z' || it in '0'..'9' }) break
+                if (!id.all { it in 'A'..'Z' || it in '0'..'9' }) return null
                 val len = ((body[pos + 3].toInt() and 0xFF) shl 16) or ((body[pos + 4].toInt() and 0xFF) shl 8) or (body[pos + 5].toInt() and 0xFF)
-                if (pos + 6 + len > body.size) break
+                if (pos + 6 + len > body.size) return null
                 val data = body.copyOfRange(pos + 6, pos + 6 + len)
                 pos += 6 + len
                 convertV22(id, data)?.let(frames::add)
             } else {
-                if (pos + 10 > body.size || body[pos].toInt() == 0) break
                 val id = String(body, pos, 4, LATIN1)
-                if (!id.all { it in 'A'..'Z' || it in '0'..'9' }) break
-                val len = if (major == 4 && (0..3).all { body[pos + 4 + it].toInt() and 0x80 == 0 }) synchsafe(body, pos + 4) else int32(body, pos + 4)
-                if (len < 0 || pos + 10 + len > body.size) break
+                if (!id.all { it in 'A'..'Z' || it in '0'..'9' }) return null
+                val len = if (major == 4 && !plainSizes) {
+                    if ((0..3).any { body[pos + 4 + it].toInt() and 0x80 != 0 }) return null
+                    synchsafe(body, pos + 4)
+                } else {
+                    int32(body, pos + 4)
+                }
+                if (len < 0 || pos + 10 + len > body.size) return null
                 val formatFlags = body[pos + 9].toInt() and 0xFF
                 var data = body.copyOfRange(pos + 10, pos + 10 + len)
                 pos += 10 + len
@@ -190,6 +227,8 @@ object Id3 {
                 }
             }
         }
+        // Lo que queda tras el último marco debe ser relleno (ceros); si no, había marcos ilegibles.
+        for (i in pos until body.size) if (body[i].toInt() != 0) return null
         return frames
     }
 
@@ -206,33 +245,90 @@ object Id3 {
         return Id3Frame(v23, data)
     }
 
-    /** 2.4 → 2.3: el UTF-8 (codificación 3) no existe en 2.3. */
+    /** 2.4 → 2.3: las codificaciones 2 (UTF-16BE sin BOM) y 3 (UTF-8) no existen en 2.3. */
     private fun convertV24(id: String, data: ByteArray): Id3Frame? {
-        if (data.isEmpty() || data[0].toInt() != 3) return Id3Frame(id, data)
+        if (data.isEmpty()) return Id3Frame(id, data)
+        val enc = data[0].toInt()
+        if (enc != 2 && enc != 3) return Id3Frame(id, data)
         return when {
-            id.startsWith("T") -> {
-                val strings = String(data, 1, data.size - 1, Charsets.UTF_8).split('\u0000').let { parts ->
-                    if (parts.size > 1 && parts.last().isEmpty()) parts.dropLast(1) else parts
-                }
-                val out = java.io.ByteArrayOutputStream()
-                out.write(1)
-                strings.forEachIndexed { i, s ->
-                    if (i > 0) out.write(byteArrayOf(0, 0))
-                    out.write(byteArrayOf(0xFF.toByte(), 0xFE.toByte()))
-                    out.write(s.toByteArray(Charsets.UTF_16LE))
-                }
-                Id3Frame(id, out.toByteArray())
+            id.startsWith("T") -> Id3Frame(id, utf16(splitStrings(enc, data, 1)))
+            id == "COMM" || id == "USLT" -> {
+                // [codificación][idioma 3][descripción\0][texto]
+                if (data.size < 4) return null
+                val strings = splitStrings(enc, data, 4)
+                val desc = strings.getOrElse(0) { "" }
+                val text = strings.drop(1).joinToString("\n")
+                Id3Frame(id, utf16(listOf(desc, text), prefix = data.copyOfRange(1, 4)))
+            }
+            id == "WXXX" -> {
+                // [codificación][descripción\0][URL en ISO-8859-1]
+                val end = terminatorEnd(enc, data, 1)
+                if (end < 0) return null
+                val desc = decode(enc, data.copyOfRange(1, end - terminatorSize(enc)))
+                Id3Frame(id, utf16(listOf(desc)) + byteArrayOf(0, 0) + data.copyOfRange(end, data.size))
             }
             id == "APIC" -> {
-                // [3][mime\0][tipo][descripción UTF-8\0][imagen] → descripción vacía en ISO-8859-1.
+                // [codificación][mime\0][tipo][descripción][imagen] → descripción vacía en ISO-8859-1.
                 val mimeEnd = indexOf(data, 0, 1)
                 if (mimeEnd < 0 || mimeEnd + 2 > data.size) return null
-                val descEnd = indexOf(data, 0, mimeEnd + 2)
+                val descEnd = terminatorEnd(enc, data, mimeEnd + 2)
                 if (descEnd < 0) return null
-                Id3Frame(id, byteArrayOf(0) + data.copyOfRange(1, mimeEnd + 2) + byteArrayOf(0) + data.copyOfRange(descEnd + 1, data.size))
+                Id3Frame(id, byteArrayOf(0) + data.copyOfRange(1, mimeEnd + 2) + byteArrayOf(0) + data.copyOfRange(descEnd, data.size))
             }
-            else -> null // comentarios o letras en UTF-8: poco comunes; se descartan en vez de dañarlos
+            else -> null // otros marcos con UTF-8/UTF-16BE: muy raros; se descartan en vez de dañarlos
         }
+    }
+
+    private fun terminatorSize(enc: Int) = if (enc == 1 || enc == 2) 2 else 1
+
+    /** Posición justo después del terminador de cadena que empieza en [from], o -1. */
+    private fun terminatorEnd(enc: Int, data: ByteArray, from: Int): Int {
+        if (terminatorSize(enc) == 1) {
+            val i = indexOf(data, 0, from)
+            return if (i < 0) -1 else i + 1
+        }
+        var p = from
+        while (p + 1 < data.size) {
+            if (data[p].toInt() == 0 && data[p + 1].toInt() == 0) return p + 2
+            p += 2
+        }
+        return -1
+    }
+
+    private fun decode(enc: Int, bytes: ByteArray): String = when (enc) {
+        0 -> String(bytes, LATIN1)
+        1 -> String(bytes, Charsets.UTF_16)
+        2 -> String(bytes, Charsets.UTF_16BE)
+        else -> String(bytes, Charsets.UTF_8)
+    }
+
+    /** Cadenas separadas por terminadores a partir de [from]. */
+    private fun splitStrings(enc: Int, data: ByteArray, from: Int): List<String> {
+        val out = ArrayList<String>()
+        var p = from
+        while (p < data.size) {
+            val end = terminatorEnd(enc, data, p)
+            if (end < 0) {
+                out += decode(enc, data.copyOfRange(p, data.size))
+                break
+            }
+            out += decode(enc, data.copyOfRange(p, end - terminatorSize(enc)))
+            p = end
+        }
+        return out
+    }
+
+    /** [1][prefijo][BOM+UTF-16LE] cadenas separadas por 00 00. */
+    private fun utf16(strings: List<String>, prefix: ByteArray = ByteArray(0)): ByteArray {
+        val out = java.io.ByteArrayOutputStream()
+        out.write(1)
+        out.write(prefix)
+        strings.forEachIndexed { i, s ->
+            if (i > 0) out.write(byteArrayOf(0, 0))
+            out.write(byteArrayOf(0xFF.toByte(), 0xFE.toByte()))
+            out.write(s.toByteArray(Charsets.UTF_16LE))
+        }
+        return out.toByteArray()
     }
 
     // ---- Escritura ----
@@ -309,8 +405,9 @@ object Id3 {
      * y la ID3v1 actualizada (si existía). Devuelve el número de bytes de audio copiados.
      */
     fun rewrite(source: ByteSource, edit: TagEdit, out: OutputStream): Long {
-        val layout = read(source)
-        out.write(buildTag(applyEdit(layout.frames, edit)))
+        val plan = plan(source, edit, allowInPlace = false)
+        val layout = plan.layout
+        out.write(plan.tag)
         val buffer = ByteArray(64 * 1024)
         var pos = layout.audioStart
         while (pos < layout.audioEnd) {
@@ -320,8 +417,102 @@ object Id3 {
             out.write(buffer, 0, n)
             pos += n
         }
-        layout.v1?.let { out.write(updateV1(it, edit)) }
+        plan.v1?.let { out.write(it) }
         return layout.audioEnd - layout.audioStart
+    }
+
+    /**
+     * Prepara la edición sin escribir nada. Lanza [InvalidTagException] si la etiqueta no se puede
+     * leer con seguridad y [NotMp3Exception] si el contenido no es MPEG: en ambos casos el archivo
+     * no se toca.
+     */
+    fun plan(source: ByteSource, edit: TagEdit, allowInPlace: Boolean = true): RewritePlan {
+        val layout = read(source)
+        if (!looksLikeMpeg(source, layout.audioStart, layout.audioEnd)) throw NotMp3Exception("El contenido no es audio MPEG")
+        val frames = applyEdit(layout.frames, edit)
+        val framesBytes = frames.sumOf { 10L + it.data.size }
+        val fits = allowInPlace && layout.audioStart >= 10 && 10 + framesBytes <= layout.audioStart
+        val tag = if (fits) {
+            buildTag(frames, padding = (layout.audioStart - 10 - framesBytes).toInt())
+        } else {
+            buildTag(frames, padding = GROW_PADDING)
+        }
+        return RewritePlan(tag, layout.v1?.let { updateV1(it, edit) }, layout, inPlace = fits)
+    }
+
+    // ---- Comprobación de que el contenido es MP3 ----
+
+    private val BITRATES_V1 = arrayOf(
+        intArrayOf(0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448), // capa I
+        intArrayOf(0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384), // capa II
+        intArrayOf(0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320), // capa III
+    )
+    private val BITRATES_V2 = arrayOf(
+        intArrayOf(0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256), // capa I
+        intArrayOf(0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160), // capas II y III
+    )
+    private val SAMPLE_RATES = intArrayOf(44_100, 48_000, 32_000)
+
+    /** Longitud en bytes de la trama MPEG cuya cabecera empieza en [h], o -1 si no es válida. */
+    fun mpegFrameLength(h: ByteArray, o: Int = 0): Int {
+        if (h.size < o + 4) return -1
+        val b1 = h[o + 1].toInt() and 0xFF
+        val b2 = h[o + 2].toInt() and 0xFF
+        if (h[o].toInt() and 0xFF != 0xFF || b1 and 0xE0 != 0xE0) return -1
+        val version = (b1 shr 3) and 3 // 0 = 2.5, 2 = 2, 3 = 1
+        val layer = (b1 shr 1) and 3 // 1 = III, 2 = II, 3 = I
+        val bitrateIndex = b2 shr 4
+        val rateIndex = (b2 shr 2) and 3
+        if (version == 1 || layer == 0 || bitrateIndex == 0 || bitrateIndex == 15 || rateIndex == 3) return -1
+        val padding = (b2 shr 1) and 1
+        val mpeg1 = version == 3
+        val layerNumber = 4 - layer
+        val kbps = if (mpeg1) BITRATES_V1[layerNumber - 1][bitrateIndex] else BITRATES_V2[if (layerNumber == 1) 0 else 1][bitrateIndex]
+        val rate = SAMPLE_RATES[rateIndex] shr (if (mpeg1) 0 else if (version == 2) 1 else 2)
+        val bitrate = kbps * 1000
+        return when {
+            layerNumber == 1 -> (12 * bitrate / rate + padding) * 4
+            layerNumber == 3 && !mpeg1 -> 72 * bitrate / rate + padding
+            else -> 144 * bitrate / rate + padding
+        }
+    }
+
+    /**
+     * ¿Hay audio MPEG de verdad? Busca, en los primeros 64 KB tras la etiqueta, dos tramas válidas
+     * seguidas (la segunda justo donde acaba la primera). Rechaza los contenedores habituales con
+     * extensión .mp3 equivocada (MP4/AAC de conversores web, WAV, FLAC, Ogg, WebM).
+     */
+    fun looksLikeMpeg(source: ByteSource, audioStart: Long, audioEnd: Long): Boolean {
+        val window = minOf(audioEnd - audioStart, 64L * 1024 + 4096).toInt()
+        if (window < 8) return false
+        val buf = ByteArray(window)
+        var off = 0
+        while (off < window) {
+            val n = source.read(audioStart + off, buf, off, window - off)
+            if (n <= 0) break
+            off += n
+        }
+        if (off < 8) return false
+        fun at(i: Int, sig: String) = i + sig.length <= off && sig.indices.all { buf[i + it] == sig[it].code.toByte() }
+        if (at(4, "ftyp") || at(0, "RIFF") || at(0, "fLaC") || at(0, "OggS") ||
+            (buf[0].toInt() and 0xFF == 0x1A && buf[1].toInt() and 0xFF == 0x45 && buf[2].toInt() and 0xFF == 0xDF && buf[3].toInt() and 0xFF == 0xA3)
+        ) {
+            return false
+        }
+        val limit = minOf(off - 4, 64 * 1024)
+        for (i in 0 until limit) {
+            if (buf[i].toInt() and 0xFF != 0xFF) continue
+            val len = mpegFrameLength(buf, i)
+            if (len < 24) continue
+            val next = i + len
+            if (next + 4 > off) {
+                // Archivo diminuto o trama al final de la ventana: basta con una trama si acaba justo al final.
+                if (audioStart + next == audioEnd) return true
+                continue
+            }
+            if (mpegFrameLength(buf, next) > 0) return true
+        }
+        return false
     }
 
     // ---- Consulta ----

@@ -266,4 +266,5 @@
     <string name="tag_discard_title">Discard changes?</string>
     <string name="tag_discard">Discard</string>
     <string name="tag_keep_editing">Keep editing</string>
+    <string name="tag_error_pending">A previous edit was interrupted (was the unit switched off?) and its file couldn’t be checked yet. Connect the storage it was on and try again.</string>
 </resources>

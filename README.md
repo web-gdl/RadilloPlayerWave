@@ -18,6 +18,7 @@ siquiera el micrófono, aunque tenga visualizador). Reproduce lo que haya en la 
 en una memoria USB, organiza por canciones, álbumes, artistas, carpetas y listas, guarda favoritos,
 busca, sigue sonando en segundo plano con controles en la notificación y la pantalla bloqueada
 (también cuando el escritorio o la radio del coche piden el audio), recuerda dónde te quedaste,
+permite **editar etiquetas y portada** de los MP3 (se guardan dentro del archivo),
 tiene temporizador de apagado y usa el ecualizador y el refuerzo de graves del propio dispositivo
 cuando existen de verdad (nunca los simula).
 
@@ -70,6 +71,10 @@ Nombre provisional: comprobar disponibilidad de marca antes de cualquier uso com
 «Reproduciendo», sigue sonando en el coche aunque el equipo pida el audio, recuerda cola,
 aleatorio, repetición y carpeta, y arranca sin volver a escanear la música. Interfaz rediseñada
 para usarla al volante. Detalles en `docs/AUDITORIA.md`.
+
+**0.10.x:** editor de etiquetas y portada (título, artista, álbum, año, pista y portada) que
+escribe dentro del MP3 a prueba de cortes de corriente (copia de seguridad, diario, verificación por
+CRC y recuperación al arrancar); también en memorias USB.
 
 **Funciones:** biblioteca de música local (canciones,
 álbumes, artistas, carpetas y listas), favoritos, búsqueda, reproducción en segundo plano con
