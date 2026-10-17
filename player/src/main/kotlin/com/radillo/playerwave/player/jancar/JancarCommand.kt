@@ -12,6 +12,7 @@ sealed class JancarCommand(val label: String) {
     data object Stop : JancarCommand("detener")
     data object Next : JancarCommand("siguiente")
     data object Previous : JancarCommand("anterior")
+    /** En milisegundos: así lo pasa el propio servicio a las apps de terceros (`TransportControls.seekTo`). */
     data class SeekTo(val positionMs: Long) : JancarCommand("buscar")
     /** Atenuación (p. ej. mientras habla el navegador): 0..1. */
     data class Volume(val volume: Float) : JancarCommand("volumen")

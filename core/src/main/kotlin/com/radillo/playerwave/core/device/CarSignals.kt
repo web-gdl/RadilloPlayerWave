@@ -1,5 +1,7 @@
 package com.radillo.playerwave.core.device
 
+import android.os.SystemClock
+
 /**
  * Señales que el estéreo (servicio Jancar) anuncia a todas las apps: cámara de reversa, llave
  * (ACC) y teclas del volante. Aquí solo se guarda el estado; el receptor lo registra la app.
@@ -23,8 +25,8 @@ object CarSignals {
     private const val KEY_TYPE_DOWN = 1
     private const val KEY_TYPE_ONCE = 2
 
-    /** Reloj sustituible en pruebas. */
-    var clock: () -> Long = System::currentTimeMillis
+    /** Reloj monótono (el reloj de pared del estéreo se corrige tras arrancar); sustituible en pruebas. */
+    var clock: () -> Long = { SystemClock.elapsedRealtime() }
 
     @Volatile private var reverseSince = 0L
     @Volatile var accOn: Boolean? = null
@@ -97,6 +99,6 @@ object CarSignals {
         reverseSince = 0L
         accOn = null
         synchronized(keyCounts) { keyCounts.clear() }
-        clock = System::currentTimeMillis
+        clock = { SystemClock.elapsedRealtime() }
     }
 }

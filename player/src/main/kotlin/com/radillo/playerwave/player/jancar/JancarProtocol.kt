@@ -43,10 +43,11 @@ object JancarProtocol {
 
     /**
      * Estado que se publica según el reproductor. Una cola restaurada que aún no se preparó cuenta
-     * como «en pausa» (hay canción cargada); terminada o vacía, como «detenida».
+     * como «en pausa» (hay canción cargada); terminada, vacía o con error (p. ej. se quitó la USB),
+     * como «detenida».
      */
-    fun stateFor(playWhenReady: Boolean, ended: Boolean, hasItems: Boolean): Int = when {
-        !hasItems || ended -> STATE_STOPPED
+    fun stateFor(playWhenReady: Boolean, ended: Boolean, hasItems: Boolean, failed: Boolean = false): Int = when {
+        !hasItems || ended || failed -> STATE_STOPPED
         playWhenReady -> STATE_PLAYING
         else -> STATE_PAUSED
     }

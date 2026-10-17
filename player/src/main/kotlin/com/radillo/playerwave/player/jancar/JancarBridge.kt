@@ -42,9 +42,19 @@ internal class JancarBridge private constructor(
     private val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     private var connected = false
+    /** Hay que (volver a) registrarse al próximo «reproducir». */
     private var registered = false
+    /**
+     * El servicio tiene la fuente abierta a nombre de la app. Sigue así tras el «detener» del
+     * apagado (el servicio no la cierra); solo lo borran nuestro «soltar» o perder el servicio.
+     */
+    private var openAtService = false
+    /** El registro falló: la app maneja el foco por su cuenta hasta el próximo intento. */
     private var failed = false
     private var released = false
+    /** Arranque del estéreo esperando a que se conecte el servicio. */
+    private var pendingWhenConnected: (() -> Unit)? = null
+    private val pendingTimeout = Runnable { runPendingWhenConnected() }
     private var lastInfoKey: String? = null
     private var lastState: Triple<Int, Int, Int>? = null
 
@@ -77,13 +87,54 @@ internal class JancarBridge private constructor(
         if (released) return
         player.removeListener(this)
         main.removeCallbacks(ticker)
-        val close = if (registered) JancarProtocol.TYPE_THIRD_PARTY else null
+        main.removeCallbacks(pendingTimeout)
+        pendingWhenConnected = null
+        val close = if (openAtService) JancarProtocol.TYPE_THIRD_PARTY else null
         released = true
         client.release(close)
         registered = false
+        openAtService = false
         connected = false
         JancarStatus.registered = false
         JancarStatus.link = JancarStatus.Link.LOST
+    }
+
+    /**
+     * El usuario cerró la app (desde «recientes», sin música): suelta la fuente para que el volante
+     * no apunte a ella ni el estéreo la reabra al arrancar. El puente sigue conectado.
+     */
+    fun closeSource() {
+        if (released) return
+        if (openAtService) client.close(JancarProtocol.TYPE_THIRD_PARTY)
+        markClosed()
+    }
+
+    /**
+     * Ejecuta [action] cuando el servicio esté conectado (o ya), o pasado [timeoutMs] si no llega:
+     * así lo que se reproduce al arrancar el estéreo ya va con el foco a cargo del servicio.
+     */
+    fun whenConnected(timeoutMs: Long, action: () -> Unit) {
+        if (released || connected) {
+            action()
+            return
+        }
+        pendingWhenConnected = action
+        main.removeCallbacks(pendingTimeout)
+        main.postDelayed(pendingTimeout, timeoutMs)
+    }
+
+    private fun runPendingWhenConnected() {
+        main.removeCallbacks(pendingTimeout)
+        val action = pendingWhenConnected ?: return
+        pendingWhenConnected = null
+        action()
+    }
+
+    private fun markClosed() {
+        registered = false
+        openAtService = false
+        JancarStatus.registered = false
+        main.removeCallbacks(ticker)
     }
 
     // ---- Conexión ----
@@ -97,30 +148,29 @@ internal class JancarBridge private constructor(
         if (first) EventLog.log("Estéreo: conectado al servicio de medios")
         onActiveChanged()
         if (player.playWhenReady) register()
+        runPendingWhenConnected()
     }
 
     override fun onDisconnected() {
         if (released || !connected) return
         connected = false
-        registered = false
-        main.removeCallbacks(ticker)
+        markClosed()
         JancarStatus.link = JancarStatus.Link.LOST
-        JancarStatus.registered = false
         EventLog.log("Estéreo: se perdió el servicio de medios; la app maneja el audio sola")
         // Si se fue en plena atenuación, nadie devolvería el volumen.
         player.volume = 1f
         onActiveChanged()
     }
 
-    override fun onCallFailed(what: String) {
+    override fun onCallFailed(what: String, code: Int) {
         JancarStatus.failedCalls++
-        if (!connected || failed) return
-        // Si el servicio no responde, la app vuelve a pedir el foco por su cuenta para no quedarse
-        // sonando encima de la radio. Se reintenta al próximo «reproducir».
+        // Solo un registro fallido cambia de modo: entonces el servicio no tiene la fuente ni pide
+        // el foco, y la app lo pide por su cuenta para no sonar encima de la radio. Con la fuente
+        // abierta, pedir el foco haría que el servicio la detuviera: un fallo de «estado» o
+        // «canción» se cuenta y nada más. Se reintenta al próximo «reproducir».
+        if (code != JancarProtocol.TX_OPEN || !connected || failed) return
         failed = true
-        registered = false
-        JancarStatus.registered = false
-        main.removeCallbacks(ticker)
+        markClosed()
         player.volume = 1f
         onActiveChanged()
     }
@@ -136,17 +186,17 @@ internal class JancarBridge private constructor(
         when (handler.handle(command)) {
             SourceCommandHandler.Outcome.KEEP -> Unit
             SourceCommandHandler.Outcome.RELEASED -> {
-                // Pudo ser otra fuente que tomó el audio: al volver a sonar hay que registrarse.
+                // Pudo ser otra fuente que tomó el audio (o el apagado del auto): al volver a sonar
+                // hay que registrarse. La fuente puede seguir abierta en el servicio.
                 registered = false
-                JancarStatus.registered = false
                 main.removeCallbacks(ticker)
+                // Sin fuente, nadie devolvería el volumen de una atenuación en curso.
+                player.volume = 1f
             }
             SourceCommandHandler.Outcome.CLOSE -> {
                 setUserWantsPlayback(false)
-                if (registered) client.close(JancarProtocol.TYPE_THIRD_PARTY)
-                registered = false
-                JancarStatus.registered = false
-                main.removeCallbacks(ticker)
+                closeSource()
+                player.volume = 1f
             }
         }
     }
@@ -154,7 +204,14 @@ internal class JancarBridge private constructor(
     // ---- Reproductor ----
 
     override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-        if (handler.onPlayWhenReadyChanged(playWhenReady)) setUserWantsPlayback(playWhenReady)
+        val byUser = handler.onPlayWhenReadyChanged(playWhenReady)
+        // Solo lo que decide el usuario cuenta para reanudar al arrancar; no las pausas por foco
+        // de audio o salida desconectada (cuando el puente no manda).
+        if (byUser && active &&
+            (reason == Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST || reason == Player.PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
+        ) {
+            setUserWantsPlayback(playWhenReady)
+        }
         if (playWhenReady) {
             if (failed && connected) {
                 // Nuevo intento tras un fallo: si el servicio responde, vuelve a mandar él.
@@ -182,11 +239,14 @@ internal class JancarBridge private constructor(
     override fun onPlaybackStateChanged(playbackState: Int) = publishState()
 
     private fun register() {
-        if (!active || registered) return
+        // Sin cola no se le quita el audio a la radio para no poner nada.
+        if (!active || registered || player.mediaItemCount == 0) return
         registered = true
+        openAtService = true
         JancarStatus.registered = true
         lastInfoKey = null
         lastState = null
+        player.volume = 1f
         client.open(JancarProtocol.TYPE_THIRD_PARTY)
         EventLog.log("Estéreo: registrada como fuente de audio")
         publishInfo()
@@ -204,6 +264,7 @@ internal class JancarBridge private constructor(
             playWhenReady = player.playWhenReady,
             ended = player.playbackState == Player.STATE_ENDED,
             hasItems = hasItems,
+            failed = player.playerError != null,
         )
         val position = (player.currentPosition.coerceAtLeast(0L) / 1000L).toInt()
         val duration = player.duration.takeIf { it > 0L }?.let { (it / 1000L).toInt() } ?: 0
@@ -288,7 +349,10 @@ internal class JancarBridge private constructor(
 
     /** El reproductor visto por el manejador de órdenes. */
     private inner class PlayerAdapter : SourcePlayer {
-        override val playWhenReady: Boolean get() = player.playWhenReady
+        // Una cola terminada no «suena» aunque playWhenReady siga activo: si no, tras una llamada
+        // o al encender el auto volvería a empezar la última canción.
+        override val playWhenReady: Boolean
+            get() = player.playWhenReady && player.playbackState != Player.STATE_ENDED
         override fun play() {
             if (player.mediaItemCount == 0) return
             if (player.playbackState == Player.STATE_IDLE) player.prepare()

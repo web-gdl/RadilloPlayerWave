@@ -10,10 +10,8 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.Parcel
 import com.radillo.playerwave.core.diagnostics.EventLog
-import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 
 /**
  * Conexión binder con el servicio de medios del estéreo (`com.jancar.services`). Escribe y lee las
@@ -32,8 +30,8 @@ internal class JancarMediaClient(
         fun onConnected()
         fun onDisconnected()
         fun onCommand(command: JancarCommand)
-        /** Una llamada al servicio falló (el puente debe dejar de confiar en él). */
-        fun onCallFailed(what: String)
+        /** Una llamada al servicio falló ([code]: código de la transacción de `IMedia`). */
+        fun onCallFailed(what: String, code: Int)
     }
 
     private val main = Handler(Looper.getMainLooper())
@@ -149,36 +147,32 @@ internal class JancarMediaClient(
     }
 
     /**
-     * Suelta la fuente (si se indica) y la conexión. Espera brevemente a que salga la última
-     * llamada para que el estéreo no se quede con una fuente muerta.
+     * Suelta la fuente (si se indica) y la conexión. Lo pendiente (estado, carátula) se descarta y
+     * el «soltar» se envía en el acto: si quedara en cola detrás de una carátula, podría perderse y
+     * el estéreo se quedaría con una fuente muerta.
      */
     fun release(closeType: Int?) {
         if (released) return
-        if (closeType != null && remote != null) {
-            val task = try {
-                io.submit(Callable { transact("soltar", JancarProtocol.TX_CLOSE) { writeInt(closeType) } })
-            } catch (_: Exception) {
-                null
-            }
-            try {
-                task?.get(RELEASE_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-            } catch (_: Exception) {
-            }
-        }
         released = true
+        io.shutdownNow()
+        val binder = remote
+        if (closeType != null && binder != null) {
+            transactWith(binder, "soltar", JancarProtocol.TX_CLOSE) { writeInt(closeType) }
+        }
         remote?.let { runCatching { it.unlinkToDeath(deathRecipient, 0) } }
         remote = null
         if (bound) {
             runCatching { context.unbindService(connection) }
             bound = false
         }
-        io.shutdown()
     }
 
     private fun call(what: String, code: Int, write: Parcel.() -> Unit) {
         if (released) return
         val task = Runnable {
-            if (!transact(what, code, write)) main.post { if (!released) listener.onCallFailed(what) }
+            val binder = remote
+            val ok = binder != null && transactWith(binder, what, code, write)
+            if (!ok) main.post { if (!released) listener.onCallFailed(what, code) }
         }
         // Desde el propio hilo del puente (p. ej. tras preparar la carátula) se llama en el acto,
         // para conservar el orden respecto de lo que ya estaba en cola.
@@ -193,19 +187,22 @@ internal class JancarMediaClient(
         }
     }
 
-    /** Hilo del puente. Devuelve `false` si el servicio no está o la llamada falló. */
-    private fun transact(what: String, code: Int, write: Parcel.() -> Unit): Boolean {
-        val binder = remote ?: return false
+    /** Devuelve `false` si la llamada falló o el servicio no la reconoce. */
+    private fun transactWith(binder: IBinder, what: String, code: Int, write: Parcel.() -> Unit): Boolean {
         val data = Parcel.obtain()
         val reply = Parcel.obtain()
         return try {
             data.writeInterfaceToken(JancarProtocol.MEDIA_DESCRIPTOR)
             data.write()
-            binder.transact(code, data, reply, 0)
+            if (!binder.transact(code, data, reply, 0)) {
+                // Un firmware sin ese código devuelve false con la respuesta vacía.
+                logOnce(what, "Estéreo: el servicio no reconoce «$what»")
+                return false
+            }
             reply.readException()
             true
         } catch (e: Exception) {
-            EventLog.log("Estéreo: falló «$what» (${e.javaClass.simpleName})")
+            logOnce(what, "Estéreo: falló «$what» (${e.javaClass.simpleName})")
             false
         } finally {
             data.recycle()
@@ -213,6 +210,12 @@ internal class JancarMediaClient(
         }
     }
 
+    /** El estado se envía cada segundo: un fallo repetido no debe llenar el registro de eventos. */
+    private val loggedFailures = java.util.Collections.synchronizedSet(HashSet<String>())
+
+    private fun logOnce(what: String, message: String) {
+        if (loggedFailures.add(what)) EventLog.log(message)
+    }
 
     private class ParcelArgs(private val parcel: Parcel) : JancarCommand.Args {
         override fun readInt(): Int = parcel.readInt()
@@ -221,8 +224,6 @@ internal class JancarMediaClient(
     }
 
     companion object {
-        private const val RELEASE_TIMEOUT_MS = 500L
-
         fun serviceIntent(): Intent = Intent(JancarProtocol.ACTION_MEDIA).setPackage(JancarProtocol.SERVICE_PACKAGE)
 
         /** `true` si el estéreo tiene el servicio (si no, la app sigue como en cualquier Android). */

@@ -63,6 +63,7 @@ class JancarProtocolTest {
         assertEquals(JancarProtocol.STATE_PAUSED, JancarProtocol.stateFor(playWhenReady = false, ended = false, hasItems = true))
         assertEquals(JancarProtocol.STATE_STOPPED, JancarProtocol.stateFor(playWhenReady = true, ended = true, hasItems = true))
         assertEquals(JancarProtocol.STATE_STOPPED, JancarProtocol.stateFor(playWhenReady = false, ended = false, hasItems = false))
+        assertEquals(JancarProtocol.STATE_STOPPED, JancarProtocol.stateFor(playWhenReady = true, ended = false, hasItems = true, failed = true))
     }
 
     @Test

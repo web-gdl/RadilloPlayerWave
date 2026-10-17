@@ -39,12 +39,19 @@ class JancarBridgeTest {
         data class Call(val code: Int, val type: Int, val callback: IBinder? = null, val text: List<String?> = emptyList(), val ints: List<Int> = emptyList())
 
         val calls = CopyOnWriteArrayList<Call>()
+        /** Códigos que responden con una excepción (como un servicio que falla). */
+        val failing: MutableSet<Int> = java.util.Collections.synchronizedSet(mutableSetOf())
 
         fun last(code: Int): Call? = calls.lastOrNull { it.code == code }
+        fun count(code: Int): Int = calls.count { it.code == code }
 
         override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
             if (code > LAST_CALL_TRANSACTION) return super.onTransact(code, data, reply, flags)
             data.enforceInterface(JancarProtocol.MEDIA_DESCRIPTOR)
+            if (code in failing) {
+                reply?.writeException(IllegalStateException("fallo simulado"))
+                return true
+            }
             val call = when (code) {
                 JancarProtocol.TX_OPEN -> {
                     val type = data.readInt()
@@ -199,6 +206,76 @@ class JancarBridgeTest {
 
         controller.destroy()
         assertThat(fake.last(JancarProtocol.TX_CLOSE)?.type).isEqualTo(JancarProtocol.TYPE_THIRD_PARTY)
+    }
+
+    @Test
+    fun `tras apagar el auto, cerrar desde la barra de estado sigue soltando la fuente`() {
+        installFakeService()
+        val controller = Robolectric.buildService(PlaybackService::class.java)
+        val player = controller.create().get().sessionForTest()!!.player
+        waitFor("conectado") { JancarStatus.link == JancarStatus.Link.CONNECTED }
+        player.setMediaItems(listOf(track(1)).map(MediaItemMapper::toMediaItem))
+        player.play()
+        waitFor("registro") { fake.last(JancarProtocol.TX_OPEN) != null }
+        val callback = fake.last(JancarProtocol.TX_OPEN)!!.callback!!
+
+        // Apagado: el servicio detiene pero deja la fuente abierta.
+        send(callback, 7)
+        send(callback, 6) { writeInt(JancarProtocol.QUIT_SYSTEM) }
+        assertThat(JancarStatus.registered).isTrue()
+        send(callback, 6) { writeInt(1) }
+        waitFor("fuente soltada") { fake.last(JancarProtocol.TX_CLOSE) != null }
+        assertThat(JancarStatus.registered).isFalse()
+        controller.destroy()
+        assertThat(fake.count(JancarProtocol.TX_CLOSE)).isEqualTo(1)
+    }
+
+    @Test
+    fun `un fallo de estado no cambia de modo y un registro fallido se reintenta`() {
+        installFakeService()
+        fake.failing += JancarProtocol.TX_SET_MEDIA_STATE
+        val controller = Robolectric.buildService(PlaybackService::class.java)
+        val player = controller.create().get().sessionForTest()!!.player
+        waitFor("conectado") { JancarStatus.link == JancarStatus.Link.CONNECTED }
+        player.setMediaItems(listOf(track(1)).map(MediaItemMapper::toMediaItem))
+        player.play()
+        waitFor("fallo contado") { JancarStatus.failedCalls > 0 }
+        // Sigue registrada: con la fuente abierta, pedir el foco haría que el estéreo la detuviera.
+        assertThat(JancarStatus.registered).isTrue()
+        val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        assertThat(shadowOf(audio).lastAudioFocusRequest).isNull()
+
+        // Ahora falla el registro: la fuente no queda abierta y al volver a reproducir se reintenta.
+        fake.failing.clear()
+        fake.failing += JancarProtocol.TX_OPEN
+        val callback = fake.last(JancarProtocol.TX_OPEN)!!.callback!!
+        send(callback, 7) // otra fuente tomó el audio
+        player.play()
+        waitFor("registro fallido") { !JancarStatus.registered }
+        fake.failing.clear()
+        player.pause()
+        ShadowLooper.idleMainLooper()
+        player.play()
+        waitFor("reintento") { fake.count(JancarProtocol.TX_OPEN) == 2 && JancarStatus.registered }
+        controller.destroy()
+    }
+
+    @Test
+    fun `cerrar la app desde recientes sin musica suelta la fuente`() {
+        installFakeService()
+        val controller = Robolectric.buildService(PlaybackService::class.java)
+        val service = controller.create().get()
+        val player = service.sessionForTest()!!.player
+        waitFor("conectado") { JancarStatus.link == JancarStatus.Link.CONNECTED }
+        player.setMediaItems(listOf(track(1)).map(MediaItemMapper::toMediaItem))
+        player.play()
+        waitFor("registro") { fake.last(JancarProtocol.TX_OPEN) != null }
+        player.pause()
+        ShadowLooper.idleMainLooper()
+
+        service.onTaskRemoved(null)
+        waitFor("fuente soltada") { fake.last(JancarProtocol.TX_CLOSE) != null }
+        controller.destroy()
     }
 
     @Test

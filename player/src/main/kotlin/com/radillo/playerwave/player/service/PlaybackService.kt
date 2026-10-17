@@ -157,16 +157,16 @@ class PlaybackService : MediaLibraryService() {
      * Si la cola aún se está restaurando, se reproduce en cuanto llegue.
      */
     private fun resumeAfterBoot() {
-        val player = exoPlayer ?: return
-        if (bridge?.userWantsPlayback != true) {
+        val b = bridge ?: return
+        if (!b.userWantsPlayback) {
             EventLog.log("Arranque del estéreo: la música estaba en pausa; no se reanuda")
             return
         }
-        if (player.mediaItemCount == 0) {
-            playAfterRestore = true
-            return
+        // Se espera a que el servicio del estéreo se conecte para que sea él quien pida el foco.
+        b.whenConnected(BOOT_CONNECT_WAIT_MS) {
+            val player = exoPlayer ?: return@whenConnected
+            if (player.mediaItemCount == 0) playAfterRestore = true else startPlayback(player)
         }
-        startPlayback(player)
     }
 
     private fun startPlayback(player: ExoPlayer) {
@@ -318,6 +318,8 @@ class PlaybackService : MediaLibraryService() {
             player.playbackState == Player.STATE_ENDED
         ) {
             EventLog.log("App cerrada desde recientes sin música: servicio detenido")
+            // Que el volante no apunte a una app cerrada ni el estéreo la reabra al arrancar.
+            bridge?.closeSource()
             stopSelf()
         }
     }
@@ -364,5 +366,6 @@ class PlaybackService : MediaLibraryService() {
         const val SAVE_DEBOUNCE_MS = 1_000L
         const val PERIODIC_SAVE_MS = 15_000L
         const val SYNC_SAVE_TIMEOUT_MS = 2_000L
+        const val BOOT_CONNECT_WAIT_MS = 3_000L
     }
 }
