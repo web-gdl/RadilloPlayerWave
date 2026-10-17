@@ -133,7 +133,7 @@ class ScreenshotTest {
         v.text("trackSubtitle", "Eagles · Hotel California")
         v.text("position", "2:41")
         v.text("duration", "6:30")
-        v.text("queueInfo", "Siguiente: La Bamba")
+        v.text("queueInfo", "A continuación: La Bamba")
         (v.find("seek") as? SeekBar)?.progress = 420
         (v.find("art") as? ImageView)?.setImageResource(R.drawable.tile_note)
         (v.find("btnPlay") as? ImageView)?.setImageResource(R.drawable.ic_pause)
