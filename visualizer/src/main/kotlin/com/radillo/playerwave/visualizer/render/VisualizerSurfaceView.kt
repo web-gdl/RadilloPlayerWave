@@ -29,7 +29,6 @@ class VisualizerSurfaceView @JvmOverloads constructor(
     private var engine: VisualizerEngine? = null
     private var thread: RenderThread? = null
     private var surfaceReady = false
-    private var engineAttached = false
 
     init {
         holder.addCallback(this)
@@ -39,45 +38,22 @@ class VisualizerSurfaceView @JvmOverloads constructor(
     fun setEngine(engine: VisualizerEngine) {
         if (this.engine === engine) return
         val previous = this.engine
-        if (surfaceReady && engineAttached) {
+        if (surfaceReady) {
             stopThread()
             previous?.detach()
-            engineAttached = false
         }
         this.engine = engine
-        if (surfaceReady && visibility == VISIBLE) {
+        if (surfaceReady) {
             engine.attach()
-            engineAttached = true
             engine.onResize(width, height)
             startThread()
         }
     }
 
-    override fun onVisibilityChanged(changedView: View, visibility: Int) {
-        super.onVisibilityChanged(changedView, visibility)
-        // Cuando la vista se oculta, libera la superficie y el hilo; cuando se muestra, los reactiva.
-        if (visibility == VISIBLE) {
-            if (surfaceReady && !engineAttached) {
-                engine?.attach()
-                startThread()
-                engineAttached = true
-            }
-        } else {
-            if (engineAttached) {
-                stopThread()
-                engine?.detach()
-                engineAttached = false
-            }
-        }
-    }
-
     override fun surfaceCreated(holder: SurfaceHolder) {
         surfaceReady = true
-        if (visibility == VISIBLE) {
-            engine?.attach()
-            engineAttached = true
-            startThread()
-        }
+        engine?.attach()
+        startThread()
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
@@ -86,10 +62,7 @@ class VisualizerSurfaceView @JvmOverloads constructor(
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         stopThread()
-        if (engineAttached) {
-            engine?.detach()
-            engineAttached = false
-        }
+        engine?.detach()
         surfaceReady = false
     }
 
