@@ -9,10 +9,15 @@ import com.radillo.playerwave.visualizer.analysis.AudioSourceStatus
 import com.radillo.playerwave.visualizer.analysis.FrameHistory
 import com.radillo.playerwave.visualizer.analysis.PlaybackClock
 import com.radillo.playerwave.visualizer.analysis.SyntheticFrameSource
+import com.radillo.playerwave.core.diagnostics.EventLog
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -42,13 +47,22 @@ class VisualizerEngine(
     private val registry: SceneRegistry,
     private val analyzerConfig: AnalyzerConfig = AnalyzerConfig(),
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    /**
+     * Un fallo del análisis no debe cerrar la app: se registra y el visualizador sigue con datos
+     * sintéticos (sin este manejador, una excepción en `Dispatchers.Default` mata el proceso).
+     */
+    private val analysisErrors = CoroutineExceptionHandler { _, error ->
+        EventLog.log("Error en el análisis de audio: ${error.javaClass.simpleName}: ${error.message?.take(120)}")
+    }
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default + analysisErrors)
     private val analyzer = AudioAnalyzer(analyzerConfig)
     private val history = FrameHistory()
     private val synthetic = SyntheticFrameSource(analyzerConfig)
     private val lock = Any()
 
     private var analysisJob: Job? = null
+    /** Trabajo cancelado que quizá aún no ha terminado (ver [startAnalysis]). */
+    private var stoppingJob: Job? = null
     private var attachedSurfaces = 0
 
     @Volatile private var lastRealFrameNanos = 0L
@@ -116,14 +130,25 @@ class VisualizerEngine(
         synchronized(lock) {
             attachedSurfaces = (attachedSurfaces - 1).coerceAtLeast(0)
             if (attachedSurfaces == 0) {
-                analysisJob?.cancel()
+                stoppingJob = analysisJob?.also { it.cancel() }
                 analysisJob = null
             }
         }
     }
 
+    /**
+     * Arranca el análisis. Si una superficie se destruye y otra se crea casi a la vez (cambiar de
+     * pantalla), el trabajo anterior puede seguir vivo un instante: el nuevo **espera** a que
+     * termine antes de tocar el analizador, que no admite dos hilos a la vez.
+     */
     private fun startAnalysis() {
+        val previous = stoppingJob
+        stoppingJob = null
         analysisJob = scope.launch {
+            // La espera no se puede cancelar: si este trabajo se cancela mientras espera, quien venga
+            // detrás aún debe esperar (en cadena) a que el anterior haya terminado.
+            if (previous != null) withContext(NonCancellable) { previous.join() }
+            ensureActive()
             analyzer.reset()
             source.blocks.collect { block ->
                 analyzer.push(block) { frame ->

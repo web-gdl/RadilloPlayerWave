@@ -86,6 +86,25 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+      # Las mismas capturas en la rama «ci-capturas» (solo la última ejecución), legibles con git.
+      - name: Subir capturas a la rama ci-capturas
+        if: always() && github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          shopt -s nullglob
+          files=(app/build/outputs/screenshots/*.png)
+          [ ${#files[@]} -gt 0 ] || exit 0
+          tmp=$(mktemp -d)
+          cp "${files[@]}" "$tmp/"
+          cd "$tmp"
+          git init -q -b ci-capturas
+          git config user.name "github-actions"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          echo "Capturas generadas por ScreenshotTest en el commit ${{ github.sha }}." > README.md
+          git add -A
+          git commit -q -m "Capturas de ${{ github.sha }}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-capturas
+
       # Si la compilación falla, deja el extracto relevante del registro como comentario
       # del commit, para poder diagnosticarlo desde la API sin abrir la interfaz web.
       - name: Comentar el error en el commit

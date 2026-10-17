@@ -9,8 +9,11 @@ import com.radillo.playerwave.visualizer.analysis.PlaybackClock
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
 import org.junit.Test
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Regresión de la Fase B: el reloj se consultaba desde el hilo de render y lanzaba en cada frame,
@@ -55,5 +58,48 @@ class VisualizerEngineRenderTest {
         }
         assertThat(scene.updates).isEqualTo(30)
         assertThat(scene.draws).isEqualTo(30)
+    }
+
+    /**
+     * Regresión del cierre al pasar de «Visualizador» a «Reproduciendo»: una superficie se destruye
+     * y otra se crea casi a la vez, y el análisis anterior seguía vivo mientras arrancaba el nuevo,
+     * con dos hilos sobre el mismo analizador. El nuevo debe esperar a que el anterior termine.
+     */
+    @Test
+    fun `restarting the analysis never runs two collectors at once`() {
+        val active = AtomicInteger(0)
+        val maxActive = AtomicInteger(0)
+        val starts = AtomicInteger(0)
+        val slowSource = object : AudioSource {
+            override val status: StateFlow<AudioSourceStatus> = MutableStateFlow(AudioSourceStatus.ACTIVE)
+            override val blocks: Flow<PcmBlock> = flow {
+                val now = active.incrementAndGet()
+                starts.incrementAndGet()
+                maxActive.accumulateAndGet(now) { a, b -> maxOf(a, b) }
+                try {
+                    awaitCancellation()
+                } finally {
+                    Thread.sleep(150) // cierre lento, como en un A7 ocupado
+                    active.decrementAndGet()
+                }
+            }
+        }
+        val clock = object : PlaybackClock {
+            override fun positionUs(): Long? = null
+            override fun isPlaying(): Boolean = false
+        }
+        val engine = VisualizerEngine(slowSource, clock, DefaultScenes.registry())
+        repeat(3) {
+            engine.attach()
+            Thread.sleep(40)
+            engine.detach()
+        }
+        engine.attach()
+        val deadline = System.currentTimeMillis() + 3_000
+        while (starts.get() < 2 && System.currentTimeMillis() < deadline) Thread.sleep(20)
+        Thread.sleep(400)
+        assertThat(starts.get()).isAtLeast(2)
+        assertThat(maxActive.get()).isEqualTo(1)
+        engine.detach()
     }
 }

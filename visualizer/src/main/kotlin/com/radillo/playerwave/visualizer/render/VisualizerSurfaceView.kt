@@ -3,19 +3,25 @@ package com.radillo.playerwave.visualizer.render
 import android.content.Context
 import android.graphics.Canvas
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.Process
 import android.util.AttributeSet
 import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
-import com.radillo.playerwave.core.device.RealApiLevel
+import com.radillo.playerwave.core.diagnostics.EventLog
+import com.radillo.playerwave.core.diagnostics.RenderMode
 import com.radillo.playerwave.visualizer.engine.VisualizerEngine
 
 /**
  * Superficie del visualizador: un `SurfaceView` con su propio hilo de render.
  *
- * - El hilo dibuja con `lockHardwareCanvas` (GPU, API 26+ real) y cae a `lockCanvas` (software)
- *   si la unidad no lo admite. Un frame lento del visualizador nunca bloquea el hilo principal.
+ * - El hilo dibuja con la CPU (`lockCanvas`) o con la GPU (`lockHardwareCanvas`) según
+ *   [RenderMode]: en equipos de gama baja con Android 8–9 real la GPU puede cerrar la app al
+ *   destruir la superficie. Un frame lento del visualizador nunca bloquea el hilo principal.
+ * - Al destruirse la superficie, el hilo se detiene y se espera a que termine **antes** de
+ *   devolver el control: después de `surfaceDestroyed` nadie puede tocar la superficie.
  * - El tope de fps del motor se respeta espaciando los frames (`minFrameIntervalNanos`); sin tope,
  *   la cola de búferes de la superficie limita el bucle a la cadencia de la pantalla.
  * - El análisis de audio se enciende con la superficie y se apaga con ella ([VisualizerEngine.attach]/
@@ -51,6 +57,7 @@ class VisualizerSurfaceView @JvmOverloads constructor(
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
+        if (surfaceReady) return
         surfaceReady = true
         engine?.attach()
         startThread()
@@ -61,15 +68,24 @@ class VisualizerSurfaceView @JvmOverloads constructor(
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
+        val gpu = thread?.usesGpu == true
+        if (gpu) RenderMode.beginGpuTransition()
         stopThread()
-        engine?.detach()
+        if (surfaceReady) engine?.detach()
         surfaceReady = false
+        // La superficie se libera al volver de aquí; si el proceso muere en ese instante, la marca
+        // queda y el siguiente arranque usará la CPU.
+        if (gpu) mainHandler.postDelayed({ RenderMode.endGpuTransition() }, TRANSITION_GRACE_MS)
     }
 
     private fun startThread() {
         val engine = engine ?: return
         if (thread != null) return
-        thread = RenderThread(holder, engine).also { it.start() }
+        val gpu = RenderMode.useGpu() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+        if (gpu) RenderMode.beginGpuTransition()
+        thread = RenderThread(holder, engine, gpu) {
+            if (gpu) mainHandler.postDelayed({ RenderMode.endGpuTransition() }, TRANSITION_GRACE_MS)
+        }.also { it.start() }
     }
 
     private fun stopThread() {
@@ -78,7 +94,10 @@ class VisualizerSurfaceView @JvmOverloads constructor(
         t.running = false
         t.interrupt()
         try {
-            t.join(1_000)
+            // Hay que esperar a que termine: si siguiera dibujando tras liberar la superficie, el
+            // cierre sería nativo. Un frame tarda milisegundos; el límite solo evita un bloqueo eterno.
+            t.join(STOP_TIMEOUT_MS)
+            if (t.isAlive) EventLog.log("El hilo del visualizador no terminó a tiempo")
         } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
         }
@@ -88,10 +107,14 @@ class VisualizerSurfaceView @JvmOverloads constructor(
     private class RenderThread(
         private val holder: SurfaceHolder,
         private val engine: VisualizerEngine,
+        gpu: Boolean,
+        private val onFirstFrame: () -> Unit,
     ) : Thread("RadilloVisualizer") {
 
         @Volatile var running = true
-        private var useHardware = Build.VERSION.SDK_INT >= 26 && RealApiLevel.effective >= 26
+        @Volatile private var useHardware = gpu
+        val usesGpu: Boolean get() = useHardware
+        private var firstFramePosted = false
 
         override fun run() {
             try {
@@ -128,6 +151,10 @@ class VisualizerSurfaceView @JvmOverloads constructor(
                         Log.w(TAG, "No se pudo publicar el frame", t)
                     }
                 }
+                if (!firstFramePosted) {
+                    firstFramePosted = true
+                    onFirstFrame()
+                }
             }
         }
 
@@ -163,7 +190,11 @@ class VisualizerSurfaceView @JvmOverloads constructor(
         }
     }
 
+    private val mainHandler = Handler(Looper.getMainLooper())
+
     private companion object {
         const val TAG = "VisualizerSurface"
+        const val STOP_TIMEOUT_MS = 3_000L
+        const val TRANSITION_GRACE_MS = 1_500L
     }
 }
