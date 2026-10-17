@@ -27,6 +27,7 @@ import com.radillo.playerwave.player.audiofx.AudioEffectsHub
 import com.radillo.playerwave.player.audiotap.AudioTapHub
 import com.radillo.playerwave.player.audiotap.RadilloRenderersFactory
 import com.radillo.playerwave.player.engine.MediaItemMapper
+import com.radillo.playerwave.player.jancar.JancarBridge
 import java.io.File
 import java.util.concurrent.Executors
 
@@ -39,6 +40,9 @@ import java.util.concurrent.Executors
  *   crearse (la app vuelve a donde estaba aunque el equipo se haya apagado con la llave).
  * - **Foco de audio de coche** ([KeepPlayingAudioFocus]): si el ajuste está activo, la música no se
  *   pausa cuando el lanzador o la radio del equipo se quedan el audio.
+ * - **Estéreos Jancar** ([JancarBridge]): se registra como fuente del sistema (volante, llamadas,
+ *   apagar y encender el auto, app de memoria). Mientras está conectado, el foco lo pide el
+ *   servicio del estéreo y la app no lo pide.
  * - Apunta en [EventLog] por qué se pausa o se detiene, para diagnosticar sin `adb`.
  *
  * El `ExoPlayer` se crea aquí (único proceso) y la UI se conecta mediante `MediaController`.
@@ -49,6 +53,9 @@ class PlaybackService : MediaLibraryService() {
     private var session: MediaLibrarySession? = null
     private var exoPlayer: ExoPlayer? = null
     private var focus: KeepPlayingAudioFocus? = null
+    private var bridge: JancarBridge? = null
+    /** El estéreo pidió reanudar al arrancar, pero la cola aún no se había restaurado. */
+    private var playAfterRestore = false
     private lateinit var store: PlaybackStateStore
     private lateinit var settings: SharedPreferences
     private var carDefault = false
@@ -85,6 +92,7 @@ class PlaybackService : MediaLibraryService() {
         val player = buildPlayer()
         exoPlayer = player
         focus = KeepPlayingAudioFocus(this, player)
+        bridge = JancarBridge.create(this, player, onActiveChanged = ::applyFocusMode)
         applyFocusMode()
         settings.registerOnSharedPreferenceChangeListener(settingsListener)
         restoreState(player)
@@ -92,6 +100,7 @@ class PlaybackService : MediaLibraryService() {
         sessionActivityIntent()?.let(builder::setSessionActivity)
         session = builder.build()
         EventLog.log("Servicio de reproducción creado")
+        BootResume.attach(::resumeAfterBoot)
     }
 
     private fun buildPlayer(): ExoPlayer {
@@ -125,15 +134,47 @@ class PlaybackService : MediaLibraryService() {
         return player
     }
 
-    /** «Seguir sonando»: foco propio; si no, ExoPlayer cede el audio como cualquier reproductor. */
+    /**
+     * Quién pide el foco de audio:
+     * - estéreo Jancar conectado: nadie en la app (lo pide su servicio en nombre de la app);
+     * - «Seguir sonando»: el foco propio de coche;
+     * - si no, ExoPlayer, que cede el audio como cualquier reproductor.
+     */
     private fun applyFocusMode() {
         val exo = exoPlayer ?: return
-        val keepPlaying = PlaybackSettings.keepPlayingOnFocusLoss(this, carDefault)
-        exo.setAudioAttributes(audioAttributes, !keepPlaying)
+        val external = bridge?.active == true
+        val keepPlaying = !external && PlaybackSettings.keepPlayingOnFocusLoss(this, carDefault)
+        val car = external || keepPlaying
+        exo.setAudioAttributes(audioAttributes, !car)
         // Los autoestéreos MTK emiten «audio ruidoso» al cambiar de fuente o de ruta (radio, BT,
         // escritorio); en modo coche no debe pausar. En el móvil sí: se desenchufan auriculares.
-        exo.setHandleAudioBecomingNoisy(!keepPlaying)
+        exo.setHandleAudioBecomingNoisy(!car)
         focus?.enabled = keepPlaying
+    }
+
+    /**
+     * El estéreo abrió la app al arrancar (app de memoria): si el usuario la tenía sonando, sigue.
+     * Si la cola aún se está restaurando, se reproduce en cuanto llegue.
+     */
+    private fun resumeAfterBoot() {
+        val player = exoPlayer ?: return
+        if (bridge?.userWantsPlayback != true) {
+            EventLog.log("Arranque del estéreo: la música estaba en pausa; no se reanuda")
+            return
+        }
+        if (player.mediaItemCount == 0) {
+            playAfterRestore = true
+            return
+        }
+        startPlayback(player)
+    }
+
+    private fun startPlayback(player: ExoPlayer) {
+        if (player.playWhenReady && player.playbackState != Player.STATE_IDLE) return
+        if (player.playbackState == Player.STATE_IDLE) player.prepare()
+        if (player.playbackState == Player.STATE_ENDED) player.seekToDefaultPosition()
+        player.play()
+        EventLog.log("Arranque del estéreo: la música sigue donde iba")
     }
 
     private inner class PlayerEvents : Player.Listener {
@@ -205,6 +246,10 @@ class PlaybackService : MediaLibraryService() {
                 // Sin prepare(): no se decodifica nada hasta que el usuario pulse reproducir.
                 player.setMediaItems(items, saved.index.coerceIn(0, items.lastIndex), saved.positionMs)
                 EventLog.log("Cola restaurada: ${items.size} canciones (${System.currentTimeMillis() - started} ms)")
+                if (playAfterRestore) {
+                    playAfterRestore = false
+                    startPlayback(player)
+                }
             }
         }
     }
@@ -280,7 +325,11 @@ class PlaybackService : MediaLibraryService() {
     override fun onDestroy() {
         saveState(sync = true)
         handler.removeCallbacksAndMessages(null)
+        BootResume.detach()
         settings.unregisterOnSharedPreferenceChangeListener(settingsListener)
+        // Suelta la fuente del estéreo: si no, el volante apuntaría a una app sin reproductor.
+        bridge?.release()
+        bridge = null
         focus?.release()
         focus = null
         AudioEffectsHub.onSessionId(0)

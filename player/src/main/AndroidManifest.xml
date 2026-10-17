@@ -5,6 +5,12 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <!-- Estéreos Jancar: servicio de medios del sistema al que la app se registra como fuente
+         (exportado y sin permiso en el equipo). Necesario para verlo desde Android 11. -->
+    <queries>
+        <package android:name="com.jancar.services" />
+    </queries>
+
     <application>
         <service
             android:name="com.radillo.playerwave.player.service.PlaybackService"

@@ -47,7 +47,8 @@ equipos las apps actuales van a tirones o se cierran por falta de memoria. Por e
 
 La adaptación avanza por fases documentadas en `docs/TARGET_DEVICE.md`: A (cimientos),
 B (visualizador en `SurfaceView`) y C (interfaz en vistas nativas para 1024×600, sin Compose)
-están hechas; D (escáner de USB, arranque con el coche, teclas del volante) está en camino.
+están hechas; de la D (coche) ya están el escaneo al conectar la USB y, en estéreos Jancar,
+las teclas del volante y la vuelta al encender el auto.
 
 > **In English:** a local music player for Android with a real‑time audio visualizer (FFT on the
 > player's own PCM, no microphone), tuned for cheap Android car head units — model JCAC10003 on the
@@ -75,6 +76,12 @@ para usarla al volante. Detalles en `docs/AUDITORIA.md`.
 **0.10.x:** editor de etiquetas y portada (título, artista, álbum, año, pista y portada) que
 escribe dentro del MP3 a prueba de cortes de corriente (copia de seguridad, diario, verificación por
 CRC y recuperación al arrancar); también en memorias USB.
+
+**0.11.0:** integración con el estéreo (equipos Jancar como el alps 8227L): la app se registra
+como fuente de audio del sistema, así que responde a las teclas del volante, se pausa en las
+llamadas, no se cierra al apagar el auto y sigue sonando al encenderlo; el estéreo la vuelve a
+abrir al arrancar. Con la cámara de reversa el visualizador deja de dibujar. En otros equipos
+la app funciona como siempre.
 
 **Funciones:** biblioteca de música local (canciones,
 álbumes, artistas, carpetas y listas), favoritos, búsqueda, reproducción en segundo plano con

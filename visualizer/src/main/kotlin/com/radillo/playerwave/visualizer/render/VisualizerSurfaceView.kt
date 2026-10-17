@@ -10,6 +10,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import com.radillo.playerwave.core.device.CarSignals
 import com.radillo.playerwave.core.diagnostics.EventLog
 import com.radillo.playerwave.core.diagnostics.RenderMode
 import com.radillo.playerwave.visualizer.engine.VisualizerEngine
@@ -26,6 +27,8 @@ import com.radillo.playerwave.visualizer.engine.VisualizerEngine
  *   la cola de búferes de la superficie limita el bucle a la cadencia de la pantalla.
  * - El análisis de audio se enciende con la superficie y se apaga con ella ([VisualizerEngine.attach]/
  *   [VisualizerEngine.detach]), de modo que en segundo plano no se gasta CPU.
+ * - Mientras la cámara de reversa del estéreo está en pantalla ([CarSignals.reverseActive]) no se
+ *   dibuja: en un procesador modesto, la cámara necesita esa CPU.
  */
 class VisualizerSurfaceView @JvmOverloads constructor(
     context: Context,
@@ -124,6 +127,11 @@ class VisualizerSurfaceView @JvmOverloads constructor(
             }
             var lastFrameStart = 0L
             while (running) {
+                if (CarSignals.reverseActive) {
+                    if (!sleepNanos(REVERSE_POLL_NANOS)) break
+                    lastFrameStart = 0L
+                    continue
+                }
                 val interval = engine.minFrameIntervalNanos
                 val now = System.nanoTime()
                 if (interval > 0L && lastFrameStart != 0L) {
@@ -194,6 +202,7 @@ class VisualizerSurfaceView @JvmOverloads constructor(
 
     private companion object {
         const val TAG = "VisualizerSurface"
+        const val REVERSE_POLL_NANOS = 250_000_000L
         const val STOP_TIMEOUT_MS = 3_000L
         const val TRANSITION_GRACE_MS = 1_500L
     }

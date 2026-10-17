@@ -316,6 +316,37 @@ Conclusiones: el presupuesto de memoria (≤ 90 MB) se cumple con holgura; la el
 visualizador en Android 8.1 es la correcta. Restaurar una cola tan grande bloqueaba el hilo
 principal ~2 s al arrancar: desde la 0.10.2 se lee en segundo plano.
 
+### 0.11.0: integración con el estéreo Jancar (17-10-2026)
+
+Análisis estático de las apps de fábrica del equipo (servicio `com.jancar.services`, música,
+lanzador y aprendizaje de teclas). Lo que importa para la app:
+
+- El servicio de medios del sistema está **exportado y sin permiso**: cualquier app puede
+  registrarse como fuente de audio (`IMedia.open(tipo, callback, paquete)`), sin el SDK del
+  fabricante. La app usa su propio cliente binder ([`JancarMediaClient`](../player/src/main/kotlin/com/radillo/playerwave/player/jancar/JancarMediaClient.kt)).
+- Registrada como fuente **de terceros (20)**:
+  - las teclas del volante y del panel llegan directamente (este modelo no envía teclas
+    multimedia estándar de Android);
+  - llamadas, voz o pantalla apagada la pausan y la reanudan (`suspend`/`resume`); el navegador
+    la atenúa (`setVolume`);
+  - **al apagar el auto** (6 s después de quitar la llave) el sistema detiene la fuente y fuerza el
+    cierre de las apps que no son suyas; a una fuente registrada, en cambio, le pide salir
+    (`quitApp(0)`), así que la app sigue viva y **al encender continúa** (`resume`);
+  - queda como **app de memoria**: al arrancar el estéreo, el lanzador pide abrir la última fuente
+    y el sistema abre la app con `boot_memory=true`; si la música sonaba, sigue.
+- **Foco de audio**: al registrarse, el servicio pide el foco en nombre de la app. Mientras el
+  puente está conectado la app no lo pide (si lo hiciera, el servicio entendería que otra app se
+  quedó el audio y la detendría). Si el servicio no responde, la app vuelve a su foco de coche.
+- No se usa el tipo MÚSICA (0) aunque el lanzador solo pinte la carátula de ese tipo: si la app
+  de fábrica se abriera con el mismo tipo, el servicio cambiaría de dueño sin avisar y sonarían
+  las dos. El widget de música del lanzador abre siempre la app de fábrica (está fijo).
+- Avisos abiertos a todas las apps: cámara de reversa (`android.backcar.action.STARTED`/`FINISH`,
+  pausa el dibujo del visualizador), llave (`com.jancar.services.action.acc`, extra booleano
+  `acc`) y teclas (`com.jancar.services.action.key.event`); se cuentan en Diagnóstico.
+
+Pendiente de confirmar en el auto con el informe de Diagnóstico (líneas «Estéreo» y «Señales del
+auto»).
+
 ### 0.9.0: auditoría y rediseño (17-10-2026)
 
 Cierres al cambiar de superficie del visualizador, foco de audio de coche, persistencia de la

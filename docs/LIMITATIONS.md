@@ -78,6 +78,20 @@ el coste de mantenimiento.
 - La cola se muestra en orden de reproducción lineal; con "aleatorio" activo el orden real lo
   decide ExoPlayer.
 
+## Estéreos Jancar (0.11.0)
+
+- La integración (teclas del volante, pausas del sistema, seguir al encender, app de memoria) solo
+  se activa si el equipo tiene el servicio `com.jancar.services`. Se dedujo del análisis de las
+  apps de fábrica, no de documentación del fabricante: otras versiones del firmware podrían
+  comportarse distinto. La pantalla Diagnóstico dice si se conectó y qué órdenes llegaron.
+- El widget de música del lanzador de fábrica no muestra la canción de la app (solo pinta la
+  música de fábrica y el Bluetooth) y, al tocarlo, abre la app de fábrica, que entonces se queda
+  con el audio. Es comportamiento fijo del lanzador.
+- Si el usuario cierra la app (desde «recientes» con la música en pausa, o desde la barra de
+  estado), suelta la fuente y el estéreo ya no la abrirá al arrancar.
+- Al arrancar el estéreo la música sigue solo si estaba sonando (lo decide el último play o pausa
+  del usuario, no las pausas del sistema).
+
 ## Favoritos, listas, ajustes y efectos (Fase 3)
 
 - **Ecualizador y refuerzo de graves** usan los efectos del propio dispositivo

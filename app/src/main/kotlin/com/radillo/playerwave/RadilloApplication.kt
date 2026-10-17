@@ -31,6 +31,8 @@ class RadilloApplication : Application() {
         super.onCreate()
         RenderMode.init(this, lowEndDevice = profile.lowEnd)
         CoverOverrides.init(this)
+        // Reversa, llave y teclas del volante que anuncia el estéreo (solo equipos Jancar).
+        CarSignalsReceiver.register(this)
         EventLog.log("Proceso iniciado (${BuildConfig.VERSION_NAME})")
         // Restaura el ecualizador guardado. El controlador espera a que el servicio publique
         // la sesión de audio, así que es seguro llamarlo antes de que exista el reproductor.

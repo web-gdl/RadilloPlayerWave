@@ -1,6 +1,7 @@
 package com.radillo.playerwave
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Bundle
@@ -20,6 +21,8 @@ import com.radillo.playerwave.data.settings.AppSettingsRepository
 import com.radillo.playerwave.data.settings.PrefsAppSettingsRepository
 import com.radillo.playerwave.databinding.ActivityMainBinding
 import com.radillo.playerwave.player.engine.PlaybackState
+import com.radillo.playerwave.player.jancar.JancarProtocol
+import com.radillo.playerwave.player.service.BootResume
 import com.radillo.playerwave.ui.ChromeMode
 import com.radillo.playerwave.ui.Navigator
 import com.radillo.playerwave.ui.Tab
@@ -108,6 +111,7 @@ class MainActivity : FragmentActivity(), Navigator {
             // biblioteca, a la carpeta, álbum o artista que estuviera abierto.
             openTab(Tab.entries.firstOrNull { it.name == uiPrefs.getString(KEY_LAST_TAB, null) } ?: Tab.LIBRARY)
             requestNotificationPermissionOnce()
+            handleBootMemory(intent)
         } else {
             currentTab = Tab.entries.getOrElse(savedInstanceState.getInt(KEY_TAB)) { Tab.LIBRARY }
         }
@@ -129,6 +133,28 @@ class MainActivity : FragmentActivity(), Navigator {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleBootMemory(intent)
+    }
+
+    /**
+     * El estéreo Jancar abre la última app de música al arrancar con el extra `boot_memory=true`.
+     * Se avisa al servicio para que la música siga si estaba sonando. Se ignora si la actividad
+     * se reabre desde «recientes» con el mismo intent.
+     */
+    private fun handleBootMemory(intent: Intent?) {
+        intent ?: return
+        if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
+        @Suppress("DEPRECATION")
+        val value = intent.extras?.get(JancarProtocol.EXTRA_BOOT_MEMORY)?.toString() ?: return
+        if (!value.equals("true", ignoreCase = true)) return
+        intent.removeExtra(JancarProtocol.EXTRA_BOOT_MEMORY)
+        com.radillo.playerwave.core.diagnostics.EventLog.log("El estéreo abrió la app al arrancar")
+        BootResume.request()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

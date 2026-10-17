@@ -11,12 +11,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.radillo.playerwave.BuildConfig
 import com.radillo.playerwave.R
+import com.radillo.playerwave.core.device.CarSignals
 import com.radillo.playerwave.core.device.DeviceProfile
 import com.radillo.playerwave.core.device.GpuInfo
 import com.radillo.playerwave.core.device.GpuProbe
 import com.radillo.playerwave.core.diagnostics.EventLog
 import com.radillo.playerwave.core.diagnostics.RenderMode
 import com.radillo.playerwave.data.settings.VisualizerSettingsRepository
+import com.radillo.playerwave.player.jancar.JancarStatus
 import com.radillo.playerwave.visualizer.engine.VisualizerEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -99,6 +101,8 @@ class DiagnosticsViewModel @Inject constructor(
             appendLine("GPU: ${g?.renderer ?: "?"} · ${g?.vendor ?: ""} · ${g?.version ?: ""}")
             appendLine("Visualizador: ${fps.value.roundToInt()} fps de ${maxFps.value} · calidad ${(quality.value * 100).roundToInt()} %")
             appendLine("Dibujo: elegido ${RenderMode.choice} · efectivo ${if (RenderMode.useGpu()) "GPU" else "CPU"}" + if (RenderMode.forcedCpuAfterCrash) " · CPU forzada tras un cierre" else "")
+            appendLine("Estéreo: ${JancarStatus.summary()}")
+            appendLine("Señales del auto: ${CarSignals.summary()}")
             appendLine()
             appendLine("— Registro —")
             EventLog.entries().forEach { appendLine(it) }
