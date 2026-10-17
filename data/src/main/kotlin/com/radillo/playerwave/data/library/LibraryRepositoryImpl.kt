@@ -133,6 +133,8 @@ class LibraryRepositoryImpl @Inject constructor(
     override fun search(query: String): Flow<List<Track>> =
         dao.search(query.trim()).map { list -> list.map { it.toTrack() } }
 
+    override suspend fun track(id: Long): Track? = dao.byId(id)?.toTrack()
+
     override suspend fun rescan(force: Boolean): ScanResult = scanMutex.withLock {
         val signature = scanner.signature()
         val cachedCount = dao.count()

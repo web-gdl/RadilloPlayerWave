@@ -185,6 +185,15 @@
         </LinearLayout>
     </ScrollView>
 
+    <!-- Mismo menú «⋮» que en las listas (cola, favoritos, listas, editar etiquetas). -->
+    <ImageButton
+        android:id="@+id/btnMore"
+        style="@style/IconButton"
+        android:layout_gravity="top|end"
+        android:layout_margin="@dimen/space_s"
+        android:contentDescription="@string/cd_more"
+        android:src="@drawable/ic_more_vert" />
+
     <TextView
         android:id="@+id/emptyText"
         style="@style/Text.Secondary"

@@ -4,6 +4,7 @@ import android.app.Application
 import com.radillo.playerwave.core.device.DeviceProfile
 import com.radillo.playerwave.core.diagnostics.EventLog
 import com.radillo.playerwave.core.diagnostics.RenderMode
+import com.radillo.playerwave.core.ui.CoverOverrides
 import com.radillo.playerwave.data.settings.AudioEffectsSettingsRepository
 import com.radillo.playerwave.player.audiofx.AudioEffectsController
 import dagger.hilt.android.HiltAndroidApp
@@ -27,6 +28,7 @@ class RadilloApplication : Application() {
         EventLog.installCrashRecorder()
         super.onCreate()
         RenderMode.init(this, lowEndDevice = profile.lowEnd)
+        CoverOverrides.init(this)
         EventLog.log("Proceso iniciado (${BuildConfig.VERSION_NAME})")
         // Restaura el ecualizador guardado. El controlador espera a que el servicio publique
         // la sesión de audio, así que es seguro llamarlo antes de que exista el reproductor.

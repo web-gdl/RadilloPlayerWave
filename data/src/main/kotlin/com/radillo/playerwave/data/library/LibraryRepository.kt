@@ -23,6 +23,9 @@ interface LibraryRepository {
     fun tracksOfFolder(folderPath: String): Flow<List<Track>>
     fun search(query: String): Flow<List<Track>>
 
+    /** Una canción de la caché por su id de MediaStore, o null. */
+    suspend fun track(id: Long): Track?
+
     /**
      * Sincroniza la caché local con MediaStore. Sin [force], primero compara una huella barata y
      * no escanea si nada cambió (arranque instantáneo con la biblioteca ya guardada). Con [force]

@@ -41,4 +41,10 @@ interface PlaybackController {
     fun playNext(tracks: List<Track>)
     fun removeFromQueue(index: Int)
     fun skipToQueueItem(index: Int)
+
+    /**
+     * Actualiza en la cola los datos de una canción editada (título, portada…). Si es la que suena,
+     * se vuelve a leer desde la posición actual, porque su archivo acaba de cambiar.
+     */
+    fun refreshTrack(track: Track)
 }

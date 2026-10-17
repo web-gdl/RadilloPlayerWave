@@ -245,6 +245,19 @@ class MediaControllerPlaybackController @Inject constructor(
         if (index in 0 until it.mediaItemCount) it.removeMediaItem(index)
     }
 
+    override fun refreshTrack(track: Track) = run {
+        val id = track.id.toString()
+        val item = MediaItemMapper.toMediaItem(track)
+        var current = false
+        for (i in 0 until it.mediaItemCount) {
+            if (it.getMediaItemAt(i).mediaId == id) {
+                it.replaceMediaItem(i, item)
+                if (i == it.currentMediaItemIndex) current = true
+            }
+        }
+        if (current) it.seekTo(it.currentPosition)
+    }
+
     override fun skipToQueueItem(index: Int) = run {
         if (index in 0 until it.mediaItemCount) {
             it.seekToDefaultPosition(index)

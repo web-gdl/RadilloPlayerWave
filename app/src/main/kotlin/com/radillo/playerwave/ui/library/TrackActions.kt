@@ -8,13 +8,16 @@ import androidx.fragment.app.Fragment
 import com.radillo.playerwave.R
 import com.radillo.playerwave.core.model.Track
 import com.radillo.playerwave.ui.common.showTextInputDialog
+import com.radillo.playerwave.ui.navigator
+import com.radillo.playerwave.ui.tags.TagEditorFragment
 
 /** Acción adicional que una pantalla añade al menú de una pista (p. ej. «Quitar de la lista»). */
 class ExtraAction(@StringRes val label: Int, val run: () -> Unit)
 
 /**
  * Menú de una pista como diálogo de lista de plataforma (sin hojas inferiores animadas):
- * reproducir a continuación, añadir a la cola, favorito, añadir a una lista y extras.
+ * reproducir a continuación, añadir a la cola, favorito, añadir a una lista, editar etiquetas y
+ * portada, y extras.
  */
 fun Fragment.showTrackActions(
     track: Track,
@@ -28,6 +31,7 @@ fun Fragment.showTrackActions(
         context.getString(R.string.action_add_to_queue),
         context.getString(if (isFavorite) R.string.action_remove_favorite else R.string.action_add_favorite),
         context.getString(R.string.action_add_to_playlist),
+        context.getString(R.string.tag_edit_action),
     )
     extras.forEach { labels += context.getString(it.label) }
     AlertDialog.Builder(context)
@@ -48,7 +52,8 @@ fun Fragment.showTrackActions(
                     context.toast(context.getString(if (isFavorite) R.string.toast_removed_favorite else R.string.toast_added_favorite))
                 }
                 3 -> showPlaylistPicker(track, actions)
-                else -> extras.getOrNull(which - 4)?.run?.invoke()
+                4 -> navigator.push(TagEditorFragment.newInstance(track.id))
+                else -> extras.getOrNull(which - 5)?.run?.invoke()
             }
         }
         .show()

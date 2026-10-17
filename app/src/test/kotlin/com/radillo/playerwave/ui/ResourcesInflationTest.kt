@@ -35,6 +35,7 @@ class ResourcesInflationTest {
         R.layout.fragment_equalizer,
         R.layout.fragment_settings,
         R.layout.fragment_diagnostics,
+        R.layout.fragment_tag_editor,
     )
 
     private val drawables = R.drawable::class.java.fields

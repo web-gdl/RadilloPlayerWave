@@ -1,5 +1,7 @@
 package com.radillo.playerwave.core.model
 
+import com.radillo.playerwave.core.ui.CoverOverrides
+
 /**
  * Pista de audio local. `id` es el `MediaStore.Audio.Media._ID`; `uri` es la URI
  * de contenido con la que ExoPlayer abrirá el archivo (no se usan rutas absolutas).
@@ -21,8 +23,11 @@ data class Track(
     val dateAddedSec: Long,
     val sizeBytes: Long,
 ) {
-    /** URI de la carátula del álbum (content://media/external/audio/albumart/<albumId>). */
-    val albumArtUri: String get() = "content://media/external/audio/albumart/$albumId"
+    /**
+     * Carátula: la cambiada en el editor si la hay ([CoverOverrides]); si no, la del álbum en
+     * MediaStore (content://media/external/audio/albumart/<albumId>).
+     */
+    val albumArtUri: String get() = CoverOverrides.uriFor(id) ?: "content://media/external/audio/albumart/$albumId"
 }
 
 data class Album(

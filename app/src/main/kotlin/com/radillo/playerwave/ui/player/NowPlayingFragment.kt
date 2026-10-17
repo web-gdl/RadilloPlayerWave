@@ -19,6 +19,8 @@ import com.radillo.playerwave.ui.common.onUserChange
 import com.radillo.playerwave.ui.common.subtitle
 import com.radillo.playerwave.ui.common.visibleIf
 import com.radillo.playerwave.ui.effects.EqualizerFragment
+import com.radillo.playerwave.ui.library.TrackActionsViewModel
+import com.radillo.playerwave.ui.library.showTrackActions
 import com.radillo.playerwave.ui.navigator
 import com.radillo.playerwave.ui.visualizer.VisualizerViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -34,6 +36,7 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
     override val hidesMiniPlayer: Boolean get() = true
 
     private val viewModel: PlayerViewModel by activityViewModels()
+    private val trackActions: TrackActionsViewModel by activityViewModels()
     /** Aplica escena, paleta y perfil al motor aunque no se haya abierto la pestaña Visualizador. */
     private val visualizer: VisualizerViewModel by viewModels()
     private var binding: FragmentNowPlayingBinding? = null
@@ -52,6 +55,7 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
         b.btnSleep.setOnClickListener { showSleepDialog() }
         b.btnEqualizer.setOnClickListener { navigator.push(EqualizerFragment()) }
         b.btnQueue.setOnClickListener { navigator.push(QueueFragment()) }
+        b.btnMore.setOnClickListener { viewModel.state.value.currentTrack?.let { showTrackActions(it, trackActions) } }
 
         // El recuadro de la carátula alterna con el visualizador en vivo (un toque cambia).
         b.artVisualizer.setEngine(visualizer.engine)
@@ -107,6 +111,7 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
         val b = binding ?: return
         val track = state.currentTrack
         b.contentGroup.visibleIf(track != null)
+        b.btnMore.visibleIf(track != null)
         b.emptyText.visibleIf(track == null)
         if (track == null) return
         b.trackTitle.text = track.title

@@ -236,4 +236,36 @@
     <string name="diag_no_crash">Ninguno registrado</string>
     <string name="diag_no_events">Sin eventos todavía</string>
     <string name="diag_clear_log">Borrar registro</string>
+
+    <!-- Editor de etiquetas y portada -->
+    <string name="tag_edit_action">Editar etiquetas y portada</string>
+    <string name="tag_editor_title">Editar canción</string>
+    <string name="tag_field_title">Título</string>
+    <string name="tag_field_artist">Artista</string>
+    <string name="tag_field_album">Álbum</string>
+    <string name="tag_field_year">Año</string>
+    <string name="tag_field_track">Nº de pista</string>
+    <string name="tag_change_cover">Cambiar portada</string>
+    <string name="tag_remove_cover">Quitar portada</string>
+    <string name="tag_note">Los cambios se guardan dentro del archivo MP3: otros reproductores también los verán. El sonido no se modifica.</string>
+    <string name="tag_saving">Guardando…</string>
+    <string name="tag_saved">Cambios guardados en el archivo</string>
+    <string name="tag_not_mp3">Por ahora solo se pueden editar archivos MP3 (este es %s).</string>
+    <string name="tag_error_title_required">El título no puede quedar vacío</string>
+    <string name="tag_error_year">Escribe un año entre 1000 y 2100, o déjalo vacío</string>
+    <string name="tag_error_track">Escribe un número de pista entre 1 y 999, o déjalo vacío</string>
+    <string name="tag_folder_access_title">Permiso para guardar</string>
+    <string name="tag_folder_access_body">Para escribir en esta memoria, Android necesita que elijas su carpeta principal (la raíz de la USB o de la memoria interna) y pulses «Permitir». Solo se pide una vez por memoria.</string>
+    <string name="tag_folder_access_choose">Elegir carpeta</string>
+    <string name="tag_error_no_access">Este equipo no deja escribir en esa memoria. Prueba a copiar la canción a la memoria interna.</string>
+    <string name="tag_error_not_found">No se encontró el archivo. Quizá se retiró la USB.</string>
+    <string name="tag_error_space">No hay espacio libre suficiente para guardar con copia de seguridad.</string>
+    <string name="tag_error_invalid">La etiqueta del archivo está dañada; no se modificó nada para no estropearlo.</string>
+    <string name="tag_error_io">No se pudo guardar. El archivo quedó como estaba.</string>
+    <string name="tag_error_no_picker">No hay ninguna app para elegir imágenes en este equipo.</string>
+    <string name="tag_error_image">No se pudo abrir esa imagen.</string>
+    <string name="tag_error_permission">Sin el permiso de almacenamiento no se pueden guardar los cambios.</string>
+    <string name="tag_discard_title">¿Descartar los cambios?</string>
+    <string name="tag_discard">Descartar</string>
+    <string name="tag_keep_editing">Seguir editando</string>
 </resources>

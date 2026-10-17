@@ -7,9 +7,20 @@
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
+    <!-- Editor de etiquetas: escribir en los MP3 en Android ≤ 9 (en 10+ se usa el consentimiento del
+         sistema o una carpeta concedida). Sin maxSdkVersion: algunos equipos de coche declaran un
+         Android mayor que el real y el sistema no lo concedería. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
     <!-- Notificación de reproducción (Android 13+). Opcional: la app funciona sin ella. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Los permisos del servicio en primer plano los declara el módulo :player. -->
+
+    <!-- Saber si el equipo tiene selector de carpetas (para conceder la USB al editor). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.OPEN_DOCUMENT_TREE" />
+        </intent>
+    </queries>
 
     <application
         android:name=".RadilloApplication"
@@ -19,6 +30,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.RadilloPlayerWave"
         android:enableOnBackInvokedCallback="true"
+        android:requestLegacyExternalStorage="true"
         tools:targetApi="33">
 
         <activity

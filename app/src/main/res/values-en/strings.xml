@@ -234,4 +234,36 @@
     <string name="diag_no_crash">None recorded</string>
     <string name="diag_no_events">No events yet</string>
     <string name="diag_clear_log">Clear log</string>
+
+    <!-- Tag and cover editor -->
+    <string name="tag_edit_action">Edit tags and cover</string>
+    <string name="tag_editor_title">Edit song</string>
+    <string name="tag_field_title">Title</string>
+    <string name="tag_field_artist">Artist</string>
+    <string name="tag_field_album">Album</string>
+    <string name="tag_field_year">Year</string>
+    <string name="tag_field_track">Track no.</string>
+    <string name="tag_change_cover">Change cover</string>
+    <string name="tag_remove_cover">Remove cover</string>
+    <string name="tag_note">Changes are saved inside the MP3 file, so other players will see them too. The audio is not modified.</string>
+    <string name="tag_saving">Saving…</string>
+    <string name="tag_saved">Changes saved to the file</string>
+    <string name="tag_not_mp3">For now only MP3 files can be edited (this one is %s).</string>
+    <string name="tag_error_title_required">The title can’t be empty</string>
+    <string name="tag_error_year">Enter a year between 1000 and 2100, or leave it empty</string>
+    <string name="tag_error_track">Enter a track number between 1 and 999, or leave it empty</string>
+    <string name="tag_folder_access_title">Permission to save</string>
+    <string name="tag_folder_access_body">To write to this storage, Android needs you to choose its main folder (the root of the USB drive or internal storage) and tap “Allow”. It’s only asked once per storage.</string>
+    <string name="tag_folder_access_choose">Choose folder</string>
+    <string name="tag_error_no_access">This unit doesn’t allow writing to that storage. Try copying the song to internal storage.</string>
+    <string name="tag_error_not_found">The file wasn’t found. Maybe the USB drive was removed.</string>
+    <string name="tag_error_space">Not enough free space to save with a backup.</string>
+    <string name="tag_error_invalid">The file’s tag is damaged; nothing was changed so it isn’t ruined.</string>
+    <string name="tag_error_io">Couldn’t save. The file was left as it was.</string>
+    <string name="tag_error_no_picker">There’s no app to pick images on this unit.</string>
+    <string name="tag_error_image">Couldn’t open that image.</string>
+    <string name="tag_error_permission">Without storage permission the changes can’t be saved.</string>
+    <string name="tag_discard_title">Discard changes?</string>
+    <string name="tag_discard">Discard</string>
+    <string name="tag_keep_editing">Keep editing</string>
 </resources>

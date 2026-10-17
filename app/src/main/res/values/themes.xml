@@ -172,6 +172,24 @@
         <item name="android:max">1000</item>
     </style>
 
+    <!-- Formulario (editor de etiquetas): etiqueta visible encima de cada campo, no solo el «hint». -->
+    <style name="FormLabel" parent="Text.Secondary">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">@dimen/space_m</item>
+    </style>
+    <style name="FormField" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">@dimen/touch</item>
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:inputType">textCapSentences</item>
+        <item name="android:imeOptions">actionNext|flagNoExtractUi</item>
+        <item name="android:importantForAutofill">no</item>
+    </style>
+
     <style name="SettingRow" parent="">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>

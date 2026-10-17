@@ -56,6 +56,9 @@ interface TrackDao {
     @Query("SELECT * FROM tracks")
     suspend fun allEntities(): List<TrackEntity>
 
+    @Query("SELECT * FROM tracks WHERE id = :id")
+    suspend fun byId(id: Long): TrackEntity?
+
     @Upsert
     suspend fun upsertAll(tracks: List<TrackEntity>)
 

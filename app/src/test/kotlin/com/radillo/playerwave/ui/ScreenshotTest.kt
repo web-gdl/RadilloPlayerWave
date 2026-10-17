@@ -188,6 +188,17 @@ class ScreenshotTest {
         (find("switchKeepPlaying") as? android.widget.Switch)?.isChecked = true
     }
 
+    private fun tagEditor(ctx: Context): View {
+        val v = LayoutInflater.from(ctx).inflate(R.layout.fragment_tag_editor, null, false)
+        v.text("fieldTitle", "Rayando el sol")
+        v.text("fieldArtist", "Maná")
+        v.text("fieldAlbum", "Falta amor")
+        v.text("fieldYear", "1990")
+        v.text("fieldTrack", "7")
+        (v.find("cover") as? ImageView)?.setImageResource(R.drawable.tile_album)
+        return v
+    }
+
     private fun albumDetail(ctx: Context): View {
         val v = LayoutInflater.from(ctx).inflate(R.layout.fragment_track_list, null, false)
         v.text("title", "Música USB")
@@ -212,6 +223,7 @@ class ScreenshotTest {
         capture(shellView, 1024, 600, "car_visualizer_$suffix", underlay)
         capture(shell(ctx, settings(ctx), "navLibrary", mini = true), 1024, 600, "car_settings_$suffix")
         capture(shell(ctx, albumDetail(ctx), "navLibrary", mini = true), 1024, 600, "car_folder_$suffix")
+        capture(shell(ctx, tagEditor(ctx), "navLibrary", mini = false), 1024, 600, "car_tag_editor_$suffix")
     }
 
     @Test
@@ -230,5 +242,6 @@ class ScreenshotTest {
         capture(shell(ctx, library(ctx), "navLibrary", mini = true), w, h, "phone_library_dark")
         capture(shell(ctx, nowPlaying(ctx), "navNowPlaying", mini = false), w, h, "phone_now_playing_dark")
         capture(shell(ctx, visualizer(ctx), "navVisualizer", mini = false), w, h, "phone_visualizer_dark")
+        capture(shell(ctx, tagEditor(ctx), "navLibrary", mini = false), w, h, "phone_tag_editor_dark")
     }
 }
