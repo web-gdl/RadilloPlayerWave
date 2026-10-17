@@ -21,6 +21,34 @@ class MediaStoreScanner @Inject constructor(
     private val contentResolver: ContentResolver,
 ) {
 
+    /**
+     * Huella de la biblioteca leyendo solo `_ID`, `DATE_MODIFIED` y `SIZE` (sin títulos ni rutas).
+     * `null` si no hay permiso o MediaStore no responde.
+     */
+    suspend fun signature(): LibrarySignature? = withContext(Dispatchers.IO) {
+        val projection = arrayOf(MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DATE_MODIFIED, MediaStore.Audio.Media.SIZE)
+        val cursor = try {
+            contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, projection, SELECTION, selectionArgs(), null)
+        } catch (e: SecurityException) {
+            null
+        } catch (e: RuntimeException) {
+            null
+        } ?: return@withContext null
+        cursor.use { c ->
+            var count = 0
+            var maxId = 0L
+            var maxModified = 0L
+            var total = 0L
+            while (c.moveToNext()) {
+                count++
+                maxId = maxOf(maxId, c.getLong(0))
+                maxModified = maxOf(maxModified, c.getLong(1))
+                total += c.getLong(2)
+            }
+            LibrarySignature(count, maxId, maxModified, total)
+        }
+    }
+
     suspend fun scan(): List<TrackEntity> = withContext(Dispatchers.IO) {
         val projection = arrayOf(
             MediaStore.Audio.Media._ID,
@@ -38,8 +66,8 @@ class MediaStoreScanner @Inject constructor(
             MediaStore.Audio.Media.DATE_ADDED,
             MediaStore.Audio.Media.SIZE,
         )
-        val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0 AND ${MediaStore.Audio.Media.DURATION} > ?"
-        val selectionArgs = arrayOf(MIN_DURATION_MS.toString())
+        val selection = SELECTION
+        val args = selectionArgs()
 
         val result = ArrayList<TrackEntity>()
         val cursor: Cursor? = try {
@@ -47,7 +75,7 @@ class MediaStoreScanner @Inject constructor(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 projection,
                 selection,
-                selectionArgs,
+                args,
                 "${MediaStore.Audio.Media.TITLE} COLLATE NOCASE ASC",
             )
         } catch (e: SecurityException) {
@@ -96,12 +124,15 @@ class MediaStoreScanner @Inject constructor(
         result
     }
 
+    private fun selectionArgs() = arrayOf(MIN_DURATION_MS.toString())
+
     private fun Cursor.getStringOrNull(column: Int): String? = if (isNull(column)) null else getString(column)
 
     companion object {
         /** Se descartan clips de menos de 5 s (tonos, notificaciones mal etiquetadas). */
         const val MIN_DURATION_MS = 5_000L
         const val UNKNOWN = "<unknown>"
+        private val SELECTION = "${MediaStore.Audio.Media.IS_MUSIC} != 0 AND ${MediaStore.Audio.Media.DURATION} > ?"
 
         fun normalizeUnknown(value: String?): String =
             if (value.isNullOrBlank() || value == UNKNOWN) "" else value

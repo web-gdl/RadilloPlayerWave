@@ -15,6 +15,7 @@ interface LibraryRepository {
     val albums: Flow<List<Album>>
     val artists: Flow<List<Artist>>
     val folders: Flow<List<Folder>>
+    /** `true` solo mientras se lee MediaStore completo (no durante la comprobación rápida). */
     val isScanning: StateFlow<Boolean>
 
     fun tracksOfAlbum(albumId: Long): Flow<List<Track>>
@@ -22,6 +23,10 @@ interface LibraryRepository {
     fun tracksOfFolder(folderPath: String): Flow<List<Track>>
     fun search(query: String): Flow<List<Track>>
 
-    /** Vuelve a leer MediaStore y sincroniza la caché local. Seguro de llamar repetidamente. */
-    suspend fun rescan()
+    /**
+     * Sincroniza la caché local con MediaStore. Sin [force], primero compara una huella barata y
+     * no escanea si nada cambió (arranque instantáneo con la biblioteca ya guardada). Con [force]
+     * (botón «Buscar música nueva») siempre lee MediaStore completo. Seguro de llamar repetidamente.
+     */
+    suspend fun rescan(force: Boolean = false): ScanResult
 }

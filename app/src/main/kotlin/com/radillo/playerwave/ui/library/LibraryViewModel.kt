@@ -11,7 +11,10 @@ import com.radillo.playerwave.data.collections.PlaylistRepository
 import com.radillo.playerwave.data.library.LibraryRepository
 import com.radillo.playerwave.player.engine.PlaybackController
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.radillo.playerwave.data.library.ScanResult
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -42,15 +45,23 @@ class LibraryViewModel @Inject constructor(
     val selectedTab = MutableStateFlow(LibraryTab.SONGS)
     private var scannedOnce = false
 
+    /** Resultado de una búsqueda manual, para avisar «12 canciones nuevas» o «sin cambios». */
+    private val _scanResults = MutableSharedFlow<ScanResult>(extraBufferCapacity = 1)
+    val scanResults: SharedFlow<ScanResult> = _scanResults
+
+    /** Botón «Buscar música nueva»: lectura completa de MediaStore aunque la huella no cambie. */
     fun rescan() {
-        viewModelScope.launch { repository.rescan() }
+        viewModelScope.launch { _scanResults.emit(repository.rescan(force = true)) }
     }
 
-    /** Escanea una vez por proceso, al conceder el permiso o al abrir la biblioteca. */
+    /**
+     * Al abrir la biblioteca: la caché se muestra al instante y solo se escanea si MediaStore
+     * cambió desde la última vez (una comprobación de milisegundos). Una vez por proceso.
+     */
     fun ensureScanned() {
         if (scannedOnce) return
         scannedOnce = true
-        rescan()
+        viewModelScope.launch { repository.rescan(force = false) }
     }
 
     fun playAll(tracks: List<Track>, startIndex: Int) = playback.playQueue(tracks, startIndex)

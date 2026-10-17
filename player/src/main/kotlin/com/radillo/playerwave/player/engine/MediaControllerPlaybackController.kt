@@ -190,9 +190,20 @@ class MediaControllerPlaybackController @Inject constructor(
 
     // ---- Comandos ----
 
-    override fun play() = run { it.play() }
+    override fun play() = run { it.playPrepared() }
     override fun pause() = run { it.pause() }
-    override fun togglePlayPause() = run { if (it.isPlaying) it.pause() else it.play() }
+    override fun togglePlayPause() = run { if (it.playWhenReady) it.pause() else it.playPrepared() }
+
+    /**
+     * La cola restaurada al arrancar no se prepara (no se decodifica nada hasta que hace falta):
+     * antes de reproducir se prepara si está en reposo, y se vuelve al principio si había terminado.
+     */
+    private fun MediaController.playPrepared() {
+        if (mediaItemCount == 0) return
+        if (playbackState == Player.STATE_IDLE) prepare()
+        if (playbackState == Player.STATE_ENDED) seekToDefaultPosition()
+        play()
+    }
     override fun next() = run { it.seekToNextMediaItem() }
     override fun previous() = run {
         // Como la mayoría de reproductores: si llevamos más de 3 s, vuelve al principio.
@@ -237,7 +248,7 @@ class MediaControllerPlaybackController @Inject constructor(
     override fun skipToQueueItem(index: Int) = run {
         if (index in 0 until it.mediaItemCount) {
             it.seekToDefaultPosition(index)
-            it.play()
+            it.playPrepared()
         }
     }
 }
