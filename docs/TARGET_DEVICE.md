@@ -2,7 +2,7 @@
 
 Adaptación de RadilloPlayerWave a una unidad Android de coche de gama baja.
 Estado: **Opción 1 aprobada por el usuario** (música en memoria interna y USB). Fases A, B y C
-hechas; D pendiente.
+hechas, auditoría 0.9.0 hecha; D pendiente.
 
 ## 1. Qué es realmente este hardware y qué implica
 
@@ -299,20 +299,21 @@ usados en release y la UI Compose actual desaparece en esa fase.
 - «Reproduciendo» muestra el visualizador en vivo en el recuadro de la carátula (un toque alterna).
 - Verificado en el autoestéreo JCAC10003 / alps 8227L a 1024×600: interfaz, menú y visualizadores.
 
-## 8. Galería: screenshots del autoestéreo
+### 0.9.0: auditoría y rediseño (17-10-2026)
 
-Pantalla de inicio (Biblioteca) en el JCAC10003:
+Cierres al cambiar de superficie del visualizador, foco de audio de coche, persistencia de la
+cola y de la navegación, escaneo incremental con huella y rediseño de la interfaz. Todo en
+[`AUDITORIA.md`](AUDITORIA.md).
+
+## 8. Galería
+
+Capturas generadas por CI (`ScreenshotTest`) a 1024×600 y 160 dpi con el tema oscuro. Se pueden
+añadir fotos del equipo real en `docs/screenshots/`.
 
 ![Biblioteca](screenshots/biblioteca.png)
 
-Reproduciendo con visualizador:
+![Reproduciendo](screenshots/reproduciendo.png)
 
-![Reproduciendo](screenshots/reproduciendo-visualizador.png)
+![Visualizador](screenshots/visualizador.png)
 
-Opciones de visualizador:
-
-![Visualizador](screenshots/visualizador-ajustes.png)
-
-Pantalla de diagnóstico:
-
-![Diagnóstico](screenshots/diagnostico.png)
+![Ajustes](screenshots/ajustes.png)

@@ -69,22 +69,22 @@ class VisualizerSurfaceView @JvmOverloads constructor(
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         val gpu = thread?.usesGpu == true
-        if (gpu) RenderMode.beginGpuTransition()
+        val token = if (gpu) RenderMode.beginGpuTransition() else null
         stopThread()
         if (surfaceReady) engine?.detach()
         surfaceReady = false
         // La superficie se libera al volver de aquí; si el proceso muere en ese instante, la marca
         // queda y el siguiente arranque usará la CPU.
-        if (gpu) mainHandler.postDelayed({ RenderMode.endGpuTransition() }, TRANSITION_GRACE_MS)
+        if (token != null) mainHandler.postDelayed({ RenderMode.endGpuTransition(token) }, TRANSITION_GRACE_MS)
     }
 
     private fun startThread() {
         val engine = engine ?: return
         if (thread != null) return
         val gpu = RenderMode.useGpu() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-        if (gpu) RenderMode.beginGpuTransition()
+        val token = if (gpu) RenderMode.beginGpuTransition() else null
         thread = RenderThread(holder, engine, gpu) {
-            if (gpu) mainHandler.postDelayed({ RenderMode.endGpuTransition() }, TRANSITION_GRACE_MS)
+            if (token != null) mainHandler.postDelayed({ RenderMode.endGpuTransition(token) }, TRANSITION_GRACE_MS)
         }.also { it.start() }
     }
 

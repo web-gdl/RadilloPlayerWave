@@ -35,4 +35,5 @@
     <dimen name="seek_thumb">20dp</dimen>
     <dimen name="seek_track">4dp</dimen>
     <dimen name="mini_progress">3dp</dimen>
+    <dimen name="nav_label">14sp</dimen>
 </resources>

@@ -37,8 +37,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         b.rowDiagnostics.setOnClickListener { navigator.push(DiagnosticsFragment()) }
         b.rowLicenses.setOnClickListener { showLicenses() }
         b.rowRescan.setOnClickListener { viewModel.rescan() }
-        b.switchKeepPlaying.setOnCheckedChangeListener { button, checked -> if (button.isPressed) viewModel.setKeepPlaying(checked) }
-        collectWhenStarted(viewModel.keepPlaying) { b.switchKeepPlaying.isChecked = it }
+        b.switchKeepPlaying.setOnCheckedChangeListener { _, checked -> if (!binding) viewModel.setKeepPlaying(checked) }
+        collectWhenStarted(viewModel.keepPlaying) { bind { b.switchKeepPlaying.isChecked = it } }
         collectWhenStarted(viewModel.isScanning) { scanning ->
             b.rowRescan.isEnabled = !scanning
             b.rowRescan.alpha = if (scanning) 0.5f else 1f
@@ -56,13 +56,31 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
         val themeViews = mapOf(ThemeMode.SYSTEM to b.themeSystem, ThemeMode.LIGHT to b.themeLight, ThemeMode.DARK to b.themeDark)
         themeViews.forEach { (mode, v) -> v.setOnClickListener { viewModel.setThemeMode(mode) } }
-        b.switchArtworkColors.setOnCheckedChangeListener { button, checked -> if (button.isPressed) viewModel.setArtworkColors(checked) }
-        b.switchLandscape.setOnCheckedChangeListener { button, checked -> if (button.isPressed) viewModel.setLockLandscape(checked) }
+        b.switchArtworkColors.setOnCheckedChangeListener { _, checked -> if (!binding) viewModel.setArtworkColors(checked) }
+        b.switchLandscape.setOnCheckedChangeListener { _, checked -> if (!binding) viewModel.setLockLandscape(checked) }
 
         collectWhenStarted(viewModel.settings) { s ->
             themeViews.forEach { (mode, v) -> v.isSelected = mode == s.themeMode }
-            b.switchArtworkColors.isChecked = s.artworkColors
-            b.switchLandscape.isChecked = s.lockLandscape ?: viewModel.profile.fixedLandscape
+            bind {
+                b.switchArtworkColors.isChecked = s.artworkColors
+                b.switchLandscape.isChecked = s.lockLandscape ?: viewModel.profile.fixedLandscape
+            }
+        }
+    }
+
+    /**
+     * Mientras se reflejan los valores guardados, los cambios de los interruptores no se toman
+     * como del usuario. (Antes se usaba `isPressed`, que falla con la rueda o el mando del equipo:
+     * al soltar la tecla el estado «pulsado» se limpia antes del clic.)
+     */
+    private var binding = false
+
+    private inline fun bind(block: () -> Unit) {
+        binding = true
+        try {
+            block()
+        } finally {
+            binding = false
         }
     }
 

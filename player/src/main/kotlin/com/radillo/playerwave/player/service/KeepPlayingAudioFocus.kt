@@ -73,7 +73,15 @@ internal class KeepPlayingAudioFocus(context: Context, private val player: Playe
                 player.volume = DUCK_VOLUME
             }
             AudioManager.AUDIOFOCUS_LOSS -> {
+                // Una pérdida permanente se ignora del todo: ni volumen bajo ni pausa pendiente. Si
+                // venía de una pausa breve (p. ej. el lanzador pidió el audio «un momento» y luego se
+                // lo quedó), sin esto la música no volvería nunca: no llegará ningún GAIN.
                 hasFocus = false
+                restoreVolume()
+                if (pausedByTransientLoss) {
+                    pausedByTransientLoss = false
+                    player.play()
+                }
                 EventLog.log("Otra app se quedó el audio; la música sigue sonando (ajuste de coche)")
             }
         }
@@ -99,6 +107,8 @@ internal class KeepPlayingAudioFocus(context: Context, private val player: Playe
             audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
         }
         hasFocus = result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+        // Concedido al momento: no habrá callback de GAIN que devuelva el volumen.
+        if (hasFocus) restoreVolume()
     }
 
     private fun abandonFocus() {

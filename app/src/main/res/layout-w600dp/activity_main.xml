@@ -44,7 +44,7 @@
                 android:maxLines="1"
                 android:text="@string/nav_library"
                 android:textColor="@color/nav_item"
-                android:textSize="@dimen/text_secondary" />
+                android:textSize="@dimen/nav_label" />
         </LinearLayout>
         <LinearLayout
             android:id="@+id/navNowPlaying"
@@ -75,7 +75,7 @@
                 android:maxLines="1"
                 android:text="@string/nav_now_playing"
                 android:textColor="@color/nav_item"
-                android:textSize="@dimen/text_secondary" />
+                android:textSize="@dimen/nav_label" />
         </LinearLayout>
         <LinearLayout
             android:id="@+id/navVisualizer"
@@ -106,7 +106,7 @@
                 android:maxLines="1"
                 android:text="@string/nav_visualizer"
                 android:textColor="@color/nav_item"
-                android:textSize="@dimen/text_secondary" />
+                android:textSize="@dimen/nav_label" />
         </LinearLayout>
     </LinearLayout>
 

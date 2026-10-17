@@ -99,8 +99,9 @@ class LibraryRepositoryImpl @Inject constructor(
             addDataScheme("file")
         }
         try {
-            // Las difusiones del sistema llegan aunque el receptor no se exporte.
-            ContextCompat.registerReceiver(context, mediaReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+            // Exportado: «fin del escaneo» lo envía MediaProvider (no el sistema) y, por debajo de
+            // Android 13, un receptor no exportado no lo recibiría.
+            ContextCompat.registerReceiver(context, mediaReceiver, filter, ContextCompat.RECEIVER_EXPORTED)
         } catch (e: Exception) {
             // Sin receptor seguimos teniendo el ContentObserver.
         }

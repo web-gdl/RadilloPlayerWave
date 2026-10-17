@@ -62,6 +62,8 @@ class PlaybackService : MediaLibraryService() {
 
     /** Pistas de la cola ya convertidas: solo se recalculan cuando cambia la cola. */
     private var cachedTracks: List<Track>? = null
+    /** Para cada elemento del reproductor, su índice en [cachedTracks] (o -1 si no se pudo convertir). */
+    private var cachedIndexMap: IntArray = IntArray(0)
     private val saveRunnable = Runnable { saveState() }
     private val periodicSave = object : Runnable {
         override fun run() {
@@ -113,7 +115,7 @@ class PlaybackService : MediaLibraryService() {
             .setLoadControl(loadControl)
             // El foco de audio se configura en applyFocusMode() según el ajuste.
             .setAudioAttributes(audioAttributes, false)
-            // Pausa al desconectar auriculares.
+            // Pausa al desconectar auriculares (salvo en modo coche: ver applyFocusMode()).
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
@@ -128,6 +130,9 @@ class PlaybackService : MediaLibraryService() {
         val exo = exoPlayer ?: return
         val keepPlaying = PlaybackSettings.keepPlayingOnFocusLoss(this, carDefault)
         exo.setAudioAttributes(audioAttributes, !keepPlaying)
+        // Los autoestéreos MTK emiten «audio ruidoso» al cambiar de fuente o de ruta (radio, BT,
+        // escritorio); en modo coche no debe pausar. En el móvil sí: se desenchufan auriculares.
+        exo.setHandleAudioBecomingNoisy(!keepPlaying)
         focus?.enabled = keepPlaying
     }
 
@@ -167,6 +172,12 @@ class PlaybackService : MediaLibraryService() {
         override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) = scheduleSave()
         override fun onRepeatModeChanged(repeatMode: Int) = scheduleSave()
 
+        override fun onPlaybackSuppressionReasonChanged(playbackSuppressionReason: Int) {
+            if (playbackSuppressionReason != Player.PLAYBACK_SUPPRESSION_REASON_NONE) {
+                EventLog.log("Reproducción suspendida por el sistema (motivo $playbackSuppressionReason)")
+            }
+        }
+
         override fun onPlayerError(error: PlaybackException) {
             EventLog.log("Error de reproducción: ${error.errorCodeName} ${error.message?.take(120).orEmpty()}")
         }
@@ -193,17 +204,36 @@ class PlaybackService : MediaLibraryService() {
     /** Toma la instantánea en el hilo principal (el reproductor lo exige) y escribe en otro hilo. */
     private fun saveState(sync: Boolean = false) {
         val player = session?.player ?: return
-        val tracks = cachedTracks ?: (0 until player.mediaItemCount)
-            .mapNotNull { MediaItemMapper.toTrack(player.getMediaItemAt(it)) }
-            .also { cachedTracks = it }
+        val tracks = cachedTracks ?: run {
+            val list = ArrayList<Track>(player.mediaItemCount)
+            val map = IntArray(player.mediaItemCount) { -1 }
+            for (i in 0 until player.mediaItemCount) {
+                MediaItemMapper.toTrack(player.getMediaItemAt(i))?.let {
+                    map[i] = list.size
+                    list += it
+                }
+            }
+            cachedIndexMap = map
+            cachedTracks = list
+            list
+        }
+        val current = player.currentMediaItemIndex
         val saved = SavedPlayback(
             tracks = tracks,
-            index = player.currentMediaItemIndex.coerceAtLeast(0),
+            index = cachedIndexMap.getOrNull(current)?.takeIf { it >= 0 } ?: 0,
             positionMs = player.currentPosition.coerceAtLeast(0L),
             shuffle = player.shuffleModeEnabled,
             repeatMode = player.repeatMode,
         )
-        if (sync) store.write(saved) else writer.execute { store.write(saved) }
+        // Todas las escrituras pasan por el mismo hilo (nunca dos a la vez sobre el mismo archivo);
+        // al cerrarse el servicio se espera a que termine.
+        val task = writer.submit { store.write(saved) }
+        if (sync) {
+            try {
+                task.get(SYNC_SAVE_TIMEOUT_MS, java.util.concurrent.TimeUnit.MILLISECONDS)
+            } catch (_: Exception) {
+            }
+        }
     }
 
     private fun sessionActivityIntent(): PendingIntent? {
@@ -271,5 +301,6 @@ class PlaybackService : MediaLibraryService() {
         const val STATE_FILE = "playback_state.json"
         const val SAVE_DEBOUNCE_MS = 1_000L
         const val PERIODIC_SAVE_MS = 15_000L
+        const val SYNC_SAVE_TIMEOUT_MS = 2_000L
     }
 }

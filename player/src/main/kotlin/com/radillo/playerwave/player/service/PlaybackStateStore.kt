@@ -1,13 +1,14 @@
 package com.radillo.playerwave.player.service
 
 import com.radillo.playerwave.core.model.Track
+import android.util.AtomicFile
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
 /**
  * Lo que había sonando al cerrar la app: cola, canción, posición, aleatorio y repetición.
- * Se guarda en un JSON pequeño en `filesDir` (escritura atómica: archivo temporal y renombrado).
+ * Se guarda en un JSON pequeño en `filesDir` con escritura atómica y sincronizada (`AtomicFile`).
  */
 internal data class SavedPlayback(
     val tracks: List<Track>,
@@ -19,21 +20,24 @@ internal data class SavedPlayback(
 
 internal class PlaybackStateStore(private val file: File) {
 
+    /** `AtomicFile` hace `fsync` antes de sustituir: un corte de corriente (la llave) no deja el archivo vacío. */
+    private val atomic = AtomicFile(file)
+
     fun read(): SavedPlayback? = try {
-        if (file.exists()) decode(file.readText()) else null
+        decode(String(atomic.readFully(), Charsets.UTF_8)) // sin archivo: FileNotFoundException → null
     } catch (_: Exception) {
         null // archivo dañado: se empieza de cero
     }
 
+    @Synchronized
     fun write(saved: SavedPlayback) {
+        var out: java.io.FileOutputStream? = null
         try {
-            val tmp = File(file.parentFile, file.name + ".tmp")
-            tmp.writeText(encode(saved))
-            if (!tmp.renameTo(file)) {
-                file.delete()
-                tmp.renameTo(file)
-            }
+            out = atomic.startWrite()
+            out.write(encode(saved).toByteArray(Charsets.UTF_8))
+            atomic.finishWrite(out)
         } catch (_: Exception) {
+            out?.let { atomic.failWrite(it) }
         }
     }
 

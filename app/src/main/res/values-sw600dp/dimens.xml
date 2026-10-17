@@ -10,7 +10,7 @@
     <dimen name="touch_large">88dp</dimen>
     <dimen name="top_bar">64dp</dimen>
     <dimen name="nav_bar">72dp</dimen>
-    <dimen name="nav_rail">112dp</dimen>
+    <dimen name="nav_rail">120dp</dimen>
     <dimen name="row_height">76dp</dimen>
     <dimen name="art_row">60dp</dimen>
     <dimen name="mini_player">76dp</dimen>
@@ -30,4 +30,5 @@
     <dimen name="seek_thumb">28dp</dimen>
     <dimen name="seek_track">6dp</dimen>
     <dimen name="mini_progress">4dp</dimen>
+    <dimen name="nav_label">15sp</dimen>
 </resources>

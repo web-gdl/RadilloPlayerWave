@@ -106,12 +106,7 @@ class MainActivity : FragmentActivity(), Navigator {
         if (savedInstanceState == null) {
             // Se vuelve a la última sección usada (en el coche, casi siempre «Reproduciendo») y, en la
             // biblioteca, a la carpeta, álbum o artista que estuviera abierto.
-            val lastTab = Tab.entries.firstOrNull { it.name == uiPrefs.getString(KEY_LAST_TAB, null) } ?: Tab.LIBRARY
-            val collection = LastCollection.read(this)
-            openTab(lastTab)
-            if (lastTab == Tab.LIBRARY && collection != null) {
-                push(CollectionDetailFragment.newInstance(collection.kind, collection.key, collection.title))
-            }
+            openTab(Tab.entries.firstOrNull { it.name == uiPrefs.getString(KEY_LAST_TAB, null) } ?: Tab.LIBRARY)
             requestNotificationPermissionOnce()
         } else {
             currentTab = Tab.entries.getOrElse(savedInstanceState.getInt(KEY_TAB)) { Tab.LIBRARY }
@@ -148,11 +143,20 @@ class MainActivity : FragmentActivity(), Navigator {
 
     // ---- Navigator ----
 
+    /**
+     * Abre una sección de primer nivel. La biblioteca recuerda la carpeta, álbum o artista abierto:
+     * al volver a ella desde otra sección (o al abrir la app) se reabre. Volver a tocar «Biblioteca»
+     * estando ya en ella lleva a la raíz.
+     */
     override fun openTab(tab: Tab) {
         val fm = supportFragmentManager
         if (fm.isStateSaved) return
         val atRoot = fm.backStackEntryCount == 0
-        if (tab == currentTab && atRoot && fm.findFragmentById(R.id.content) != null) return
+        val hasContent = fm.findFragmentById(R.id.content) != null
+        if (tab == currentTab && atRoot && hasContent) return
+        val switching = tab != currentTab || !hasContent
+        // Al vaciar la pila la biblioteca puede reanudarse un instante y borrar la carpeta guardada.
+        val savedCollection = LastCollection.read(this)
         if (!atRoot) fm.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
         val fragment = when (tab) {
             Tab.LIBRARY -> LibraryFragment()
@@ -163,6 +167,12 @@ class MainActivity : FragmentActivity(), Navigator {
         currentTab = tab
         uiPrefs.edit().putString(KEY_LAST_TAB, tab.name).apply()
         updateNavSelection()
+        when {
+            savedCollection == null -> Unit
+            tab != Tab.LIBRARY -> LastCollection.save(this, savedCollection.kind, savedCollection.key, savedCollection.title)
+            switching -> push(CollectionDetailFragment.newInstance(savedCollection.kind, savedCollection.key, savedCollection.title))
+            else -> LastCollection.clear(this)
+        }
     }
 
     override fun push(fragment: Fragment) {

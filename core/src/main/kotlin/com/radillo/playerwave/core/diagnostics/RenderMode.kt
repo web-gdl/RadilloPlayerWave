@@ -56,18 +56,31 @@ object RenderMode {
         Choice.AUTO -> !forcedCpuAfterCrash && !lowEnd && RealApiLevel.effective >= 29
     }
 
-    /** Llamar justo antes de crear o destruir una superficie dibujada con GPU. */
-    fun beginGpuTransition() {
-        val d = dir ?: return
+    /**
+     * Llamar justo antes de crear o destruir una superficie dibujada con GPU. Devuelve una ficha
+     * para [endGpuTransition]: así el cierre retrasado de un cambio anterior no borra la marca
+     * de uno más reciente.
+     */
+    fun beginGpuTransition(): String {
+        val token = System.nanoTime().toString()
+        val d = dir ?: return token
         try {
-            File(d, MARKER).writeText(System.currentTimeMillis().toString())
+            File(d, MARKER).writeText(token)
         } catch (_: Exception) {
         }
+        return token
     }
 
     /** Llamar cuando el cambio terminó sin problemas. */
-    fun endGpuTransition() {
-        dir?.let { File(it, MARKER).delete() }
+    fun endGpuTransition(token: String) {
+        val d = dir ?: return
+        synchronized(this) {
+            val marker = File(d, MARKER)
+            try {
+                if (marker.exists() && marker.readText() == token) marker.delete()
+            } catch (_: Exception) {
+            }
+        }
     }
 
     private fun checkPreviousRun() {

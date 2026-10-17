@@ -144,7 +144,7 @@ class VisualizerEngine(
     private fun startAnalysis() {
         val previous = stoppingJob
         stoppingJob = null
-        analysisJob = scope.launch {
+        val job = scope.launch {
             // La espera no se puede cancelar: si este trabajo se cancela mientras espera, quien venga
             // detrás aún debe esperar (en cadena) a que el anterior haya terminado.
             if (previous != null) withContext(NonCancellable) { previous.join() }
@@ -156,6 +156,14 @@ class VisualizerEngine(
                     history.add(frame, now)
                     lastRealFrameNanos = now
                 }
+            }
+        }
+        analysisJob = job
+        // Si el análisis falla, se olvida el trabajo para que la próxima superficie lo rearranque
+        // (si no, seguiría «activo» y el visualizador quedaría en modo sintético hasta salir).
+        job.invokeOnCompletion { cause ->
+            if (cause != null && cause !is kotlinx.coroutines.CancellationException) {
+                synchronized(lock) { if (analysisJob === job) analysisJob = null }
             }
         }
     }

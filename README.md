@@ -16,7 +16,8 @@ RadilloPlayerWave nació como un reproductor de MP3 «de los de antes»: tu mús
 dispositivo, sin cuentas, sin anuncios, sin telemetría y sin pedir permisos que no necesita (ni
 siquiera el micrófono, aunque tenga visualizador). Reproduce lo que haya en la memoria interna o
 en una memoria USB, organiza por canciones, álbumes, artistas, carpetas y listas, guarda favoritos,
-busca, sigue sonando en segundo plano con controles en la notificación y la pantalla bloqueada,
+busca, sigue sonando en segundo plano con controles en la notificación y la pantalla bloqueada
+(también cuando el escritorio o la radio del coche piden el audio), recuerda dónde te quedaste,
 tiene temporizador de apagado y usa el ecualizador y el refuerzo de graves del propio dispositivo
 cuando existen de verdad (nunca los simula).
 
@@ -40,7 +41,8 @@ equipos las apps actuales van a tirones o se cierran por falta de memoria. Por e
 - el visualizador dibuja en un **`SurfaceView` con su propio hilo** y por lotes, así que un
   fotograma lento nunca congela los botones;
 - un **gobernador de calidad** mide la fluidez y baja el detalle cuando hace falta;
-- una pantalla de **Diagnóstico** muestra RAM, GPU, Android real y fps, con el informe copiable.
+- una pantalla de **Diagnóstico** muestra RAM, GPU, Android real y fps, el registro de eventos y el
+  último cierre inesperado, con el informe copiable (en estos equipos no suele haber `adb`).
 
 La adaptación avanza por fases documentadas en `docs/TARGET_DEVICE.md`: A (cimientos),
 B (visualizador en `SurfaceView`) y C (interfaz en vistas nativas para 1024×600, sin Compose)
@@ -54,9 +56,22 @@ están hechas; D (escáner de USB, arranque con el coche, teclas del volante) es
 
 Nombre provisional: comprobar disponibilidad de marca antes de cualquier uso comercial.
 
+## Capturas (autoestéreo 1024×600)
+
+| Biblioteca | Reproduciendo |
+|---|---|
+| ![Biblioteca](docs/screenshots/biblioteca.png) | ![Reproduciendo](docs/screenshots/reproduciendo.png) |
+| **Visualizador** | **Ajustes** |
+| ![Visualizador](docs/screenshots/visualizador.png) | ![Ajustes](docs/screenshots/ajustes.png) |
+
 ## Estado
 
-**0.8.0 (Fase C de la adaptación al autoestéreo).** Biblioteca de música local (canciones,
+**0.9.0 (auditoría y rediseño).** Corrige los cierres al cambiar entre el visualizador y
+«Reproduciendo», sigue sonando en el coche aunque el equipo pida el audio, recuerda cola,
+aleatorio, repetición y carpeta, y arranca sin volver a escanear la música. Interfaz rediseñada
+para usarla al volante. Detalles en `docs/AUDITORIA.md`.
+
+**Funciones:** biblioteca de música local (canciones,
 álbumes, artistas, carpetas y listas), favoritos, búsqueda, reproducción en segundo plano con
 notificación y pantalla bloqueada, cola y mini reproductor, temporizador de apagado, ecualizador y
 refuerzo de graves del dispositivo (solo cuando existen de verdad), tema claro/oscuro con acento de
@@ -117,7 +132,7 @@ core/        Modelos, perfil del dispositivo, carga de carátulas (RGB_565) y ac
 data/        Biblioteca (MediaStore + Room), favoritos y listas (Room), ajustes (SharedPreferences)
 player/      ExoPlayer, MediaSession, servicio, tap de PCM (audiotap), efectos (audiofx), temporizador
 visualizer/  Análisis (FFT, bandas, onsets), motor, escenas sobre Canvas, SurfaceView con hilo de render
-docs/        Arquitectura, dependencias y licencias, limitaciones
+docs/        Arquitectura, dependencias y licencias, limitaciones, auditoría 0.9
 ```
 
 La regla de dependencias es estricta: `visualizer` nunca depende de `player` ni de Media3.
