@@ -76,6 +76,16 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+      # Capturas de las pantallas (ScreenshotTest, Robolectric) para revisar el diseño sin equipo.
+      - name: Publicar capturas de pantalla
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: app/build/outputs/screenshots/*.png
+          if-no-files-found: ignore
+          retention-days: 14
+
       # Si la compilación falla, deja el extracto relevante del registro como comentario
       # del commit, para poder diagnosticarlo desde la API sin abrir la interfaz web.
       - name: Comentar el error en el commit
