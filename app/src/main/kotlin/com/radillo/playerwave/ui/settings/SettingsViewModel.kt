@@ -45,6 +45,14 @@ class SettingsViewModel @Inject constructor(
         crossfadeSeconds.value = PlaybackSettings.crossfadeSeconds(context)
     }
 
+    /** Mezclar también al saltar de canción a mano. */
+    val crossfadeOnSkip = MutableStateFlow(PlaybackSettings.crossfadeOnSkip(context))
+
+    fun setCrossfadeOnSkip(enabled: Boolean) {
+        PlaybackSettings.setCrossfadeOnSkip(context, enabled)
+        crossfadeOnSkip.value = enabled
+    }
+
     val isScanning: StateFlow<Boolean> = library.isScanning
     private val _scanResults = MutableSharedFlow<ScanResult>(extraBufferCapacity = 1)
     val scanResults: SharedFlow<ScanResult> = _scanResults

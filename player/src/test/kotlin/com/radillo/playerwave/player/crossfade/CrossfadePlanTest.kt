@@ -44,5 +44,15 @@ class CrossfadePlanTest {
         assertEquals(0.7071f, mid, 1e-3f)
     }
 
+    @Test
+    fun `al saltar a mano la mezcla es corta y retoma donde iba la anterior`() {
+        assertEquals(3_000L, CrossfadePlan.manualFadeMs(12_000))
+        assertEquals(2_000L, CrossfadePlan.manualFadeMs(2_000))
+        assertEquals(0L, CrossfadePlan.manualFadeMs(0))
+        assertEquals(60_200L, CrossfadePlan.estimatePosition(60_000, 200))
+        assertEquals(61_500L, CrossfadePlan.estimatePosition(60_000, 9_000))
+        assertEquals(0L, CrossfadePlan.estimatePosition(-5, -10))
+    }
+
     private fun r(v: Float) = Math.round(v * 1000) / 1000f
 }

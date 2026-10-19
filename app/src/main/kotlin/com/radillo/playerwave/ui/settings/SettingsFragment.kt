@@ -41,7 +41,14 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         b.switchKeepPlaying.setOnCheckedChangeListener { _, checked -> if (!binding) viewModel.setKeepPlaying(checked) }
         collectWhenStarted(viewModel.keepPlaying) { bind { b.switchKeepPlaying.isChecked = it } }
         b.rowCrossfade.setOnClickListener { chooseCrossfade() }
-        collectWhenStarted(viewModel.crossfadeSeconds) { b.crossfadeValue.text = crossfadeLabel(it) }
+        collectWhenStarted(viewModel.crossfadeSeconds) { seconds ->
+            b.crossfadeValue.text = crossfadeLabel(seconds)
+            // Sin crossfade el interruptor no hace nada: se ve apagado y no se puede tocar.
+            b.switchCrossfadeSkip.isEnabled = seconds > 0
+            b.switchCrossfadeSkip.alpha = if (seconds > 0) 1f else 0.5f
+        }
+        b.switchCrossfadeSkip.setOnCheckedChangeListener { _, checked -> if (!binding) viewModel.setCrossfadeOnSkip(checked) }
+        collectWhenStarted(viewModel.crossfadeOnSkip) { bind { b.switchCrossfadeSkip.isChecked = it } }
         collectWhenStarted(viewModel.isScanning) { scanning ->
             b.rowRescan.isEnabled = !scanning
             b.rowRescan.alpha = if (scanning) 0.5f else 1f

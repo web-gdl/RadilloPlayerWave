@@ -214,6 +214,7 @@
     <string name="settings_keep_playing_hint">Recommended in the car: going home or opening another app won’t pause the music. Navigation and calls pause it briefly and it resumes on its own.</string>
     <string name="settings_crossfade">Crossfade between songs</string>
     <string name="settings_crossfade_hint">The next song fades in while the current one ends, with no silence in between.</string>
+    <string name="settings_crossfade_skip">Also crossfade when changing songs (next, previous, queue)</string>
     <string name="settings_crossfade_off">Off</string>
     <string name="settings_crossfade_seconds">%d s</string>
     <string name="settings_library">Library</string>

@@ -28,6 +28,10 @@ import com.radillo.playerwave.player.audiotap.RadilloRenderersFactory
  *   que se va y baja hasta 0; luego se libera. Comparte la sesión de audio del principal, así que
  *   el ecualizador también se le aplica. Nunca pide el foco de audio.
  *
+ * **Al cambiar de canción a mano** (siguiente, anterior, elegir en la cola), si el ajuste lo permite,
+ * se hace una mezcla corta ([CrossfadePlan.manualFadeMs]): la nueva entra desde 0 al instante y el
+ * auxiliar retoma la anterior donde iba y la apaga.
+ *
  * Se cancela al pausar. Si otro (atenuación del navegador, foco de audio) cambia el volumen en plena
  * mezcla, se le deja el volumen a él. Todo en el hilo principal.
  */
@@ -43,6 +47,14 @@ internal class CrossfadeController(
     private val handler = Handler(Looper.getMainLooper())
     private val prefs = PlaybackSettings.prefs(context)
     private var fadeMs = PlaybackSettings.crossfadeSeconds(context) * 1000L
+    private var onSkip = PlaybackSettings.crossfadeOnSkip(context)
+    /** Duración de la mezcla en curso (completa al final de una canción, corta al saltar). */
+    private var activeFadeMs = fadeMs
+
+    /** Última canción y posición vistas sonando: lo que hay que retomar si el usuario salta. */
+    private var lastItem: MediaItem? = null
+    private var lastPositionMs = 0L
+    private var lastSeenAt = 0L
 
     private var phase = Phase.IDLE
     private var tail: ExoPlayer? = null
@@ -54,8 +66,9 @@ internal class CrossfadeController(
     private var lastSetVolume = -1f
 
     private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-        if (key == PlaybackSettings.KEY_CROSSFADE_SECONDS) {
+        if (key == PlaybackSettings.KEY_CROSSFADE_SECONDS || key == PlaybackSettings.KEY_CROSSFADE_ON_SKIP) {
             fadeMs = PlaybackSettings.crossfadeSeconds(context) * 1000L
+            onSkip = PlaybackSettings.crossfadeOnSkip(context)
             if (fadeMs == 0L) cancel()
             schedule()
         }
@@ -96,6 +109,9 @@ internal class CrossfadeController(
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
         // Un salto del usuario mientras se preparaba la mezcla la deja sin sentido.
         if (phase == Phase.PREPARING) cancel()
+        // Salto a mano (siguiente, anterior, elegir en la cola) con la música sonando. El salto
+        // propio de la mezcla ocurre ya en FADING y no entra aquí.
+        if (phase == Phase.IDLE && reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK) startManualFade()
     }
 
     private fun schedule() {
@@ -106,6 +122,11 @@ internal class CrossfadeController(
     // ---- Máquina de estados ----
 
     private fun step() {
+        if (phase == Phase.IDLE && player.isPlaying) {
+            lastItem = player.currentMediaItem
+            lastPositionMs = player.currentPosition
+            lastSeenAt = SystemClock.elapsedRealtime()
+        }
         when (phase) {
             Phase.IDLE -> maybePrepare()
             Phase.PREPARING -> maybeStart()
@@ -157,6 +178,7 @@ internal class CrossfadeController(
         // La fase cambia antes del salto: el aviso de cambio de canción llega dentro de seek y no
         // debe tomarse por un salto del usuario.
         phase = Phase.FADING
+        activeFadeMs = fadeMs
         fadeStartedAt = SystemClock.elapsedRealtime()
         aux.play()
         setMainVolume(0f)
@@ -169,11 +191,43 @@ internal class CrossfadeController(
             // Otro (atenuación del navegador, foco de audio) tomó el volumen: que mande él.
             return finish(restore = false)
         }
-        val progress = (SystemClock.elapsedRealtime() - fadeStartedAt).toFloat() / fadeMs
+        val progress = (SystemClock.elapsedRealtime() - fadeStartedAt).toFloat() / activeFadeMs
         val (incoming, outgoing) = CrossfadePlan.gains(progress)
         setMainVolume(targetVolume * incoming)
         aux.volume = targetVolume * outgoing
         if (progress >= 1f || aux.playbackState == Player.STATE_ENDED) finish(restore = true)
+    }
+
+    /**
+     * Mezcla corta al saltar a mano: la canción nueva ya está en el principal; se baja a 0 y sube,
+     * y un auxiliar retoma la anterior donde iba (estimado) y la apaga. Mientras el auxiliar se
+     * prepara (unas décimas) suena solo la nueva subiendo: nunca hay silencio.
+     */
+    private fun startManualFade() {
+        val item = lastItem ?: return
+        if (fadeMs <= 0 || !onSkip || !player.playWhenReady) return
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastSeenAt > CrossfadePlan.MAX_STALE_MS) return
+        val position = CrossfadePlan.estimatePosition(lastPositionMs, now - lastSeenAt)
+        lastItem = null
+        tail = try {
+            buildTail().apply {
+                setMediaItem(item, position)
+                playWhenReady = true
+                prepare()
+            }
+        } catch (e: Exception) {
+            EventLog.log("Crossfade: no se pudo mezclar el salto (${e.javaClass.simpleName})")
+            null
+        }
+        val aux = tail ?: return
+        targetVolume = player.volume
+        aux.volume = targetVolume
+        activeFadeMs = CrossfadePlan.manualFadeMs(fadeMs)
+        phase = Phase.FADING
+        fadeStartedAt = now
+        setMainVolume(0f)
+        schedule()
     }
 
     private fun finish(restore: Boolean) {
@@ -230,7 +284,8 @@ internal class CrossfadeController(
     }
 
     private companion object {
-        const val IDLE_TICK_MS = 500L
+        // Cada 250 ms: la posición anotada para retomar la canción anterior al saltar no se aleja más.
+        const val IDLE_TICK_MS = 250L
         const val ACTIVE_TICK_MS = 40L
         const val ALIGN_TOLERANCE_MS = 20L
     }

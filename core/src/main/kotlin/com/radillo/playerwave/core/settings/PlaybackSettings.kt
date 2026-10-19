@@ -12,6 +12,7 @@ object PlaybackSettings {
     const val FILE = "playback_settings"
     const val KEY_KEEP_PLAYING = "keep_playing_on_focus_loss"
     const val KEY_CROSSFADE_SECONDS = "crossfade_seconds"
+    const val KEY_CROSSFADE_ON_SKIP = "crossfade_on_skip"
 
     /** Duraciones que ofrece Ajustes (0 = apagado). Pocas opciones: se elige en un vistazo. */
     val CROSSFADE_OPTIONS = intArrayOf(0, 2, 4, 6, 8, 10, 12)
@@ -46,5 +47,12 @@ object PlaybackSettings {
 
     fun setCrossfadeSeconds(context: Context, seconds: Int) {
         prefs(context).edit().putInt(KEY_CROSSFADE_SECONDS, seconds.coerceIn(0, 12)).apply()
+    }
+
+    /** Mezclar también al cambiar de canción a mano (siguiente, anterior, cola). Activo por defecto. */
+    fun crossfadeOnSkip(context: Context): Boolean = prefs(context).getBoolean(KEY_CROSSFADE_ON_SKIP, true)
+
+    fun setCrossfadeOnSkip(context: Context, value: Boolean) {
+        prefs(context).edit().putBoolean(KEY_CROSSFADE_ON_SKIP, value).apply()
     }
 }

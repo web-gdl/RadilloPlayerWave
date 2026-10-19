@@ -82,6 +82,9 @@ el coste de mantenimiento.
 
 - La mezcla usa un segundo reproductor efímero solo para el final de la canción que se va; el
   visualizador sigue a la canción que entra.
+- Al cambiar de canción a mano la mezcla dura como mucho 3 s y la canción anterior se retoma donde
+  iba con un margen de unas décimas (puede repetirse o saltarse un instante). Elegir una canción
+  nueva desde la biblioteca no mezcla: reemplaza la cola.
 - No se mezcla con «repetir una», al final de la cola sin repetición, ni en canciones de menos de
   dos veces la mezcla más 5 s. Pausar en plena mezcla la corta.
 - En un equipo con poca CPU, durante esos segundos se decodifican dos canciones a la vez.

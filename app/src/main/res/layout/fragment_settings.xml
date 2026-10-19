@@ -96,6 +96,11 @@
                 android:paddingEnd="@dimen/space_xl"
                 android:text="@string/settings_crossfade_hint" />
 
+            <Switch
+                android:id="@+id/switchCrossfadeSkip"
+                style="@style/SettingRow"
+                android:text="@string/settings_crossfade_skip" />
+
             <TextView
                 android:id="@+id/rowEqualizer"
                 style="@style/SettingRow"

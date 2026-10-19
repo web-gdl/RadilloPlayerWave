@@ -216,6 +216,7 @@
     <string name="settings_keep_playing_hint">Recomendado en el coche: volver al escritorio o abrir otra app no pausa la música. La navegación y las llamadas la pausan un momento y vuelve sola.</string>
     <string name="settings_crossfade">Mezcla entre canciones (crossfade)</string>
     <string name="settings_crossfade_hint">La canción siguiente entra mientras termina la actual, sin silencio entre ellas.</string>
+    <string name="settings_crossfade_skip">Mezclar también al cambiar de canción (siguiente, anterior, cola)</string>
     <string name="settings_crossfade_off">Apagado</string>
     <string name="settings_crossfade_seconds">%d s</string>
     <string name="settings_library">Biblioteca</string>

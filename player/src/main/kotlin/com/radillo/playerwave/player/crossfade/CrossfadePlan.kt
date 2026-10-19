@@ -22,6 +22,18 @@ object CrossfadePlan {
     /** Si el auxiliar no está listo pasado este margen, se abandona la mezcla (transición normal). */
     const val START_GRACE_MS = 600L
 
+    /** Mezcla al saltar a mano: corta, para que la canción elegida se imponga enseguida. */
+    const val MANUAL_MAX_MS = 3_000L
+
+    /** Si la última posición anotada es más vieja que esto, no se retoma la canción anterior. */
+    const val MAX_STALE_MS = 1_500L
+
+    fun manualFadeMs(fadeMs: Long): Long = fadeMs.coerceAtMost(MANUAL_MAX_MS).coerceAtLeast(0L)
+
+    /** Dónde iba la canción anterior: lo anotado más el tiempo transcurrido desde entonces. */
+    fun estimatePosition(lastPositionMs: Long, elapsedMs: Long): Long =
+        (lastPositionMs.coerceAtLeast(0L) + elapsedMs.coerceIn(0L, MAX_STALE_MS))
+
     /** ¿Se puede mezclar esta canción? */
     fun eligible(fadeMs: Long, durationMs: Long, hasNext: Boolean, repeatOne: Boolean): Boolean =
         fadeMs > 0 && hasNext && !repeatOne && durationMs > 0 && durationMs >= 2 * fadeMs + MIN_EXTRA_MS
