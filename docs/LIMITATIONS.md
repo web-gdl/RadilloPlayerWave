@@ -123,8 +123,9 @@ el coste de mantenimiento.
   se parece al color base del tema. Se puede desactivar en Ajustes.
 - La **búsqueda** compara título, artista y álbum por subcadena, con un máximo de 200 resultados (sin acentos normalizados ni
   búsqueda fonética).
-- En pantallas anchas (≥ 600 dp) se usa un raíl de navegación lateral y «Reproduciendo» pasa a
-  dos columnas; no hay disposición específica para plegables con bisagra.
+- En pantallas anchas (≥ 600 dp de ancho) las secciones van en una barra superior con Buscar y
+  Ajustes, y «Reproduciendo» pasa a dos columnas (desde la 0.12); no hay disposición específica
+  para plegables con bisagra.
 
 ## Estado por fase
 

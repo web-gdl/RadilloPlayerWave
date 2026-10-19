@@ -3,7 +3,7 @@
 Reproductor de música local para Android con un motor de visualización en tiempo real,
 **optimizado para autoestéreos Android genéricos de gama baja** — modelo **JCAC10003**,
 plataforma **alps 8227L** (CPU AC822TL / MediaTek MT8227L: Cortex‑A7 de 32 bits, GPU Mali‑450,
-1 GB de RAM, pantalla de 1024×600) — y que también funciona en teléfonos y tabletas.
+1 GB de RAM, pantalla de 1024×600, de la que quedan 1024×534 útiles bajo la barra del sistema) — y que también funciona en teléfonos y tabletas.
 
 [![Android CI](https://github.com/web-gdl/RadilloPlayerWave/actions/workflows/android.yml/badge.svg)](https://github.com/web-gdl/RadilloPlayerWave/actions/workflows/android.yml)
 [![Última versión](https://img.shields.io/github/v/release/web-gdl/RadilloPlayerWave?label=APK)](https://github.com/web-gdl/RadilloPlayerWave/releases/latest)
@@ -31,7 +31,7 @@ Y lo que lo hace distinto de la mayoría de reproductores modernos es **para qui
 optimizado**: para los autoestéreos Android baratos que vienen en millones de coches —
 concretamente el modelo **JCAC10003** sobre la plataforma **alps 8227L (CPU AC822TL, MediaTek)**,
 con 1 GB de RAM, procesador Cortex‑A7 de 32 bits, GPU Mali‑450 (solo OpenGL ES 2.0), pantalla
-de 1024×600 a 160 dpi y una versión de Android que suele estar «maquillada» en la ROM. En esos
+de 1024×600 a 160 dpi (1024×534 útiles) y una versión de Android que suele estar «maquillada» en la ROM. En esos
 equipos las apps actuales van a tirones o se cierran por falta de memoria. Por eso aquí:
 
 - el APK **release** pesa ~1,4 MB (vistas nativas sin Compose, R8, recursos reducidos, solo audio en el reproductor);
@@ -144,7 +144,7 @@ Ejecutar las pruebas unitarias:
 ## Estructura
 
 ```
-app/         Actividad única, fragments XML + ViewBinding, navegación propia, recursos (1024×600 y móvil)
+app/         Actividad única, fragments XML + ViewBinding, navegación propia, recursos (estéreo 1024×534 y móvil)
 core/        Modelos, perfil del dispositivo, carga de carátulas (RGB_565) y acento de carátula
 data/        Biblioteca (MediaStore + Room), favoritos y listas (Room), ajustes (SharedPreferences)
 player/      ExoPlayer, MediaSession, servicio, tap de PCM (audiotap), efectos (audiofx), temporizador
