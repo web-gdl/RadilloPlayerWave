@@ -119,6 +119,7 @@ internal class JancarBridge private constructor(
         player.removeListener(this)
         runCatching { context.unregisterReceiver(accReceiver) }
         main.removeCallbacks(accResumeCheck)
+        main.removeCallbacks(accRepublish)
         main.removeCallbacks(ticker)
         main.removeCallbacks(pendingTimeout)
         pendingWhenConnected = null
@@ -141,8 +142,27 @@ internal class JancarBridge private constructor(
         if (released) return
         handler.onAcc(on)
         main.removeCallbacks(accResumeCheck)
-        if (on) main.postDelayed(accResumeCheck, ACC_RESUME_FALLBACK_MS)
+        main.removeCallbacks(accRepublish)
+        if (on) {
+            main.postDelayed(accRepublish, ACC_REPUBLISH_MS)
+            main.postDelayed(accResumeCheck, ACC_RESUME_FALLBACK_MS)
+        }
         updateStandby()
+    }
+
+    /**
+     * Al encender el auto: el «detener» del apagado borró la canción del widget del escritorio, pero
+     * la fuente sigue abierta a nombre de la app. Se vuelve a publicar (en pausa) para que el widget
+     * muestre la última canción aunque la música todavía no siga.
+     */
+    private val accRepublish = Runnable {
+        if (released || !connected || failed || !openAtService || registered) return@Runnable
+        if (player.mediaItemCount == 0) return@Runnable
+        lastState = null
+        lastInfoKey = null
+        publishState(force = true)
+        publishInfo(force = true)
+        EventLog.log("Estéreo: canción publicada de nuevo para el widget tras encender")
     }
 
     private fun updateStandby() {
@@ -308,16 +328,19 @@ internal class JancarBridge private constructor(
         player.volume = 1f
         client.open(JancarProtocol.TYPE_THIRD_PARTY)
         EventLog.log("Estéreo: registrada como fuente de audio")
-        publishInfo()
+        // Primero el estado: el servicio descarta una canción igual a la última que recibió hasta
+        // que cambia el estado. Al volver a encender el auto es la misma canción de antes del
+        // apagado (que el servicio borró del widget al detener): con el orden inverso se perdía.
         publishState()
+        publishInfo()
         if (player.isPlaying) {
             main.removeCallbacks(ticker)
             main.postDelayed(ticker, STATE_INTERVAL_MS)
         }
     }
 
-    private fun publishState() {
-        if (!registered) return
+    private fun publishState(force: Boolean = false) {
+        if (!registered && !force) return
         val hasItems = player.mediaItemCount > 0
         val state = JancarProtocol.stateFor(
             playWhenReady = player.playWhenReady,
@@ -333,8 +356,8 @@ internal class JancarBridge private constructor(
         client.setMediaState(JancarProtocol.TYPE_THIRD_PARTY, state, position, duration)
     }
 
-    private fun publishInfo() {
-        if (!registered) return
+    private fun publishInfo(force: Boolean = false) {
+        if (!registered && !force) return
         val item = player.currentMediaItem ?: return
         val meta = item.mediaMetadata
         val title = meta.title?.toString().orEmpty()
@@ -433,6 +456,8 @@ internal class JancarBridge private constructor(
         private const val STATE_INTERVAL_MS = 1_000L
         /** Al encender el auto, el servicio manda «reanudar» enseguida; si no, se reanuda pasado esto. */
         const val ACC_RESUME_FALLBACK_MS = 5_000L
+        /** Tras encender, el escritorio ya volvió a pedir los datos: entonces se republica la canción. */
+        const val ACC_REPUBLISH_MS = 2_000L
 
         /** Lo que el usuario quería la última vez (para el arranque en frío, sin servicio creado). */
         fun userWantsPlayback(context: Context): Boolean =

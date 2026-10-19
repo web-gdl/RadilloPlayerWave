@@ -95,6 +95,7 @@ grande en «Reproduciendo».
 silencio: la canción actual sigue sonando hasta que la mezcla está lista. Al apagar el auto con la
 música sonando, la app se queda esperando el encendido (Android 8 la cerraba en segundo plano) y,
 si al encender el estéreo no la reanuda o ya no estaba abierta, la reabre y sigue donde iba.
+En la 0.13.3 el widget del escritorio vuelve a mostrar la última canción al encender el auto.
 
 **Funciones:** biblioteca de música local (canciones,
 álbumes, artistas, carpetas y listas), favoritos, búsqueda, reproducción en segundo plano con

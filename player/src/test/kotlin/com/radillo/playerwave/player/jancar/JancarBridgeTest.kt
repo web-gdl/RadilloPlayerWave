@@ -235,10 +235,21 @@ class JancarBridgeTest {
         assertThat(started.map { it.component?.className }).contains(CarStandbyService::class.java.name)
 
         // Llave encendida, pero el «reanudar» no llega: a los 5 s la música sigue igual.
+        val infosBefore = fake.count(JancarProtocol.TX_SET_MEDIA_INFO)
         context.sendBroadcast(Intent(CarSignals.ACTION_ACC).putExtra(CarSignals.EXTRA_ACC, true))
         ShadowLooper.idleMainLooper()
         assertThat(player.playWhenReady).isFalse()
-        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(JancarBridge.ACC_RESUME_FALLBACK_MS + 100))
+
+        // A los 2 s la última canción vuelve al widget (en pausa): primero el estado, luego la canción,
+        // porque el servicio descarta una canción repetida hasta que cambia el estado.
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(JancarBridge.ACC_REPUBLISH_MS + 100))
+        waitFor("canción republicada") { fake.count(JancarProtocol.TX_SET_MEDIA_INFO) == infosBefore + 1 }
+        val lastTwo = fake.calls.filter { it.code == JancarProtocol.TX_SET_MEDIA_INFO || it.code == JancarProtocol.TX_SET_MEDIA_STATE }.takeLast(2)
+        assertThat(lastTwo.map { it.code }).containsExactly(JancarProtocol.TX_SET_MEDIA_STATE, JancarProtocol.TX_SET_MEDIA_INFO).inOrder()
+        assertThat(lastTwo.first().ints.first()).isEqualTo(JancarProtocol.STATE_PAUSED)
+        assertThat(lastTwo.last().text.first()).isEqualTo("Canción 1")
+
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(JancarBridge.ACC_RESUME_FALLBACK_MS))
         assertThat(player.playWhenReady).isTrue()
         waitFor("nuevo registro") { fake.count(JancarProtocol.TX_OPEN) == 2 }
         controller.destroy()

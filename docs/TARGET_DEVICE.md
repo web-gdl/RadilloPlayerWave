@@ -316,6 +316,16 @@ Conclusiones: el presupuesto de memoria (≤ 90 MB) se cumple con holgura; la el
 visualizador en Android 8.1 es la correcta. Restaurar una cola tan grande bloqueaba el hilo
 principal ~2 s al arrancar: desde la 0.10.2 se lee en segundo plano.
 
+### 0.13.3: la canción vuelve al widget al encender (19-10-2026)
+
+- El usuario confirmó la 0.13.2 (crossfade sin silencio; la app conserva la canción), pero el widget
+  seguía vacío al encender. Causa (análisis de `com.jancar.services`): al apagar, `stop()` borra la
+  canción del widget (`clearMediaInfoAndState`) sin olvidar la última recibida, y
+  `MediaCtrl.setMediaInfo` descarta una canción igual a la anterior hasta que llega un estado nuevo.
+  La app publicaba canción y luego estado, así que la misma canción de antes del apagado se perdía.
+- Ahora publica primero el estado y luego la canción, y 2 s después del aviso de encendido vuelve
+  a publicarla (en pausa) aunque la música aún no siga, porque la fuente sigue abierta.
+
 ### 0.13.2: correcciones del crossfade al saltar y del encendido (19-10-2026)
 
 - Reporte del usuario: al adelantar, medio segundo de silencio antes de la mezcla. Causa: el
