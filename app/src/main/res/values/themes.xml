@@ -202,7 +202,8 @@
 
     <!-- Acción secundaria en tarjeta (propuesta 1): icono y texto en fila, reparte el ancho. -->
     <style name="LabeledCard" parent="">
-        <item name="android:layout_width">0dp</item>
+        <!-- Ancho natural + reparto del sobrante: «Temporizador» no se corta y «Cola» no ocupa de más. -->
+        <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">@dimen/np_card_height</item>
         <item name="android:layout_weight">1</item>
         <item name="android:layout_marginEnd">12dp</item>
@@ -211,8 +212,8 @@
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>
         <item name="android:background">@drawable/bg_action_card</item>
-        <item name="android:paddingStart">8dp</item>
-        <item name="android:paddingEnd">8dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
     </style>
     <style name="LabeledCard.Icon" parent="LabeledAction.Icon">
         <item name="android:layout_width">22dp</item>
