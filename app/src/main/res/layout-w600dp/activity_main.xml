@@ -20,6 +20,40 @@
         android:paddingStart="20dp"
         android:paddingEnd="12dp">
 
+        <!-- Buscar primero: mismo formato que las secciones (Jakob: donde se espera, a la izquierda). -->
+        <LinearLayout
+            android:id="@+id/topSearch"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/nav_pill_height"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_nav_pill"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp">
+
+            <ImageView
+                android:layout_width="@dimen/nav_pill_icon"
+                android:layout_height="@dimen/nav_pill_icon"
+                android:duplicateParentState="true"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_search"
+                android:tint="@color/nav_pill_content" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:duplicateParentState="true"
+                android:maxLines="1"
+                android:text="@string/action_search"
+                android:textColor="@color/nav_pill_content"
+                android:textSize="@dimen/nav_pill_text"
+                android:textStyle="bold" />
+        </LinearLayout>
         <LinearLayout
             android:id="@+id/navLibrary"
             android:layout_width="wrap_content"
@@ -124,12 +158,6 @@
             android:layout_width="0dp"
             android:layout_height="1dp"
             android:layout_weight="1" />
-
-        <ImageButton
-            android:id="@+id/topSearch"
-            style="@style/IconButton"
-            android:contentDescription="@string/action_search"
-            android:src="@drawable/ic_search" />
 
         <ImageButton
             android:id="@+id/topSettings"
