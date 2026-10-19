@@ -173,11 +173,11 @@
                     <TextView android:id="@+id/btnFavoriteLabel" style="@style/LabeledCard.Label" android:text="@string/np_favorite" />
                 </LinearLayout>
                 <LinearLayout
-                    android:id="@+id/btnSleep"
+                    android:id="@+id/btnCrossfade"
                     style="@style/LabeledCard"
-                    android:contentDescription="@string/sleep_timer">
-                    <ImageView android:id="@+id/btnSleepIcon" style="@style/LabeledCard.Icon" android:src="@drawable/ic_bedtime" />
-                    <TextView android:id="@+id/btnSleepLabel" style="@style/LabeledCard.Label" android:text="@string/np_sleep" />
+                    android:contentDescription="@string/np_crossfade_toggle">
+                    <ImageView android:id="@+id/btnCrossfadeIcon" style="@style/LabeledCard.Icon" android:src="@drawable/ic_crossfade" />
+                    <TextView android:id="@+id/btnCrossfadeLabel" style="@style/LabeledCard.Label" android:text="@string/np_crossfade" />
                 </LinearLayout>
                 <LinearLayout
                     android:id="@+id/btnEqualizer"

@@ -13,6 +13,8 @@ object PlaybackSettings {
     const val KEY_KEEP_PLAYING = "keep_playing_on_focus_loss"
     const val KEY_CROSSFADE_SECONDS = "crossfade_seconds"
     const val KEY_CROSSFADE_ON_SKIP = "crossfade_on_skip"
+    private const val KEY_CROSSFADE_LAST = "crossfade_last_seconds"
+    private const val DEFAULT_CROSSFADE_SECONDS = 6
 
     /** Duraciones que ofrece Ajustes (0 = apagado). Pocas opciones: se elige en un vistazo. */
     val CROSSFADE_OPTIONS = intArrayOf(0, 2, 4, 6, 8, 10, 12)
@@ -46,7 +48,23 @@ object PlaybackSettings {
     fun crossfadeSeconds(context: Context): Int = prefs(context).getInt(KEY_CROSSFADE_SECONDS, 0).coerceIn(0, 12)
 
     fun setCrossfadeSeconds(context: Context, seconds: Int) {
-        prefs(context).edit().putInt(KEY_CROSSFADE_SECONDS, seconds.coerceIn(0, 12)).apply()
+        val value = seconds.coerceIn(0, 12)
+        prefs(context).edit().apply {
+            putInt(KEY_CROSSFADE_SECONDS, value)
+            // Se recuerda la última duración elegida para el botón de activar/desactivar.
+            if (value > 0) putInt(KEY_CROSSFADE_LAST, value)
+        }.apply()
+    }
+
+    /**
+     * Botón de «Reproduciendo»: apaga el crossfade o lo vuelve a encender con la última duración
+     * elegida (6 s si nunca se eligió). Devuelve los segundos que quedan puestos (0 = apagado).
+     */
+    fun toggleCrossfade(context: Context): Int {
+        val next = if (crossfadeSeconds(context) > 0) 0
+        else prefs(context).getInt(KEY_CROSSFADE_LAST, DEFAULT_CROSSFADE_SECONDS).coerceIn(2, 12)
+        setCrossfadeSeconds(context, next)
+        return next
     }
 
     /** Mezclar también al cambiar de canción a mano (siguiente, anterior, cola). Activo por defecto. */

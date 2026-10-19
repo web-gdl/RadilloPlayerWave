@@ -3,6 +3,8 @@ package com.radillo.playerwave.ui.player
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.content.SharedPreferences
+import com.radillo.playerwave.core.settings.PlaybackSettings
 import com.radillo.playerwave.core.ui.ArtworkAccentExtractor
 import com.radillo.playerwave.data.collections.PlaylistRepository
 import com.radillo.playerwave.data.settings.AppSettingsRepository
@@ -13,6 +15,7 @@ import com.radillo.playerwave.player.engine.SleepTimer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -43,6 +46,29 @@ class PlayerViewModel @Inject constructor(
     }.stateIn(viewModelScope, sharing, false)
 
     val sleepRemainingMs: StateFlow<Long?> = sleepTimer.remainingMs
+
+    private val appContext = context.applicationContext
+    private val playbackPrefs = PlaybackSettings.prefs(appContext)
+    private val _crossfadeSeconds = MutableStateFlow(PlaybackSettings.crossfadeSeconds(appContext))
+
+    /** Segundos de crossfade (0 = apagado); sigue también los cambios hechos en Ajustes. */
+    val crossfadeSeconds: StateFlow<Int> = _crossfadeSeconds
+
+    private val crossfadeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == PlaybackSettings.KEY_CROSSFADE_SECONDS) _crossfadeSeconds.value = PlaybackSettings.crossfadeSeconds(appContext)
+    }
+
+    init {
+        playbackPrefs.registerOnSharedPreferenceChangeListener(crossfadeListener)
+    }
+
+    override fun onCleared() {
+        playbackPrefs.unregisterOnSharedPreferenceChangeListener(crossfadeListener)
+        super.onCleared()
+    }
+
+    /** Activa o desactiva el crossfade (recuerda la última duración). Devuelve los segundos puestos. */
+    fun toggleCrossfade(): Int = PlaybackSettings.toggleCrossfade(appContext).also { _crossfadeSeconds.value = it }
 
     /** Color dominante de la carátula actual, si el ajuste está activo y hay carátula. */
     val accent: StateFlow<Int?> = combine(

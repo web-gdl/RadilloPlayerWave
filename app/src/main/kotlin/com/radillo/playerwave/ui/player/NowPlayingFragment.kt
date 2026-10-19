@@ -1,5 +1,7 @@
 package com.radillo.playerwave.ui.player
 
+import com.radillo.playerwave.ui.library.ExtraAction
+import android.widget.Toast
 import android.app.AlertDialog
 import android.content.res.ColorStateList
 import android.os.Bundle
@@ -52,10 +54,22 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
         b.btnShuffle.setOnClickListener { viewModel.toggleShuffle() }
         b.btnRepeat.setOnClickListener { viewModel.cycleRepeat() }
         b.btnFavorite.setOnClickListener { viewModel.toggleFavorite() }
-        b.btnSleep.setOnClickListener { showSleepDialog() }
+        b.btnCrossfade.setOnClickListener {
+            val seconds = viewModel.toggleCrossfade()
+            Toast.makeText(
+                requireContext(),
+                if (seconds > 0) getString(R.string.toast_crossfade_on, seconds) else getString(R.string.toast_crossfade_off),
+                Toast.LENGTH_SHORT,
+            ).show()
+        }
         b.btnEqualizer.setOnClickListener { navigator.push(EqualizerFragment()) }
         b.btnQueue.setOnClickListener { navigator.push(QueueFragment()) }
-        b.btnMore.setOnClickListener { viewModel.state.value.currentTrack?.let { showTrackActions(it, trackActions) } }
+        // El temporizador de apagado pasó al menú «⋮» (su lugar en las tarjetas es ahora el crossfade).
+        b.btnMore.setOnClickListener {
+            viewModel.state.value.currentTrack?.let {
+                showTrackActions(it, trackActions, listOf(ExtraAction(R.string.sleep_timer) { showSleepDialog() }))
+            }
+        }
 
         // El recuadro de la carátula alterna con el visualizador en vivo (un toque cambia).
         b.artVisualizer.setEngine(visualizer.engine)
@@ -86,10 +100,10 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
             b.btnFavorite.isActivated = fav
             b.btnFavorite.contentDescription = getString(if (fav) R.string.action_remove_favorite else R.string.action_add_favorite)
         }
-        collectWhenStarted(viewModel.sleepRemainingMs) { remaining ->
-            // El tiempo restante sustituye a la etiqueta: el estado se ve donde se activa.
-            b.btnSleep.isActivated = remaining != null
-            b.btnSleepLabel.text = if (remaining != null) formatDuration(remaining) else getString(R.string.np_sleep)
+        collectWhenStarted(viewModel.crossfadeSeconds) { seconds ->
+            // Encendido: tarjeta en color de acento y la duración a la vista (el estado se ve donde se cambia).
+            b.btnCrossfade.isActivated = seconds > 0
+            b.btnCrossfadeLabel.text = if (seconds > 0) getString(R.string.np_crossfade_on, seconds) else getString(R.string.np_crossfade)
         }
         collectWhenStarted(viewModel.accent) { accent ->
             val color = accent ?: requireContext().getColor(R.color.accent)

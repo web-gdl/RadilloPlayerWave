@@ -203,6 +203,11 @@
     </plurals>
     <string name="np_up_next">Up next: %s</string>
     <string name="np_favorite">Favorite</string>
+    <string name="np_crossfade">Crossfade</string>
+    <string name="np_crossfade_on">Crossfade %d s</string>
+    <string name="np_crossfade_toggle">Turn crossfade on or off</string>
+    <string name="toast_crossfade_on">Crossfade on (%d s)</string>
+    <string name="toast_crossfade_off">Crossfade off</string>
     <string name="np_sleep">Sleep timer</string>
     <string name="np_equalizer">Equalizer</string>
     <string name="np_queue">Queue</string>

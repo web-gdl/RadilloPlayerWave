@@ -161,11 +161,11 @@
                     <TextView android:id="@+id/btnFavoriteLabel" style="@style/LabeledAction.Label" android:text="@string/np_favorite" />
                 </LinearLayout>
                 <LinearLayout
-                    android:id="@+id/btnSleep"
+                    android:id="@+id/btnCrossfade"
                     style="@style/LabeledAction"
-                    android:contentDescription="@string/sleep_timer">
-                    <ImageView android:id="@+id/btnSleepIcon" style="@style/LabeledAction.Icon" android:src="@drawable/ic_bedtime" />
-                    <TextView android:id="@+id/btnSleepLabel" style="@style/LabeledAction.Label" android:text="@string/np_sleep" />
+                    android:contentDescription="@string/np_crossfade_toggle">
+                    <ImageView android:id="@+id/btnCrossfadeIcon" style="@style/LabeledAction.Icon" android:src="@drawable/ic_crossfade" />
+                    <TextView android:id="@+id/btnCrossfadeLabel" style="@style/LabeledAction.Label" android:text="@string/np_crossfade" />
                 </LinearLayout>
                 <LinearLayout
                     android:id="@+id/btnEqualizer"

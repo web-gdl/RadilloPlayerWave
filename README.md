@@ -85,7 +85,9 @@ la app funciona como siempre.
 
 **0.12.0:** crossfade (Ajustes ▸ Reproducción): mezcla el final de una canción con el principio de
 la siguiente, de 2 a 12 segundos, sin silencio entre ellas. Desde la 0.13.0 también mezcla (en
-corto, hasta 3 s) al cambiar de canción a mano: siguiente, anterior o elegir en la cola. Interfaz rediseñada para el espacio útil real del estéreo
+corto, hasta 3 s) al cambiar de canción a mano: siguiente, anterior o elegir en la cola. En
+«Reproduciendo» la tarjeta **Crossfade** lo activa o desactiva de un toque (el temporizador de
+apagado pasó al menú «⋮»). Interfaz rediseñada para el espacio útil real del estéreo
 (1024×534): sin raíl lateral, secciones en una barra superior (Buscar primero, Ajustes a la derecha), y carátula
 grande en «Reproduciendo».
 

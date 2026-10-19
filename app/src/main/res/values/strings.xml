@@ -205,6 +205,11 @@
     </plurals>
     <string name="np_up_next">A continuación: %s</string>
     <string name="np_favorite">Favorito</string>
+    <string name="np_crossfade">Crossfade</string>
+    <string name="np_crossfade_on">Crossfade %d s</string>
+    <string name="np_crossfade_toggle">Activar o desactivar el crossfade</string>
+    <string name="toast_crossfade_on">Crossfade activado (%d s)</string>
+    <string name="toast_crossfade_off">Crossfade desactivado</string>
     <string name="np_sleep">Temporizador</string>
     <string name="np_equalizer">Ecualizador</string>
     <string name="np_queue">Cola</string>
