@@ -85,7 +85,7 @@ la app funciona como siempre.
 
 **0.12.0:** crossfade (Ajustes ▸ Reproducción): mezcla el final de una canción con el principio de
 la siguiente, de 2 a 12 segundos, sin silencio entre ellas. Interfaz rediseñada para el espacio útil real del estéreo
-(1024×534): sin raíl lateral, secciones en una barra superior con Buscar y Ajustes, y carátula
+(1024×534): sin raíl lateral, secciones en una barra superior (Buscar primero, Ajustes a la derecha), y carátula
 grande en «Reproduciendo».
 
 **Funciones:** biblioteca de música local (canciones,
