@@ -1,6 +1,9 @@
 package com.radillo.playerwave.player.jancar
 
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -9,7 +12,9 @@ import android.os.Looper
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.core.content.ContextCompat
 import androidx.media3.exoplayer.ExoPlayer
+import com.radillo.playerwave.core.device.CarSignals
 import com.radillo.playerwave.core.diagnostics.EventLog
 import java.nio.ByteBuffer
 
@@ -27,13 +32,21 @@ import java.nio.ByteBuffer
  * debe pedirlo (si lo hiciera, el servicio entendería que otra app tomó el audio y la detendría).
  * [onActiveChanged] avisa al servicio de reproducción para que cambie de modo.
  *
+ * **Apagar y encender el auto:** mientras la música espera el encendido ([SourceCommandHandler.holdForResume])
+ * se avisa con [onStandbyChanged] para que la app no se cierre (Android 8 detiene los servicios de
+ * las apps en segundo plano). Si al encender el servicio no manda «reanudar», se reanuda igual
+ * pasados [ACC_RESUME_FALLBACK_MS].
+ *
  * Si el equipo no tiene el servicio, [create] devuelve `null` y la app funciona como siempre.
  * Todo ocurre en el hilo principal salvo las llamadas binder (hilo propio del cliente).
  */
 internal class JancarBridge private constructor(
     private val context: Context,
     private val player: ExoPlayer,
+    /** Por donde van siguiente/anterior (el reproductor de la sesión, con crossfade al saltar). */
+    private val transport: Player,
     private val onActiveChanged: () -> Unit,
+    private val onStandbyChanged: (Boolean) -> Unit,
 ) : Player.Listener, JancarMediaClient.Listener {
 
     private val client = JancarMediaClient(context, this)
@@ -55,6 +68,19 @@ internal class JancarBridge private constructor(
     /** Arranque del estéreo esperando a que se conecte el servicio. */
     private var pendingWhenConnected: (() -> Unit)? = null
     private val pendingTimeout = Runnable { runPendingWhenConnected() }
+    private var holding = false
+    private val accResumeCheck = Runnable {
+        if (released) return@Runnable
+        if (handler.resumeAfterAccOn()) EventLog.log("Estéreo: no llegó «reanudar» al encender; la música sigue sola")
+        updateStandby()
+    }
+    private val accReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            @Suppress("DEPRECATION")
+            val on = CarSignals.accFrom(intent.extras?.get(CarSignals.EXTRA_ACC)) ?: return
+            onAcc(on)
+        }
+    }
     private var lastInfoKey: String? = null
     private var lastState: Triple<Int, Int, Int>? = null
 
@@ -77,6 +103,11 @@ internal class JancarBridge private constructor(
     private fun start() {
         JancarStatus.link = JancarStatus.Link.CONNECTING
         player.addListener(this)
+        try {
+            ContextCompat.registerReceiver(context, accReceiver, IntentFilter(CarSignals.ACTION_ACC), ContextCompat.RECEIVER_EXPORTED)
+        } catch (_: Exception) {
+            // Sin el aviso de la llave queda el «reanudar» del servicio.
+        }
         if (!client.bind()) {
             JancarStatus.link = JancarStatus.Link.LOST
             EventLog.log("Estéreo: el servicio de medios existe pero no se pudo conectar")
@@ -86,6 +117,8 @@ internal class JancarBridge private constructor(
     fun release() {
         if (released) return
         player.removeListener(this)
+        runCatching { context.unregisterReceiver(accReceiver) }
+        main.removeCallbacks(accResumeCheck)
         main.removeCallbacks(ticker)
         main.removeCallbacks(pendingTimeout)
         pendingWhenConnected = null
@@ -97,6 +130,30 @@ internal class JancarBridge private constructor(
         connected = false
         JancarStatus.registered = false
         JancarStatus.link = JancarStatus.Link.LOST
+        if (holding) {
+            holding = false
+            onStandbyChanged(false)
+        }
+    }
+
+    /** Aviso de la llave (también lo usan las pruebas). */
+    internal fun onAcc(on: Boolean) {
+        if (released) return
+        handler.onAcc(on)
+        main.removeCallbacks(accResumeCheck)
+        if (on) main.postDelayed(accResumeCheck, ACC_RESUME_FALLBACK_MS)
+        updateStandby()
+    }
+
+    private fun updateStandby() {
+        val hold = !released && handler.holdForResume
+        if (hold == holding) return
+        holding = hold
+        EventLog.log(
+            if (hold) "Auto apagado con la música sonando: la app queda esperando el encendido"
+            else "Fin de la espera del encendido",
+        )
+        onStandbyChanged(hold)
     }
 
     /**
@@ -199,6 +256,7 @@ internal class JancarBridge private constructor(
                 player.volume = 1f
             }
         }
+        updateStandby()
     }
 
     // ---- Reproductor ----
@@ -221,6 +279,7 @@ internal class JancarBridge private constructor(
             register()
         }
         publishState()
+        updateStandby()
     }
 
     override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -360,8 +419,8 @@ internal class JancarBridge private constructor(
             player.play()
         }
         override fun pause() = player.pause()
-        override fun next() = player.seekToNextMediaItem()
-        override fun previous() = player.seekToPrevious()
+        override fun next() = transport.seekToNextMediaItem()
+        override fun previous() = transport.seekToPrevious()
         override fun seekTo(positionMs: Long) = player.seekTo(positionMs)
         override fun setVolume(volume: Float) {
             player.volume = volume
@@ -372,14 +431,26 @@ internal class JancarBridge private constructor(
         private const val PREFS = "jancar_bridge"
         private const val KEY_WANTS_PLAYBACK = "user_wants_playback"
         private const val STATE_INTERVAL_MS = 1_000L
+        /** Al encender el auto, el servicio manda «reanudar» enseguida; si no, se reanuda pasado esto. */
+        const val ACC_RESUME_FALLBACK_MS = 5_000L
+
+        /** Lo que el usuario quería la última vez (para el arranque en frío, sin servicio creado). */
+        fun userWantsPlayback(context: Context): Boolean =
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_WANTS_PLAYBACK, false)
 
         /** Crea el puente solo si el estéreo tiene el servicio de medios de Jancar. */
-        fun create(context: Context, player: ExoPlayer, onActiveChanged: () -> Unit): JancarBridge? {
+        fun create(
+            context: Context,
+            player: ExoPlayer,
+            transport: Player = player,
+            onActiveChanged: () -> Unit,
+            onStandbyChanged: (Boolean) -> Unit = {},
+        ): JancarBridge? {
             if (!JancarMediaClient.isServiceInstalled(context)) {
                 JancarStatus.link = JancarStatus.Link.ABSENT
                 return null
             }
-            return JancarBridge(context.applicationContext, player, onActiveChanged).also { it.start() }
+            return JancarBridge(context.applicationContext, player, transport, onActiveChanged, onStandbyChanged).also { it.start() }
         }
     }
 }

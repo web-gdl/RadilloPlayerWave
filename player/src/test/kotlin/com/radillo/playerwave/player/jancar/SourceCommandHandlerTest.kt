@@ -155,4 +155,41 @@ class SourceCommandHandlerTest {
         handler.handle(JancarCommand.Ignored("favorito"))
         assertTrue(player.calls.isEmpty())
     }
+
+    @Test
+    fun `con el auto apagado y la musica detenida por el sistema, la app espera el encendido`() {
+        player.userPlay()
+        handler.onAcc(false)
+        assertFalse(handler.holdForResume)
+        handler.handle(JancarCommand.Stop)
+        assertTrue(handler.holdForResume)
+        // Llega «reanudar»: deja de esperar y el respaldo ya no hace nada.
+        handler.handle(JancarCommand.Resume)
+        assertTrue(player.playWhenReady)
+        assertFalse(handler.holdForResume)
+        assertFalse(handler.resumeAfterAccOn())
+    }
+
+    @Test
+    fun `si al encender no llega reanudar, el respaldo reanuda como el sistema`() {
+        player.userPlay()
+        handler.handle(JancarCommand.Quit(JancarProtocol.QUIT_SYSTEM))
+        assertTrue(handler.holdForResume)
+        assertTrue(handler.resumeAfterAccOn())
+        assertTrue(player.playWhenReady)
+        // Fue el sistema, no el usuario.
+        assertEquals(true to false, player.changes.last())
+        assertFalse(handler.holdForResume)
+    }
+
+    @Test
+    fun `una pausa del usuario antes de apagar no se reanuda ni hace esperar`() {
+        player.userPlay()
+        player.userPause()
+        handler.onAcc(false)
+        handler.handle(JancarCommand.Stop)
+        assertFalse(handler.holdForResume)
+        assertFalse(handler.resumeAfterAccOn())
+        assertFalse(player.playWhenReady)
+    }
 }

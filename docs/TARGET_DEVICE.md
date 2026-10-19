@@ -316,6 +316,20 @@ Conclusiones: el presupuesto de memoria (≤ 90 MB) se cumple con holgura; la el
 visualizador en Android 8.1 es la correcta. Restaurar una cola tan grande bloqueaba el hilo
 principal ~2 s al arrancar: desde la 0.10.2 se lee en segundo plano.
 
+### 0.13.2: correcciones del crossfade al saltar y del encendido (19-10-2026)
+
+- Reporte del usuario: al adelantar, medio segundo de silencio antes de la mezcla. Causa: el
+  reproductor principal saltaba primero (en silencio, cargando la nueva) y el auxiliar empezaba a
+  cargar la anterior solo entonces. Ahora `SkipCrossfadePlayer` intercepta el salto (sesión y
+  volante), el auxiliar se prepara con la canción actual medio segundo adelante mientras el
+  principal la sigue tocando, y el salto se hace cuando el auxiliar la puede continuar.
+- Reporte del usuario: al apagar y encender el auto no seguía ni el widget mostraba la canción.
+  Causa probable: en pausa, el servicio de reproducción deja el primer plano a los 10 min y Android 8
+  detiene los servicios en segundo plano; al cerrarse, el puente soltaba la fuente. Ahora:
+  `CarStandbyService` (primer plano mientras se espera el encendido), respaldo de «reanudar» a los
+  5 s del aviso de la llave, y `PowerOnReceiver` (arranque / llave) que reabre la app como app de
+  memoria si ya no corría. Pendiente de confirmar en el equipo con el informe de Diagnóstico.
+
 ### 0.12.x: crossfade y rediseño para 1024×534 (18-10-2026)
 
 - La barra del sistema del estéreo ocupa ~66 px: el espacio útil es **1024×534**, no 1024×600. Por

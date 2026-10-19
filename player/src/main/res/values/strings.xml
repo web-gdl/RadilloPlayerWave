@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="standby_channel">Espera del encendido del auto</string>
+    <string name="standby_title">Música en espera</string>
+    <string name="standby_text">Sigue donde iba al encender el auto</string>
+</resources>

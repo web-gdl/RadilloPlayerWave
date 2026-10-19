@@ -14,6 +14,8 @@
     <!-- Notificación de reproducción (Android 13+). Opcional: la app funciona sin ella. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Los permisos del servicio en primer plano los declara el módulo :player. -->
+    <!-- Seguir con la música al encender el estéreo si la app ya no estaba abierta. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- Saber si el equipo tiene selector de carpetas (para conceder la USB al editor). -->
     <queries>
@@ -43,6 +45,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Respaldo de la «app de memoria» del estéreo (ver PowerOnReceiver). El aviso de la llave
+             solo llega aquí si el estéreo lo envía a las apps cerradas. -->
+        <receiver
+            android:name=".PowerOnReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.jancar.services.action.acc" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

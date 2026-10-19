@@ -22,11 +22,7 @@ class CarSignalsReceiver private constructor() : BroadcastReceiver() {
                 if (CarSignals.onReverse(false)) EventLog.log("Cámara de reversa terminada")
             CarSignals.ACTION_ACC -> {
                 @Suppress("DEPRECATION")
-                val on = when (val v = intent.extras?.get(CarSignals.EXTRA_ACC)) {
-                    is Boolean -> v
-                    is Int -> v == 1
-                    else -> return
-                }
+                val on = CarSignals.accFrom(intent.extras?.get(CarSignals.EXTRA_ACC)) ?: return
                 if (CarSignals.onAcc(on)) EventLog.log(if (on) "Llave: encendido" else "Llave: apagado")
             }
             CarSignals.ACTION_KEY_EVENT -> {

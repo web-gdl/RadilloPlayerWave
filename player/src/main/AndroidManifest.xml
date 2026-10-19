@@ -21,6 +21,11 @@
                 <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
+        <!-- Mantiene viva la app con el auto apagado mientras la música espera el encendido. -->
+        <service
+            android:name="com.radillo.playerwave.player.service.CarStandbyService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
     </application>
 
 </manifest>

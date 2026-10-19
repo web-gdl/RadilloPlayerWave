@@ -3,17 +3,21 @@ package com.radillo.playerwave.player.jancar
 import android.app.Application
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ResolveInfo
 import android.content.pm.ServiceInfo
 import android.media.AudioManager
 import android.os.Binder
 import android.os.IBinder
+import android.os.Looper
 import android.os.Parcel
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import com.radillo.playerwave.core.device.CarSignals
 import com.radillo.playerwave.core.model.Track
 import com.radillo.playerwave.player.engine.MediaItemMapper
+import com.radillo.playerwave.player.service.CarStandbyService
 import com.radillo.playerwave.player.service.PlaybackService
 import org.junit.After
 import org.junit.Before
@@ -24,6 +28,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowLooper
+import java.time.Duration
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -206,6 +211,37 @@ class JancarBridgeTest {
 
         controller.destroy()
         assertThat(fake.last(JancarProtocol.TX_CLOSE)?.type).isEqualTo(JancarProtocol.TYPE_THIRD_PARTY)
+    }
+
+    @Test
+    fun `con el auto apagado la app espera viva y, si al encender no llega reanudar, sigue sola`() {
+        installFakeService()
+        val controller = Robolectric.buildService(PlaybackService::class.java)
+        val player = controller.create().get().sessionForTest()!!.player
+        waitFor("conectado") { JancarStatus.link == JancarStatus.Link.CONNECTED }
+        player.setMediaItems(listOf(track(1)).map(MediaItemMapper::toMediaItem))
+        player.play()
+        waitFor("registro") { fake.last(JancarProtocol.TX_OPEN) != null }
+        val callback = fake.last(JancarProtocol.TX_OPEN)!!.callback!!
+        val app = context as Application
+        while (shadowOf(app).nextStartedService != null) Unit
+
+        // Llave apagada y, 6 s después, «detener» del servicio.
+        context.sendBroadcast(Intent(CarSignals.ACTION_ACC).putExtra(CarSignals.EXTRA_ACC, false))
+        ShadowLooper.idleMainLooper()
+        send(callback, 7)
+        assertThat(player.playWhenReady).isFalse()
+        val started = generateSequence { shadowOf(app).nextStartedService }.toList()
+        assertThat(started.map { it.component?.className }).contains(CarStandbyService::class.java.name)
+
+        // Llave encendida, pero el «reanudar» no llega: a los 5 s la música sigue igual.
+        context.sendBroadcast(Intent(CarSignals.ACTION_ACC).putExtra(CarSignals.EXTRA_ACC, true))
+        ShadowLooper.idleMainLooper()
+        assertThat(player.playWhenReady).isFalse()
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(JancarBridge.ACC_RESUME_FALLBACK_MS + 100))
+        assertThat(player.playWhenReady).isTrue()
+        waitFor("nuevo registro") { fake.count(JancarProtocol.TX_OPEN) == 2 }
+        controller.destroy()
     }
 
     @Test

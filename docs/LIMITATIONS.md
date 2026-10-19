@@ -82,9 +82,11 @@ el coste de mantenimiento.
 
 - La mezcla usa un segundo reproductor efímero solo para el final de la canción que se va; el
   visualizador sigue a la canción que entra.
-- Al cambiar de canción a mano la mezcla dura como mucho 3 s y la canción anterior se retoma donde
-  iba con un margen de unas décimas (puede repetirse o saltarse un instante). Elegir una canción
-  nueva desde la biblioteca no mezcla: reemplaza la cola.
+- Al cambiar de canción a mano la mezcla dura como mucho 3 s. Desde la 0.13.2 el salto ocurre
+  cuando la mezcla está lista (unas décimas después de pulsar; como mucho 1,5 s, y si no, salto
+  normal): mientras tanto sigue sonando la canción actual, sin silencio. Pulsar varias veces
+  seguidas salta sin mezclar. Elegir una canción nueva desde la biblioteca no mezcla: reemplaza
+  la cola.
 - No se mezcla con «repetir una», al final de la cola sin repetición, ni en canciones de menos de
   dos veces la mezcla más 5 s. Pausar en plena mezcla la corta.
 - En un equipo con poca CPU, durante esos segundos se decodifican dos canciones a la vez.
@@ -102,6 +104,15 @@ el coste de mantenimiento.
   estado), suelta la fuente y el estéreo ya no la abrirá al arrancar.
 - Al arrancar el estéreo la música sigue solo si estaba sonando (lo decide el último play o pausa
   del usuario, no las pausas del sistema).
+- Con el auto apagado y la música en espera, la app mantiene un aviso «Música en espera» en primer
+  plano para que Android no la cierre; desaparece al seguir sonando. Si al encender el estéreo no
+  manda «reanudar», la app reanuda sola a los 5 s.
+- Si la app ya no estaba abierta al encender (el equipo se reinició), se reabre al recibir el aviso
+  de arranque del sistema o de la llave. El aviso de la llave solo llega a una app cerrada si el
+  estéreo lo envía así; el de arranque llega siempre que el equipo arranque de cero.
+- Un escritorio que no sea el de fábrica solo muestra la canción si lee las fuentes de terceros
+  (tipo 20) que publica el servicio del estéreo, y solo mientras la app está registrada (sonando o
+  en espera del encendido).
 
 ## Favoritos, listas, ajustes y efectos (Fase 3)
 

@@ -47,6 +47,13 @@ object CarSignals {
         return was != active
     }
 
+    /** Lee el extra de la llave (`true`/`false` o 1/0 según el equipo); `null` si no viene. */
+    fun accFrom(value: Any?): Boolean? = when (value) {
+        is Boolean -> value
+        is Int -> value == 1
+        else -> null
+    }
+
     /** Devuelve `true` si el estado cambió. */
     fun onAcc(on: Boolean): Boolean {
         val changed = accOn != on

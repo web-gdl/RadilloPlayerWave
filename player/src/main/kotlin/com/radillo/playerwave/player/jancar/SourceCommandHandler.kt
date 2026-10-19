@@ -40,6 +40,16 @@ class SourceCommandHandler(private val player: SourcePlayer) {
     var resumePending: Boolean = false
         private set
 
+    /**
+     * Se apagó el auto (aviso de la llave o «salir» del sistema) y aún no se comprobó la vuelta.
+     * Mientras dure con una reanudación pendiente, la app debe seguir viva ([holdForResume]).
+     */
+    var accOff: Boolean = false
+        private set
+
+    /** La música espera a que se vuelva a encender el auto para seguir. */
+    val holdForResume: Boolean get() = resumePending && accOff
+
     /** Cambio de reproducir/pausar que provocó el propio manejador y aún no llegó. */
     private var expected: Boolean? = null
 
@@ -67,6 +77,7 @@ class SourceCommandHandler(private val player: SourcePlayer) {
         is JancarCommand.Quit -> if (command.source == JancarProtocol.QUIT_SYSTEM) {
             // Al apagar el auto el sistema pide salir a las apps de terceros; la fuente sigue
             // registrada y al encender llegará «reanudar». No se cierra nada.
+            accOff = true
             pauseForSystem()
             Outcome.KEEP
         } else {
@@ -107,6 +118,22 @@ class SourceCommandHandler(private val player: SourcePlayer) {
             Outcome.KEEP
         }
         is JancarCommand.Ignored -> Outcome.KEEP
+    }
+
+    /** Aviso de la llave: al apagar se marca; al encender, ver [resumeAfterAccOn]. */
+    fun onAcc(on: Boolean) {
+        if (!on) accOff = true
+    }
+
+    /**
+     * Unos segundos después de encender el auto: si el servicio no mandó «reanudar» (o se perdió),
+     * se reanuda igual, como lo habría hecho él. Devuelve `true` si tuvo que hacerlo.
+     */
+    fun resumeAfterAccOn(): Boolean {
+        accOff = false
+        if (!resumePending) return false
+        handle(JancarCommand.Resume)
+        return true
     }
 
     /**

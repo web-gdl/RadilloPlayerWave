@@ -45,13 +45,32 @@ class CrossfadePlanTest {
     }
 
     @Test
-    fun `al saltar a mano la mezcla es corta y retoma donde iba la anterior`() {
+    fun `al saltar a mano la mezcla es corta`() {
         assertEquals(3_000L, CrossfadePlan.manualFadeMs(12_000))
         assertEquals(2_000L, CrossfadePlan.manualFadeMs(2_000))
         assertEquals(0L, CrossfadePlan.manualFadeMs(0))
-        assertEquals(60_200L, CrossfadePlan.estimatePosition(60_000, 200))
-        assertEquals(61_500L, CrossfadePlan.estimatePosition(60_000, 9_000))
-        assertEquals(0L, CrossfadePlan.estimatePosition(-5, -10))
+    }
+
+    @Test
+    fun `no se mezcla un salto si a la cancion casi no le queda`() {
+        assertTrue(CrossfadePlan.skipEligible(positionMs = 60_000, durationMs = 200_000))
+        assertTrue(CrossfadePlan.skipEligible(positionMs = 60_000, durationMs = 0)) // duración desconocida
+        assertFalse(CrossfadePlan.skipEligible(positionMs = 198_600, durationMs = 200_000))
+    }
+
+    @Test
+    fun `el salto espera a que el auxiliar este listo y alineado, sin dejar silencio`() {
+        val start = 60_500L
+        // Mientras el auxiliar carga, la canción actual sigue sonando en el principal.
+        assertEquals(CrossfadePlan.Skip.WAIT, CrossfadePlan.skipDecision(false, 60_100, start, 100))
+        // Listo antes de tiempo: espera a que el principal llegue al punto.
+        assertEquals(CrossfadePlan.Skip.WAIT, CrossfadePlan.skipDecision(true, 60_300, start, 300))
+        assertEquals(CrossfadePlan.Skip.START, CrossfadePlan.skipDecision(true, 60_490, start, 490))
+        // Listo tarde: arranca ya (repite unas décimas que se están apagando).
+        assertEquals(CrossfadePlan.Skip.START, CrossfadePlan.skipDecision(true, 61_000, start, 1_000))
+        // Nunca listo: salto normal.
+        assertEquals(CrossfadePlan.Skip.WAIT, CrossfadePlan.skipDecision(false, 61_400, start, 1_499))
+        assertEquals(CrossfadePlan.Skip.GIVE_UP, CrossfadePlan.skipDecision(false, 61_500, start, 1_500))
     }
 
     private fun r(v: Float) = Math.round(v * 1000) / 1000f

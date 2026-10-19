@@ -27,6 +27,7 @@ import com.radillo.playerwave.player.audiofx.AudioEffectsHub
 import com.radillo.playerwave.player.audiotap.AudioTapHub
 import com.radillo.playerwave.player.audiotap.RadilloRenderersFactory
 import com.radillo.playerwave.player.crossfade.CrossfadeController
+import com.radillo.playerwave.player.crossfade.SkipCrossfadePlayer
 import com.radillo.playerwave.player.engine.MediaItemMapper
 import com.radillo.playerwave.player.jancar.JancarBridge
 import java.io.File
@@ -96,15 +97,25 @@ class PlaybackService : MediaLibraryService() {
         val player = buildPlayer()
         exoPlayer = player
         focus = KeepPlayingAudioFocus(this, player)
-        bridge = JancarBridge.create(this, player, onActiveChanged = ::applyFocusMode)
         crossfade = CrossfadeController(this, player, audioAttributes)
+        // La sesión (app, notificación, volante) y el estéreo saltan de canción a través de este
+        // envoltorio: así el crossfade se prepara antes del salto y no hay silencio.
+        val sessionPlayer = SkipCrossfadePlayer(player) { crossfade }
+        bridge = JancarBridge.create(
+            this,
+            player,
+            transport = sessionPlayer,
+            onActiveChanged = ::applyFocusMode,
+            onStandbyChanged = { hold -> CarStandbyService.hold(this, hold) },
+        )
         applyFocusMode()
         settings.registerOnSharedPreferenceChangeListener(settingsListener)
         restoreState(player)
-        val builder = MediaLibrarySession.Builder(this, player, LibraryCallback())
+        val builder = MediaLibrarySession.Builder(this, sessionPlayer, LibraryCallback())
         sessionActivityIntent()?.let(builder::setSessionActivity)
         session = builder.build()
         EventLog.log("Servicio de reproducción creado")
+        CarResume.serviceRunning = true
         BootResume.attach(::resumeAfterBoot)
     }
 
@@ -333,10 +344,12 @@ class PlaybackService : MediaLibraryService() {
         saveState(sync = true)
         handler.removeCallbacksAndMessages(null)
         BootResume.detach()
+        CarResume.serviceRunning = false
         settings.unregisterOnSharedPreferenceChangeListener(settingsListener)
         // Suelta la fuente del estéreo: si no, el volante apuntaría a una app sin reproductor.
         bridge?.release()
         bridge = null
+        CarStandbyService.hold(this, false)
         crossfade?.release()
         crossfade = null
         focus?.release()

@@ -91,6 +91,11 @@ apagado pasó al menú «⋮»). Interfaz rediseñada para el espacio útil real
 (1024×534): sin raíl lateral, secciones en una barra superior (Buscar primero, Ajustes a la derecha), y carátula
 grande en «Reproduciendo».
 
+**0.13.2 (correcciones):** al adelantar o retroceder con crossfade ya no hay medio segundo de
+silencio: la canción actual sigue sonando hasta que la mezcla está lista. Al apagar el auto con la
+música sonando, la app se queda esperando el encendido (Android 8 la cerraba en segundo plano) y,
+si al encender el estéreo no la reanuda o ya no estaba abierta, la reabre y sigue donde iba.
+
 **Funciones:** biblioteca de música local (canciones,
 álbumes, artistas, carpetas y listas), favoritos, búsqueda, reproducción en segundo plano con
 notificación y pantalla bloqueada, cola y mini reproductor, temporizador de apagado, ecualizador y
