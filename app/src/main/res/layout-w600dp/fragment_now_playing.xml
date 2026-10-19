@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Pantalla ancha (autoestéreo 1024×600): carátula grande a la izquierda, información y controles a
-     la derecha, de arriba abajo por orden de lectura: qué suena → progreso → controles → extras. -->
+<!-- Pantalla ancha (propuesta 1, autoestéreo 1024×534 útiles): carátula grande a la izquierda,
+     información y controles a la derecha, de arriba abajo por orden de lectura: qué suena → progreso →
+     controles → extras en tarjetas. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -11,14 +12,14 @@
         android:layout_height="match_parent"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="@dimen/space_xl"
-        android:paddingEnd="@dimen/space_l">
+        android:paddingStart="36dp"
+        android:paddingEnd="36dp">
 
             <FrameLayout
                 android:id="@+id/artFrame"
-                android:layout_width="@dimen/art_now_playing"
-                android:layout_height="@dimen/art_now_playing"
-                android:background="@color/surface_alt"
+                android:layout_width="@dimen/np_art"
+                android:layout_height="@dimen/np_art"
+                android:background="@drawable/bg_art_rounded"
                 android:clickable="true"
                 android:contentDescription="@string/np_toggle_visualizer"
                 android:focusable="true"
@@ -42,7 +43,7 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/space_xl"
+            android:layout_marginStart="40dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
@@ -52,30 +53,28 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
-                android:gravity="center"
-                android:maxLines="2" />
+                android:maxLines="2"
+                android:textSize="@dimen/np_title" />
 
             <TextView
                 android:id="@+id/trackSubtitle"
                 style="@style/Text.Secondary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="6dp"
                 android:ellipsize="end"
-                android:gravity="center"
-                android:maxLines="1" />
+                android:maxLines="1"
+                android:textSize="@dimen/np_subtitle" />
 
             <SeekBar
                 android:id="@+id/seek"
                 style="@style/SeekBarThick"
-                android:layout_marginTop="@dimen/space_s" />
+                android:layout_marginTop="@dimen/space_l" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingStart="@dimen/space_l"
-                android:paddingEnd="@dimen/space_l">
+                android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/position"
@@ -107,79 +106,92 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_s"
-                android:gravity="center"
+                android:layout_marginTop="@dimen/space_m"
+                android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <ImageButton
                     android:id="@+id/btnShuffle"
                     style="@style/TransportButton.Secondary"
+                    android:layout_width="@dimen/np_transport_secondary"
+                    android:layout_height="@dimen/np_transport_secondary"
                     android:contentDescription="@string/action_shuffle"
                     android:src="@drawable/ic_shuffle" />
+
+                <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
 
                 <ImageButton
                     android:id="@+id/btnPrevious"
                     style="@style/TransportButton"
-                    android:layout_marginStart="@dimen/space_m"
+                    android:layout_width="@dimen/np_transport"
+                    android:layout_height="@dimen/np_transport"
                     android:contentDescription="@string/action_previous"
                     android:src="@drawable/ic_skip_previous" />
+
+                <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
 
                 <ImageButton
                     android:id="@+id/btnPlay"
                     style="@style/PlayButton"
-                    android:layout_marginStart="@dimen/space_l"
-                    android:layout_marginEnd="@dimen/space_l"
+                    android:layout_width="@dimen/np_play"
+                    android:layout_height="@dimen/np_play"
                     android:contentDescription="@string/action_play"
                     android:src="@drawable/ic_play" />
+
+                <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
 
                 <ImageButton
                     android:id="@+id/btnNext"
                     style="@style/TransportButton"
-                    android:layout_marginEnd="@dimen/space_m"
+                    android:layout_width="@dimen/np_transport"
+                    android:layout_height="@dimen/np_transport"
                     android:contentDescription="@string/action_next"
                     android:src="@drawable/ic_skip_next" />
+
+                <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
 
                 <ImageButton
                     android:id="@+id/btnRepeat"
                     style="@style/TransportButton.Secondary"
+                    android:layout_width="@dimen/np_transport_secondary"
+                    android:layout_height="@dimen/np_transport_secondary"
                     android:contentDescription="@string/action_repeat"
                     android:src="@drawable/ic_repeat" />
             </LinearLayout>
 
             <!-- Acciones secundarias con icono y texto: reconocer en vez de recordar qué hace cada icono. -->
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="@dimen/space_s"
+                android:layout_marginTop="@dimen/space_l"
                 android:orientation="horizontal">
                 <LinearLayout
                     android:id="@+id/btnFavorite"
-                    style="@style/LabeledAction"
+                    style="@style/LabeledCard"
                     android:contentDescription="@string/action_add_favorite">
-                    <ImageView android:id="@+id/btnFavoriteIcon" style="@style/LabeledAction.Icon" android:src="@drawable/ic_favorite_border" />
-                    <TextView android:id="@+id/btnFavoriteLabel" style="@style/LabeledAction.Label" android:text="@string/np_favorite" />
+                    <ImageView android:id="@+id/btnFavoriteIcon" style="@style/LabeledCard.Icon" android:src="@drawable/ic_favorite_border" />
+                    <TextView android:id="@+id/btnFavoriteLabel" style="@style/LabeledCard.Label" android:text="@string/np_favorite" />
                 </LinearLayout>
                 <LinearLayout
                     android:id="@+id/btnSleep"
-                    style="@style/LabeledAction"
+                    style="@style/LabeledCard"
                     android:contentDescription="@string/sleep_timer">
-                    <ImageView android:id="@+id/btnSleepIcon" style="@style/LabeledAction.Icon" android:src="@drawable/ic_bedtime" />
-                    <TextView android:id="@+id/btnSleepLabel" style="@style/LabeledAction.Label" android:text="@string/np_sleep" />
+                    <ImageView android:id="@+id/btnSleepIcon" style="@style/LabeledCard.Icon" android:src="@drawable/ic_bedtime" />
+                    <TextView android:id="@+id/btnSleepLabel" style="@style/LabeledCard.Label" android:text="@string/np_sleep" />
                 </LinearLayout>
                 <LinearLayout
                     android:id="@+id/btnEqualizer"
-                    style="@style/LabeledAction"
+                    style="@style/LabeledCard"
                     android:contentDescription="@string/equalizer_title">
-                    <ImageView android:id="@+id/btnEqualizerIcon" style="@style/LabeledAction.Icon" android:src="@drawable/ic_tune" />
-                    <TextView android:id="@+id/btnEqualizerLabel" style="@style/LabeledAction.Label" android:text="@string/np_equalizer" />
+                    <ImageView android:id="@+id/btnEqualizerIcon" style="@style/LabeledCard.Icon" android:src="@drawable/ic_tune" />
+                    <TextView android:id="@+id/btnEqualizerLabel" style="@style/LabeledCard.Label" android:text="@string/np_equalizer" />
                 </LinearLayout>
                 <LinearLayout
                     android:id="@+id/btnQueue"
-                    style="@style/LabeledAction"
+                    style="@style/LabeledCard"
                     android:contentDescription="@string/queue_title">
-                    <ImageView android:id="@+id/btnQueueIcon" style="@style/LabeledAction.Icon" android:src="@drawable/ic_queue_music" />
-                    <TextView android:id="@+id/btnQueueLabel" style="@style/LabeledAction.Label" android:text="@string/np_queue" />
+                    <ImageView android:id="@+id/btnQueueIcon" style="@style/LabeledCard.Icon" android:src="@drawable/ic_queue_music" />
+                    <TextView android:id="@+id/btnQueueLabel" style="@style/LabeledCard.Label" android:text="@string/np_queue" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

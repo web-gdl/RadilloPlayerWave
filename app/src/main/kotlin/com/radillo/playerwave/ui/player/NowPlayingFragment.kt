@@ -60,6 +60,8 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
         // El recuadro de la carátula alterna con el visualizador en vivo (un toque cambia).
         b.artVisualizer.setEngine(visualizer.engine)
         showVisualizerInArt(prefs().getBoolean(KEY_ART_VISUALIZER, true))
+        // Esquinas redondeadas de la carátula (el fondo redondeado no recorta la imagen por sí solo).
+        b.artFrame.clipToOutline = true
         b.artFrame.setOnClickListener {
             val next = b.artVisualizer.visibility != View.VISIBLE
             prefs().edit().putBoolean(KEY_ART_VISUALIZER, next).apply()

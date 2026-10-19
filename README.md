@@ -84,7 +84,9 @@ abrir al arrancar. Con la cámara de reversa el visualizador deja de dibujar. En
 la app funciona como siempre.
 
 **0.12.0:** crossfade (Ajustes ▸ Reproducción): mezcla el final de una canción con el principio de
-la siguiente, de 2 a 12 segundos, sin silencio entre ellas.
+la siguiente, de 2 a 12 segundos, sin silencio entre ellas. Interfaz rediseñada para el espacio útil real del estéreo
+(1024×534): sin raíl lateral, secciones en una barra superior con Buscar y Ajustes, y carátula
+grande en «Reproduciendo».
 
 **Funciones:** biblioteca de música local (canciones,
 álbumes, artistas, carpetas y listas), favoritos, búsqueda, reproducción en segundo plano con

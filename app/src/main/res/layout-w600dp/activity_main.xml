@@ -1,130 +1,156 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Pantallas anchas (autoestéreo 1024×600, tabletas, móvil en horizontal): raíl lateral. -->
+<!-- Pantallas anchas (autoestéreo 1024×534 útiles, tabletas, móvil en horizontal): barra superior con
+     las secciones como botones grandes y Buscar/Ajustes a la derecha. Sin raíl lateral: el contenido
+     gana todo el ancho. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/window_background"
     android:fitsSystemWindows="true"
-    android:orientation="horizontal">
+    android:orientation="vertical">
 
     <LinearLayout
         android:id="@+id/navBar"
-        android:layout_width="@dimen/nav_rail"
-        android:layout_height="match_parent"
-        android:background="@color/surface"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/top_bar_height"
+        android:background="@color/window_background"
         android:gravity="center_vertical"
-        android:orientation="vertical">
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingEnd="12dp">
+
         <LinearLayout
             android:id="@+id/navLibrary"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/nav_rail"
-            android:background="@drawable/bg_nav_item"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/nav_pill_height"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_nav_pill"
             android:clickable="true"
             android:focusable="true"
-            android:gravity="center"
-            android:orientation="vertical">
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp">
 
             <ImageView
-                android:layout_width="@dimen/nav_icon"
-                android:layout_height="@dimen/nav_icon"
+                android:layout_width="@dimen/nav_pill_icon"
+                android:layout_height="@dimen/nav_pill_icon"
                 android:duplicateParentState="true"
                 android:importantForAccessibility="no"
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_library_music"
-                android:tint="@color/nav_item" />
+                android:tint="@color/nav_pill_content" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginStart="10dp"
                 android:duplicateParentState="true"
-                android:ellipsize="end"
-                android:gravity="center"
                 android:maxLines="1"
                 android:text="@string/nav_library"
-                android:textColor="@color/nav_item"
-                android:textSize="@dimen/nav_label" />
+                android:textColor="@color/nav_pill_content"
+                android:textSize="@dimen/nav_pill_text"
+                android:textStyle="bold" />
         </LinearLayout>
         <LinearLayout
             android:id="@+id/navNowPlaying"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/nav_rail"
-            android:background="@drawable/bg_nav_item"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/nav_pill_height"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_nav_pill"
             android:clickable="true"
             android:focusable="true"
-            android:gravity="center"
-            android:orientation="vertical">
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp">
 
             <ImageView
-                android:layout_width="@dimen/nav_icon"
-                android:layout_height="@dimen/nav_icon"
+                android:layout_width="@dimen/nav_pill_icon"
+                android:layout_height="@dimen/nav_pill_icon"
                 android:duplicateParentState="true"
                 android:importantForAccessibility="no"
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_play_circle"
-                android:tint="@color/nav_item" />
+                android:tint="@color/nav_pill_content" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginStart="10dp"
                 android:duplicateParentState="true"
-                android:ellipsize="end"
-                android:gravity="center"
                 android:maxLines="1"
                 android:text="@string/nav_now_playing"
-                android:textColor="@color/nav_item"
-                android:textSize="@dimen/nav_label" />
+                android:textColor="@color/nav_pill_content"
+                android:textSize="@dimen/nav_pill_text"
+                android:textStyle="bold" />
         </LinearLayout>
         <LinearLayout
             android:id="@+id/navVisualizer"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/nav_rail"
-            android:background="@drawable/bg_nav_item"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/nav_pill_height"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_nav_pill"
             android:clickable="true"
             android:focusable="true"
-            android:gravity="center"
-            android:orientation="vertical">
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp">
 
             <ImageView
-                android:layout_width="@dimen/nav_icon"
-                android:layout_height="@dimen/nav_icon"
+                android:layout_width="@dimen/nav_pill_icon"
+                android:layout_height="@dimen/nav_pill_icon"
                 android:duplicateParentState="true"
                 android:importantForAccessibility="no"
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_graphic_eq"
-                android:tint="@color/nav_item" />
+                android:tint="@color/nav_pill_content" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginStart="10dp"
                 android:duplicateParentState="true"
-                android:ellipsize="end"
-                android:gravity="center"
                 android:maxLines="1"
                 android:text="@string/nav_visualizer"
-                android:textColor="@color/nav_item"
-                android:textSize="@dimen/nav_label" />
+                android:textColor="@color/nav_pill_content"
+                android:textSize="@dimen/nav_pill_text"
+                android:textStyle="bold" />
         </LinearLayout>
-    </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/mainColumn"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:orientation="vertical">
-
-        <FrameLayout
-            android:id="@+id/content"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
             android:layout_weight="1" />
 
-        <include
-            android:id="@+id/miniPlayer"
-            layout="@layout/view_mini_player" />
+        <ImageButton
+            android:id="@+id/topSearch"
+            style="@style/IconButton"
+            android:contentDescription="@string/action_search"
+            android:src="@drawable/ic_search" />
+
+        <ImageButton
+            android:id="@+id/topSettings"
+            style="@style/IconButton"
+            android:contentDescription="@string/nav_settings"
+            android:src="@drawable/ic_settings" />
     </LinearLayout>
+
+    <View
+        android:id="@+id/navDivider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider" />
+
+    <FrameLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <include
+        android:id="@+id/miniPlayer"
+        layout="@layout/view_mini_player" />
 </LinearLayout>

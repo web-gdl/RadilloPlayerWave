@@ -58,6 +58,10 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         b.btnRescan.setOnClickListener { viewModel.rescan() }
         b.btnEmptyAction.setOnClickListener { viewModel.rescan() }
         b.btnSettings.setOnClickListener { navigator.push(SettingsFragment()) }
+        // En pantallas anchas Buscar y Ajustes están en la barra superior global: aquí sobrarían.
+        val globalActions = resources.getBoolean(R.bool.top_bar_actions)
+        b.btnSearch.visibleIf(!globalActions)
+        b.btnSettings.visibleIf(!globalActions)
         b.btnPlayAll.setOnClickListener { content?.let { viewModel.playAll(it.tracks, 0) } }
         b.btnShuffle.setOnClickListener { content?.let { viewModel.shuffleAll(it.tracks) } }
         b.btnGrant.setOnClickListener { permissionLauncher.launch(AudioPermission.permission) }

@@ -37,7 +37,7 @@ import java.io.File
 import java.io.FileOutputStream
 
 /**
- * Capturas de las pantallas principales en el autoestéreo (1024×600, 160 dpi, tema oscuro) y en un
+ * Capturas de las pantallas principales en el autoestéreo (1024×534 útiles, 160 dpi, tema oscuro) y en un
  * móvil. No comprueban píxeles: CI las publica como artefacto para revisar el diseño sin equipo.
  *
  * Los ids se buscan por nombre para que la prueba sobreviva a cambios de los layouts: si un id no
@@ -122,6 +122,11 @@ class ScreenshotTest {
         (v.find("list") as RecyclerView).setupList(adapter)
         adapter.submitList(sampleRows())
         v.find("tabSongs")?.isSelected = true
+        // Como en LibraryFragment: en pantallas anchas Buscar y Ajustes van en la barra superior.
+        if (ctx.resources.getBoolean(R.bool.top_bar_actions)) {
+            v.show("btnSearch", false)
+            v.show("btnSettings", false)
+        }
         v.text("libraryCount", "1248 canciones")
         return v
     }
@@ -136,6 +141,7 @@ class ScreenshotTest {
         v.text("queueInfo", "A continuación: La Bamba")
         (v.find("seek") as? SeekBar)?.progress = 420
         (v.find("art") as? ImageView)?.setImageResource(R.drawable.tile_note)
+        v.find("artFrame")?.clipToOutline = true
         (v.find("btnPlay") as? ImageView)?.setImageResource(R.drawable.ic_pause)
         v.find("btnShuffle")?.isActivated = true
         v.find("btnFavorite")?.isActivated = true
@@ -211,23 +217,26 @@ class ScreenshotTest {
     }
 
     private fun carScreens(night: Boolean, suffix: String) {
+        // Espacio útil real del estéreo: 1024×534 (la barra del sistema ocupa ~66 px arriba).
+        val w = 1024
+        val h = 534
         val ctx = themed(night)
-        capture(shell(ctx, library(ctx), "navLibrary", mini = true), 1024, 600, "car_library_$suffix")
-        capture(shell(ctx, nowPlaying(ctx), "navNowPlaying", mini = false), 1024, 600, "car_now_playing_$suffix")
-        val railWidth = ctx.resources.getDimensionPixelSize(R.dimen.nav_rail)
+        capture(shell(ctx, library(ctx), "navLibrary", mini = true), w, h, "car_library_$suffix")
+        capture(shell(ctx, nowPlaying(ctx), "navNowPlaying", mini = false), w, h, "car_now_playing_$suffix")
+        val barHeight = ctx.resources.getDimensionPixelSize(R.dimen.top_bar_height) + 1
         val shellView = shell(ctx, visualizer(ctx), "navVisualizer", mini = false)
-        val scene = sceneBitmap(DefaultScenes.DEFAULT_ID, 1024 - railWidth, 600)
-        val underlay = Bitmap.createBitmap(1024, 600, Bitmap.Config.ARGB_8888).also { Canvas(it).drawBitmap(scene, railWidth.toFloat(), 0f, null) }
+        val scene = sceneBitmap(DefaultScenes.DEFAULT_ID, w, h - barHeight)
+        val underlay = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also { Canvas(it).drawBitmap(scene, 0f, barHeight.toFloat(), null) }
         (shellView.find("root") ?: shellView).background = null
         shellView.find("mainColumn")?.background = null
-        capture(shellView, 1024, 600, "car_visualizer_$suffix", underlay)
-        capture(shell(ctx, settings(ctx), "navLibrary", mini = true), 1024, 600, "car_settings_$suffix")
-        capture(shell(ctx, albumDetail(ctx), "navLibrary", mini = true), 1024, 600, "car_folder_$suffix")
-        capture(shell(ctx, tagEditor(ctx), "navLibrary", mini = false), 1024, 600, "car_tag_editor_$suffix")
+        capture(shellView, w, h, "car_visualizer_$suffix", underlay)
+        capture(shell(ctx, settings(ctx), "navLibrary", mini = true), w, h, "car_settings_$suffix")
+        capture(shell(ctx, albumDetail(ctx), "navLibrary", mini = true), w, h, "car_folder_$suffix")
+        capture(shell(ctx, tagEditor(ctx), "navLibrary", mini = false), w, h, "car_tag_editor_$suffix")
     }
 
     @Test
-    @Config(qualifiers = "es-w1024dp-h600dp-land-mdpi")
+    @Config(qualifiers = "es-w1024dp-h534dp-land-mdpi")
     fun carHeadUnit() {
         carScreens(night = true, suffix = "dark")
         carScreens(night = false, suffix = "light")

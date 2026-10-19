@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Diseño ancho (propuesta 1). Valores fijos por ancho: en el estéreo la barra del sistema deja
+     1024×534 útiles, así que el «ancho mínimo» real es 534 dp y no aplicarían los de sw600dp. -->
+<resources>
+    <dimen name="top_bar_height">64dp</dimen>
+    <dimen name="nav_pill_height">48dp</dimen>
+    <dimen name="nav_pill_icon">22dp</dimen>
+    <dimen name="nav_pill_text">18sp</dimen>
+    <dimen name="np_art">360dp</dimen>
+    <dimen name="np_title">34sp</dimen>
+    <dimen name="np_subtitle">19sp</dimen>
+    <dimen name="np_play">100dp</dimen>
+    <dimen name="np_transport">72dp</dimen>
+    <dimen name="np_transport_secondary">56dp</dimen>
+    <dimen name="np_card_height">52dp</dimen>
+</resources>

@@ -92,6 +92,9 @@ class MainActivity : FragmentActivity(), Navigator {
         binding.navLibrary.setOnClickListener { openTab(Tab.LIBRARY) }
         binding.navNowPlaying.setOnClickListener { openTab(Tab.NOW_PLAYING) }
         binding.navVisualizer.setOnClickListener { openTab(Tab.VISUALIZER) }
+        // Barra superior de pantallas anchas: Buscar y Ajustes siempre a mano (en el móvil están en la biblioteca).
+        binding.topSearch?.setOnClickListener { push(com.radillo.playerwave.ui.library.SearchFragment()) }
+        binding.topSettings?.setOnClickListener { push(com.radillo.playerwave.ui.settings.SettingsFragment()) }
         binding.miniPlayer.miniOpen.setOnClickListener { openTab(Tab.NOW_PLAYING) }
         binding.miniPlayer.miniPlay.setOnClickListener { playerViewModel.togglePlayPause() }
         binding.miniPlayer.miniNext.setOnClickListener { playerViewModel.next() }
@@ -220,6 +223,7 @@ class MainActivity : FragmentActivity(), Navigator {
     private fun updateChrome() {
         val current = supportFragmentManager.findFragmentById(R.id.content) as? ChromeMode
         binding.navBar.visibleIf(current?.hidesNavigation != true)
+        binding.navDivider?.visibleIf(current?.hidesNavigation != true)
         renderMiniPlayer(playerViewModel.state.value)
     }
 

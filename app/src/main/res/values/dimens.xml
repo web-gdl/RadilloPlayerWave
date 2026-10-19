@@ -36,4 +36,16 @@
     <dimen name="seek_track">4dp</dimen>
     <dimen name="mini_progress">3dp</dimen>
     <dimen name="nav_label">14sp</dimen>
+    <!-- Diseño ancho (propuesta 1); los valores reales están en values-w600dp. -->
+    <dimen name="top_bar_height">56dp</dimen>
+    <dimen name="nav_pill_height">44dp</dimen>
+    <dimen name="nav_pill_icon">20dp</dimen>
+    <dimen name="nav_pill_text">16sp</dimen>
+    <dimen name="np_art">280dp</dimen>
+    <dimen name="np_title">24sp</dimen>
+    <dimen name="np_subtitle">16sp</dimen>
+    <dimen name="np_play">80dp</dimen>
+    <dimen name="np_transport">56dp</dimen>
+    <dimen name="np_transport_secondary">48dp</dimen>
+    <dimen name="np_card_height">48dp</dimen>
 </resources>
