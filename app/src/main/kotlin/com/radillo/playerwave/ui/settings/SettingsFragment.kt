@@ -9,6 +9,7 @@ import androidx.fragment.app.viewModels
 import com.radillo.playerwave.BuildConfig
 import com.radillo.playerwave.R
 import com.radillo.playerwave.core.model.ThemeMode
+import com.radillo.playerwave.core.settings.PlaybackSettings
 import com.radillo.playerwave.databinding.FragmentSettingsBinding
 import com.radillo.playerwave.ui.common.collectWhenStarted
 import com.radillo.playerwave.ui.diagnostics.DiagnosticsFragment
@@ -39,6 +40,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         b.rowRescan.setOnClickListener { viewModel.rescan() }
         b.switchKeepPlaying.setOnCheckedChangeListener { _, checked -> if (!binding) viewModel.setKeepPlaying(checked) }
         collectWhenStarted(viewModel.keepPlaying) { bind { b.switchKeepPlaying.isChecked = it } }
+        b.rowCrossfade.setOnClickListener { chooseCrossfade() }
+        collectWhenStarted(viewModel.crossfadeSeconds) { b.crossfadeValue.text = crossfadeLabel(it) }
         collectWhenStarted(viewModel.isScanning) { scanning ->
             b.rowRescan.isEnabled = !scanning
             b.rowRescan.alpha = if (scanning) 0.5f else 1f
@@ -82,6 +85,24 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         } finally {
             binding = false
         }
+    }
+
+    private fun crossfadeLabel(seconds: Int): String =
+        if (seconds <= 0) getString(R.string.settings_crossfade_off) else getString(R.string.settings_crossfade_seconds, seconds)
+
+    /** Lista corta de duraciones (apagado, 2…12 s): se elige de un toque y se cierra sola. */
+    private fun chooseCrossfade() {
+        val options = PlaybackSettings.CROSSFADE_OPTIONS
+        val labels = options.map(::crossfadeLabel).toTypedArray()
+        val current = options.indexOf(viewModel.crossfadeSeconds.value).coerceAtLeast(0)
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.settings_crossfade)
+            .setSingleChoiceItems(labels, current) { dialog, which ->
+                viewModel.setCrossfadeSeconds(options[which])
+                dialog.dismiss()
+            }
+            .setNegativeButton(R.string.action_cancel, null)
+            .show()
     }
 
     private fun showLicenses() {

@@ -27,7 +27,8 @@ import androidx.media3.exoplayer.video.VideoRendererEventListener
 @OptIn(UnstableApi::class)
 class RadilloRenderersFactory(
     context: Context,
-    private val tap: AudioProcessor,
+    /** `null` = sin tap (p. ej. el reproductor auxiliar del crossfade). */
+    private val tap: AudioProcessor?,
 ) : DefaultRenderersFactory(context) {
 
     init {
@@ -43,7 +44,7 @@ class RadilloRenderersFactory(
         return DefaultAudioSink.Builder(context)
             .setEnableFloatOutput(enableFloatOutput)
             .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
-            .setAudioProcessors(arrayOf(tap))
+            .setAudioProcessors(tap?.let { arrayOf(it) } ?: emptyArray())
             .build()
     }
 

@@ -11,6 +11,10 @@ object PlaybackSettings {
 
     const val FILE = "playback_settings"
     const val KEY_KEEP_PLAYING = "keep_playing_on_focus_loss"
+    const val KEY_CROSSFADE_SECONDS = "crossfade_seconds"
+
+    /** Duraciones que ofrece Ajustes (0 = apagado). Pocas opciones: se elige en un vistazo. */
+    val CROSSFADE_OPTIONS = intArrayOf(0, 2, 4, 6, 8, 10, 12)
 
     fun prefs(context: Context): SharedPreferences =
         context.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
@@ -35,5 +39,12 @@ object PlaybackSettings {
 
     fun setKeepPlayingOnFocusLoss(context: Context, value: Boolean) {
         prefs(context).edit().putInt(KEY_KEEP_PLAYING, if (value) 1 else 0).apply()
+    }
+
+    /** Segundos de mezcla entre canciones (crossfade); 0 = apagado (por defecto). */
+    fun crossfadeSeconds(context: Context): Int = prefs(context).getInt(KEY_CROSSFADE_SECONDS, 0).coerceIn(0, 12)
+
+    fun setCrossfadeSeconds(context: Context, seconds: Int) {
+        prefs(context).edit().putInt(KEY_CROSSFADE_SECONDS, seconds.coerceIn(0, 12)).apply()
     }
 }

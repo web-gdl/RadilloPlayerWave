@@ -26,6 +26,7 @@ import com.radillo.playerwave.core.settings.PlaybackSettings
 import com.radillo.playerwave.player.audiofx.AudioEffectsHub
 import com.radillo.playerwave.player.audiotap.AudioTapHub
 import com.radillo.playerwave.player.audiotap.RadilloRenderersFactory
+import com.radillo.playerwave.player.crossfade.CrossfadeController
 import com.radillo.playerwave.player.engine.MediaItemMapper
 import com.radillo.playerwave.player.jancar.JancarBridge
 import java.io.File
@@ -40,6 +41,8 @@ import java.util.concurrent.Executors
  *   crearse (la app vuelve a donde estaba aunque el equipo se haya apagado con la llave).
  * - **Foco de audio de coche** ([KeepPlayingAudioFocus]): si el ajuste está activo, la música no se
  *   pausa cuando el lanzador o la radio del equipo se quedan el audio.
+ * - **Crossfade** ([CrossfadeController]): mezcla el final de una canción con el principio de la
+ *   siguiente si el ajuste está activo.
  * - **Estéreos Jancar** ([JancarBridge]): se registra como fuente del sistema (volante, llamadas,
  *   apagar y encender el auto, app de memoria). Mientras está conectado, el foco lo pide el
  *   servicio del estéreo y la app no lo pide.
@@ -54,6 +57,7 @@ class PlaybackService : MediaLibraryService() {
     private var exoPlayer: ExoPlayer? = null
     private var focus: KeepPlayingAudioFocus? = null
     private var bridge: JancarBridge? = null
+    private var crossfade: CrossfadeController? = null
     /** El estéreo pidió reanudar al arrancar, pero la cola aún no se había restaurado. */
     private var playAfterRestore = false
     private lateinit var store: PlaybackStateStore
@@ -93,6 +97,7 @@ class PlaybackService : MediaLibraryService() {
         exoPlayer = player
         focus = KeepPlayingAudioFocus(this, player)
         bridge = JancarBridge.create(this, player, onActiveChanged = ::applyFocusMode)
+        crossfade = CrossfadeController(this, player, audioAttributes)
         applyFocusMode()
         settings.registerOnSharedPreferenceChangeListener(settingsListener)
         restoreState(player)
@@ -332,6 +337,8 @@ class PlaybackService : MediaLibraryService() {
         // Suelta la fuente del estéreo: si no, el volante apuntaría a una app sin reproductor.
         bridge?.release()
         bridge = null
+        crossfade?.release()
+        crossfade = null
         focus?.release()
         focus = null
         AudioEffectsHub.onSessionId(0)

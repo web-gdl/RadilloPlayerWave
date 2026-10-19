@@ -54,6 +54,48 @@
                 android:paddingEnd="@dimen/space_xl"
                 android:text="@string/settings_keep_playing_hint" />
 
+            <!-- Crossfade: fila con el valor a la vista; al tocarla se elige la duración. -->
+            <LinearLayout
+                android:id="@+id/rowCrossfade"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_s"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:minHeight="@dimen/row_height"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:drawableStart="@drawable/ic_queue_music"
+                    android:drawablePadding="@dimen/space_l"
+                    android:drawableTint="@color/text_secondary"
+                    android:text="@string/settings_crossfade"
+                    android:textColor="@color/text_primary"
+                    android:textSize="@dimen/text_body" />
+
+                <TextView
+                    android:id="@+id/crossfadeValue"
+                    style="@style/Text.Secondary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/space_s"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:drawablePadding="@dimen/space_s"
+                    android:drawableTint="@color/text_secondary" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/Text.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingEnd="@dimen/space_xl"
+                android:text="@string/settings_crossfade_hint" />
+
             <TextView
                 android:id="@+id/rowEqualizer"
                 style="@style/SettingRow"

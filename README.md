@@ -83,6 +83,9 @@ llamadas, no se cierra al apagar el auto y sigue sonando al encenderlo; el esté
 abrir al arrancar. Con la cámara de reversa el visualizador deja de dibujar. En otros equipos
 la app funciona como siempre.
 
+**0.12.0:** crossfade (Ajustes ▸ Reproducción): mezcla el final de una canción con el principio de
+la siguiente, de 2 a 12 segundos, sin silencio entre ellas.
+
 **Funciones:** biblioteca de música local (canciones,
 álbumes, artistas, carpetas y listas), favoritos, búsqueda, reproducción en segundo plano con
 notificación y pantalla bloqueada, cola y mini reproductor, temporizador de apagado, ecualizador y

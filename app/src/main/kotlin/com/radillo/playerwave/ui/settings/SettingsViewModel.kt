@@ -37,6 +37,14 @@ class SettingsViewModel @Inject constructor(
         keepPlaying.value = enabled
     }
 
+    /** Segundos de crossfade (0 = apagado); lo lee el servicio de reproducción al vuelo. */
+    val crossfadeSeconds = MutableStateFlow(PlaybackSettings.crossfadeSeconds(context))
+
+    fun setCrossfadeSeconds(seconds: Int) {
+        PlaybackSettings.setCrossfadeSeconds(context, seconds)
+        crossfadeSeconds.value = PlaybackSettings.crossfadeSeconds(context)
+    }
+
     val isScanning: StateFlow<Boolean> = library.isScanning
     private val _scanResults = MutableSharedFlow<ScanResult>(extraBufferCapacity = 1)
     val scanResults: SharedFlow<ScanResult> = _scanResults

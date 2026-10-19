@@ -78,6 +78,14 @@ el coste de mantenimiento.
 - La cola se muestra en orden de reproducción lineal; con "aleatorio" activo el orden real lo
   decide ExoPlayer.
 
+## Crossfade (0.12.0)
+
+- La mezcla usa un segundo reproductor efímero solo para el final de la canción que se va; el
+  visualizador sigue a la canción que entra.
+- No se mezcla con «repetir una», al final de la cola sin repetición, ni en canciones de menos de
+  dos veces la mezcla más 5 s. Pausar en plena mezcla la corta.
+- En un equipo con poca CPU, durante esos segundos se decodifican dos canciones a la vez.
+
 ## Estéreos Jancar (0.11.0)
 
 - La integración (teclas del volante, pausas del sistema, seguir al encender, app de memoria) solo

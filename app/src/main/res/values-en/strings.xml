@@ -212,6 +212,10 @@
     <string name="settings_playback">Playback</string>
     <string name="settings_keep_playing">Keep playing when another app takes the audio</string>
     <string name="settings_keep_playing_hint">Recommended in the car: going home or opening another app won’t pause the music. Navigation and calls pause it briefly and it resumes on its own.</string>
+    <string name="settings_crossfade">Crossfade between songs</string>
+    <string name="settings_crossfade_hint">The next song fades in while the current one ends, with no silence in between.</string>
+    <string name="settings_crossfade_off">Off</string>
+    <string name="settings_crossfade_seconds">%d s</string>
     <string name="settings_library">Library</string>
     <string name="settings_rescan_hint">Looks for new songs in internal storage and USB drives. On launch it only searches if something changed.</string>
     <string name="playlist_delete_confirm">Delete the playlist “%s”? The songs stay on the device.</string>
