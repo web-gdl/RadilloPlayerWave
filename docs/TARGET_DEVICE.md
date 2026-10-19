@@ -316,6 +316,17 @@ Conclusiones: el presupuesto de memoria (≤ 90 MB) se cumple con holgura; la el
 visualizador en Android 8.1 es la correcta. Restaurar una cola tan grande bloqueaba el hilo
 principal ~2 s al arrancar: desde la 0.10.2 se lee en segundo plano.
 
+### 0.12.x: crossfade y rediseño para 1024×534 (18-10-2026)
+
+- La barra del sistema del estéreo ocupa ~66 px: el espacio útil es **1024×534**, no 1024×600. Por
+  eso Android calcula un ancho mínimo de 534 dp y no aplicaba los recursos `sw600dp` (carátula de
+  280 en vez de 380, botones de móvil). El diseño ancho fija ahora sus medidas por ancho
+  (`values-w600dp`), y las capturas de CI se generan a 1024×534.
+- Propuesta 1 elegida por el usuario entre 10: sin raíl lateral; secciones como botones grandes en
+  una barra superior con Buscar y Ajustes; en «Reproduciendo», carátula de 360 dp, transporte a lo
+  ancho y acciones secundarias en tarjetas.
+- Crossfade de 2 a 12 s en Ajustes ▸ Reproducción (`CrossfadeController`).
+
 ### 0.11.0: integración con el estéreo Jancar (17-10-2026)
 
 Análisis estático de las apps de fábrica del equipo (servicio `com.jancar.services`, música,
@@ -355,7 +366,7 @@ cola y de la navegación, escaneo incremental con huella y rediseño de la inter
 
 ## 8. Galería
 
-Capturas generadas por CI (`ScreenshotTest`) a 1024×600 y 160 dpi con el tema oscuro. Se pueden
+Capturas generadas por CI (`ScreenshotTest`) a 1024×534 (espacio útil real) y 160 dpi con el tema oscuro. Se pueden
 añadir fotos del equipo real en `docs/screenshots/`.
 
 ![Biblioteca](screenshots/biblioteca.png)

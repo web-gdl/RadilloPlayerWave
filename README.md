@@ -58,7 +58,7 @@ las teclas del volante y la vuelta al encender el auto.
 
 Nombre provisional: comprobar disponibilidad de marca antes de cualquier uso comercial.
 
-## Capturas (autoestéreo 1024×600)
+## Capturas (autoestéreo, 1024×534 útiles bajo la barra del sistema)
 
 | Biblioteca | Reproduciendo |
 |---|---|
