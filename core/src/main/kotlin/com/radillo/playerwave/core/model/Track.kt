@@ -1,6 +1,7 @@
 package com.radillo.playerwave.core.model
 
 import com.radillo.playerwave.core.ui.CoverOverrides
+import com.radillo.playerwave.core.ui.TrackCover
 
 /**
  * Pista de audio local. `id` es el `MediaStore.Audio.Media._ID`; `uri` es la URI
@@ -24,10 +25,16 @@ data class Track(
     val sizeBytes: Long,
 ) {
     /**
-     * Carátula: la cambiada en el editor si la hay ([CoverOverrides]); si no, la del álbum en
-     * MediaStore (content://media/external/audio/albumart/<albumId>).
+     * Carátula del álbum en MediaStore (o la cambiada en el editor, [CoverOverrides]). Es la que
+     * se pasa a la sesión multimedia (notificación); para mostrar la de la canción usar [coverUri].
      */
-    val albumArtUri: String get() = CoverOverrides.uriFor(id) ?: "content://media/external/audio/albumart/$albumId"
+    val albumArtUri: String get() = CoverOverrides.uriFor(id) ?: TrackCover.albumArtUri(albumId)
+
+    /**
+     * Portada de esta canción: la cambiada en el editor si la hay; si no, la que trae el propio
+     * archivo ([TrackCover]) y, si no trae, la del álbum.
+     */
+    val coverUri: String get() = CoverOverrides.uriFor(id) ?: TrackCover.uri(id, uri, albumId, sizeBytes)
 }
 
 data class Album(

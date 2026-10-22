@@ -316,6 +316,16 @@ Conclusiones: el presupuesto de memoria (≤ 90 MB) se cumple con holgura; la el
 visualizador en Android 8.1 es la correcta. Restaurar una cola tan grande bloqueaba el hilo
 principal ~2 s al arrancar: desde la 0.10.2 se lee en segundo plano.
 
+### 0.13.4: portada de cada canción (22-10-2026)
+
+- Reporte: a veces «Reproduciendo» mostraba una portada distinta a la del MP3 (el editor sí mostraba
+  la del archivo), y el widget y el reproductor no coincidían. Causa: la app usaba la miniatura del
+  **álbum** de MediaStore (`albumart/<albumId>`); Android agrupa por nombre de álbum, así que
+  canciones con el mismo álbum o sin álbum compartían una portada, y la miniatura no siempre se
+  renueva. Además el widget y la pantalla podían leerla en momentos distintos.
+- Ahora `TrackCover` lee la imagen incrustada en cada archivo (`MediaMetadataRetriever`) y solo si
+  no hay usa la del álbum; la usan la pantalla, las listas, el color de acento y el puente del estéreo.
+
 ### 0.13.3: la canción vuelve al widget al encender (19-10-2026)
 
 - El usuario confirmó la 0.13.2 (crossfade sin silencio; la app conserva la canción), pero el widget

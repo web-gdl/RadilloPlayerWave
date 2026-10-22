@@ -16,6 +16,8 @@ import androidx.core.content.ContextCompat
 import androidx.media3.exoplayer.ExoPlayer
 import com.radillo.playerwave.core.device.CarSignals
 import com.radillo.playerwave.core.diagnostics.EventLog
+import com.radillo.playerwave.core.ui.TrackCover
+import com.radillo.playerwave.player.engine.MediaItemMapper
 import java.nio.ByteBuffer
 
 /**
@@ -362,7 +364,8 @@ internal class JancarBridge private constructor(
         val meta = item.mediaMetadata
         val title = meta.title?.toString().orEmpty()
         val artist = meta.artist?.toString().orEmpty()
-        val art = meta.artworkUri
+        // La portada de la canción (la del archivo), igual que en «Reproduciendo».
+        val art = MediaItemMapper.toTrack(item)?.coverUri?.let(Uri::parse) ?: meta.artworkUri
         val index = player.currentMediaItemIndex + 1
         val total = player.mediaItemCount
         val key = "$title|$artist|$art|$index|$total"
@@ -388,16 +391,17 @@ internal class JancarBridge private constructor(
 
     /** Carátula reducida a ≤240 px en RGB_565 (la mitad de bytes que ARGB; el servicio la acepta). */
     private fun loadArt(uri: Uri): Art? = try {
+        val bytes = TrackCover.readBytes(context, uri)
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        openArt(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
-        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
+        if (bytes != null) BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        if (bytes == null || bounds.outWidth <= 0 || bounds.outHeight <= 0) {
             null
         } else {
             val options = BitmapFactory.Options().apply {
                 inSampleSize = ArtSize.sampleSize(bounds.outWidth, bounds.outHeight, JancarProtocol.ART_MAX_PX)
                 inPreferredConfig = Bitmap.Config.RGB_565
             }
-            val decoded = openArt(uri)?.use { BitmapFactory.decodeStream(it, null, options) }
+            val decoded = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
             decoded?.let { bmp ->
                 val (w, h) = ArtSize.fitWithin(bmp.width, bmp.height, JancarProtocol.ART_MAX_PX)
                 val scaled = if (w == bmp.width && h == bmp.height) bmp else Bitmap.createScaledBitmap(bmp, w, h, true)
@@ -418,10 +422,6 @@ internal class JancarBridge private constructor(
         null
     }
 
-    private fun openArt(uri: Uri) = when (uri.scheme) {
-        "file" -> uri.path?.let { java.io.File(it).inputStream() }
-        else -> context.contentResolver.openInputStream(uri)
-    }
 
     private fun setUserWantsPlayback(value: Boolean) {
         if (prefs.getBoolean(KEY_WANTS_PLAYBACK, false) != value) {

@@ -13,7 +13,7 @@ fun Track.toRow(context: Context, nowPlayingId: Long?, key: String = "t$id"): Ro
     key = key,
     title = title,
     subtitle = subtitle(context),
-    artUri = albumArtUri,
+    artUri = coverUri,
     placeholder = R.drawable.tile_note,
     highlighted = id == nowPlayingId,
 )

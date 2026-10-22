@@ -26,7 +26,7 @@ import java.util.concurrent.Future
  */
 class ArtworkLoader private constructor(context: Context) {
 
-    private val resolver = context.applicationContext.contentResolver
+    private val appContext = context.applicationContext
     private val main = Handler(Looper.getMainLooper())
     private val executor: ExecutorService = Executors.newFixedThreadPool(2) { r ->
         Thread(Runnable {
@@ -79,9 +79,11 @@ class ArtworkLoader private constructor(context: Context) {
     }
 
     private fun decode(uri: Uri, sizePx: Int): Bitmap? = try {
+        // Se lee una sola vez (la portada de la canción sale del propio archivo de audio).
+        val bytes = TrackCover.readBytes(appContext, uri)
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
-        if (bounds.outWidth <= 0 || bounds.outHeight <= 0 || Thread.currentThread().isInterrupted) {
+        if (bytes != null) BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        if (bytes == null || bounds.outWidth <= 0 || bounds.outHeight <= 0 || Thread.currentThread().isInterrupted) {
             null
         } else {
             var sample = 1
@@ -90,7 +92,7 @@ class ArtworkLoader private constructor(context: Context) {
                 inSampleSize = sample
                 inPreferredConfig = Bitmap.Config.RGB_565
             }
-            resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
         }
     } catch (_: Throwable) {
         null

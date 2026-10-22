@@ -248,9 +248,9 @@ class MainActivity : FragmentActivity(), Navigator {
             mini.miniPlay.setImageResource(if (state.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
             mini.miniPlay.contentDescription = getString(if (state.isPlaying) R.string.action_pause else R.string.action_play)
         }
-        if (lastMiniArt != track.albumArtUri) {
-            lastMiniArt = track.albumArtUri
-            ArtworkLoader.get(this).load(mini.miniArt, track.albumArtUri, mini.miniArt.layoutParams.width, R.drawable.tile_note)
+        if (lastMiniArt != track.coverUri) {
+            lastMiniArt = track.coverUri
+            ArtworkLoader.get(this).load(mini.miniArt, track.coverUri, mini.miniArt.layoutParams.width, R.drawable.tile_note)
         }
     }
 

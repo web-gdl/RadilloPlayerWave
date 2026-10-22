@@ -72,7 +72,7 @@ class PlayerViewModel @Inject constructor(
 
     /** Color dominante de la carátula actual, si el ajuste está activo y hay carátula. */
     val accent: StateFlow<Int?> = combine(
-        playback.state.map { it.currentTrack?.albumArtUri }.distinctUntilChanged(),
+        playback.state.map { it.currentTrack?.coverUri }.distinctUntilChanged(),
         appSettings.settings.map { it.artworkColors }.distinctUntilChanged(),
     ) { uri, enabled -> if (enabled) uri else null }
         .mapLatest { uri -> uri?.let { accentExtractor.accentFor(it) } }

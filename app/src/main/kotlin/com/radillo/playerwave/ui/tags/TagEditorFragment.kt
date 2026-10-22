@@ -90,7 +90,7 @@ class TagEditorFragment : Fragment(R.layout.fragment_tag_editor), ChromeMode {
         when {
             s.cover != null -> b.cover.setImageBitmap(s.cover)
             s.coverRemoved || track == null -> b.cover.setImageResource(R.drawable.tile_note)
-            else -> ArtworkLoader.get(requireContext()).load(b.cover, track.albumArtUri, b.cover.layoutParams.width.coerceAtLeast(240), R.drawable.tile_note)
+            else -> ArtworkLoader.get(requireContext()).load(b.cover, track.coverUri, b.cover.layoutParams.width.coerceAtLeast(240), R.drawable.tile_note)
         }
         val editable = s.loaded && s.problem == null && track != null
         listOf<View>(b.fieldTitle, b.fieldArtist, b.fieldAlbum, b.fieldYear, b.fieldTrack, b.btnChangeCover, b.btnRemoveCover, b.cover)

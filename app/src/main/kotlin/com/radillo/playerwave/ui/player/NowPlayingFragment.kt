@@ -132,9 +132,9 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
         if (track == null) return
         b.trackTitle.text = track.title
         b.trackSubtitle.text = track.subtitle(requireContext())
-        if (lastArt != track.albumArtUri) {
-            lastArt = track.albumArtUri
-            ArtworkLoader.get(requireContext()).load(b.art, track.albumArtUri, b.artFrame.layoutParams.width, R.drawable.tile_note)
+        if (lastArt != track.coverUri) {
+            lastArt = track.coverUri
+            ArtworkLoader.get(requireContext()).load(b.art, track.coverUri, b.artFrame.layoutParams.width, R.drawable.tile_note)
         }
         if (lastPlaying != state.isPlaying) {
             lastPlaying = state.isPlaying

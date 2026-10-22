@@ -45,10 +45,9 @@ class ArtworkAccentExtractor(private val context: Context) {
 
     private fun decodeSmall(uri: Uri): Bitmap? {
         return try {
-            val resolver = context.contentResolver
+            val bytes = TrackCover.readBytes(context, uri) ?: return null
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            val probe = resolver.openInputStream(uri) ?: return null
-            probe.use { BitmapFactory.decodeStream(it, null, bounds) }
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
             if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
             var sample = 1
             while (bounds.outWidth / (sample * 2) >= TARGET_PX && bounds.outHeight / (sample * 2) >= TARGET_PX) sample *= 2
@@ -56,7 +55,7 @@ class ArtworkAccentExtractor(private val context: Context) {
                 inSampleSize = sample
                 inPreferredConfig = Bitmap.Config.ARGB_8888
             }
-            resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
         } catch (e: Exception) {
             null
         }
