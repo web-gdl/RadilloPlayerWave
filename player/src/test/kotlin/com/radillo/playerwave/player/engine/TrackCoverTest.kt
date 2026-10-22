@@ -8,10 +8,12 @@ import com.radillo.playerwave.core.ui.TrackCover
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.io.File
 
 /** La portada de cada canción: URI propia, lectura de archivos y respaldo sin portada. */
 @RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class TrackCoverTest {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
