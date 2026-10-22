@@ -119,6 +119,16 @@ jobs:
             echo '```'
             grep -n -E "FAILURE|What went wrong|Could not|error:|^e: |Unresolved|Caused by|not found|Execution failed|BUILD FAILED|Error:|lint" build.log | grep -v "^\s*at " | head -120
             echo
+            echo "----- pruebas fallidas -----"
+            python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          for path in glob.glob("**/build/test-results/**/TEST-*.xml", recursive=True):
+              for case in ET.parse(path).getroot().iter("testcase"):
+                  for bad in list(case.findall("failure")) + list(case.findall("error")):
+                      print(f"{case.get('classname')} > {case.get('name')}")
+                      print("  " + (bad.text or bad.get("message") or "")[:1500].replace("\n", "\n  "))
+          PY
+            echo
             echo "----- últimas 60 líneas -----"
             tail -n 60 build.log
             echo '```'
