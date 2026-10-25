@@ -211,6 +211,7 @@
     <string name="np_queue">Cola</string>
     <string name="vis_scene_previous">Escena anterior</string>
     <string name="vis_scene_next">Escena siguiente</string>
+    <string name="vis_tune_short">Ajustar escena</string>
     <string name="vis_choose_scene">Elegir escena</string>
     <string name="settings_playback">Reproducción</string>
     <string name="settings_keep_playing">Seguir sonando aunque otra app pida el audio</string>

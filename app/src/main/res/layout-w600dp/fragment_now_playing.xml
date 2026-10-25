@@ -23,14 +23,31 @@
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/trackTitle"
-                style="@style/Text.Headline"
+            <!-- «⋮» junto al título: las opciones son de esta canción (proximidad) y queda donde
+                 se espera un menú, al final de la fila (Jakob), sin taparle nada. -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="2"
-                android:textSize="@dimen/np_title" />
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/trackTitle"
+                    style="@style/Text.Headline"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="2"
+                    android:textSize="@dimen/np_title" />
+
+                <ImageButton
+                    android:id="@+id/btnMore"
+                    style="@style/IconButton"
+                    android:layout_marginStart="@dimen/space_s"
+                    android:layout_marginEnd="-12dp"
+                    android:contentDescription="@string/cd_more"
+                    android:src="@drawable/ic_more_vert" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/trackSubtitle"
@@ -197,15 +214,6 @@
                     android:visibility="gone" />
             </FrameLayout>
     </LinearLayout>
-
-    <!-- Mismo menú «⋮» que en las listas (cola, favoritos, listas, editar etiquetas). -->
-    <ImageButton
-        android:id="@+id/btnMore"
-        style="@style/IconButton"
-        android:layout_gravity="top|start"
-        android:layout_margin="@dimen/space_s"
-        android:contentDescription="@string/cd_more"
-        android:src="@drawable/ic_more_vert" />
 
     <TextView
         android:id="@+id/emptyText"

@@ -104,7 +104,9 @@ portada a la derecha. Revisión completa del código: la biblioteca ya no se vac
 responde mientras indexa una USB, las portadas no se quedan en blanco al desplazarse rápido, el
 ecualizador no deja efectos abiertos si falla, el visualizador lee bien el audio al cambiar de
 formato entre canciones y ya no genera basura de memoria en pausa, y la interfaz hace menos
-trabajo cada medio segundo.
+trabajo cada medio segundo. En la 0.14.1 el menú «⋮» va junto al título de la canción y los
+ajustes del visualizador son un botón con texto, «Ajustar escena», abajo a la derecha (ya no un
+segundo engrane bajo el de Ajustes).
 
 **Funciones:** biblioteca de música local (canciones,
 álbumes, artistas, carpetas y listas), favoritos, búsqueda, reproducción en segundo plano con

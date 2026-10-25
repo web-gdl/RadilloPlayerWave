@@ -55,16 +55,9 @@
             android:tint="#FFFFFFFF" />
 
         <ImageButton
-            android:id="@+id/btnTune"
-            style="@style/IconButton"
-            android:layout_marginStart="@dimen/space_l"
-            android:contentDescription="@string/vis_settings"
-            android:src="@drawable/ic_settings"
-            android:tint="#FFFFFFFF" />
-
-        <ImageButton
             android:id="@+id/btnFullscreen"
             style="@style/IconButton"
+            android:layout_marginStart="@dimen/space_l"
             android:contentDescription="@string/vis_fullscreen"
             android:src="@drawable/ic_fullscreen"
             android:tint="#FFFFFFFF" />
@@ -140,9 +133,34 @@
             android:src="@drawable/ic_skip_next"
             android:tint="#FFFFFFFF" />
 
-        <Space
+        <!-- Ajustes de la escena abajo a la derecha, con texto y otro icono: antes era un segundo
+             engrane justo debajo del de Ajustes de la app y se confundían. Aquí queda junto a lo
+             que se ve, lejos del engrane general, y se reconoce sin adivinar. -->
+        <FrameLayout
             android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:id="@+id/btnTune"
+                style="@style/LabeledCard"
+                android:layout_width="wrap_content"
+                android:layout_gravity="end|center_vertical"
+                android:layout_marginEnd="0dp"
+                android:layout_weight="0"
+                android:background="@drawable/bg_overlay_pill"
+                android:contentDescription="@string/vis_settings">
+
+                <ImageView
+                    style="@style/LabeledCard.Icon"
+                    android:src="@drawable/ic_tune"
+                    android:tint="#FFFFFFFF" />
+
+                <TextView
+                    style="@style/LabeledCard.Label"
+                    android:text="@string/vis_tune_short"
+                    android:textColor="#FFFFFFFF" />
+            </LinearLayout>
+        </FrameLayout>
     </LinearLayout>
 </FrameLayout>

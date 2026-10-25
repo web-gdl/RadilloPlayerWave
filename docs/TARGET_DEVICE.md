@@ -316,6 +316,13 @@ Conclusiones: el presupuesto de memoria (≤ 90 MB) se cumple con holgura; la el
 visualizador en Android 8.1 es la correcta. Restaurar una cola tan grande bloqueaba el hilo
 principal ~2 s al arrancar: desde la 0.10.2 se lee en segundo plano.
 
+### 0.14.1: «⋮» junto al título y ajustes del visualizador (25-10-2026)
+
+- Captura del usuario: el «⋮» se encimaba sobre el título. Ahora va al final de la fila del título
+  (proximidad con la canción a la que se refiere; posición habitual de un menú).
+- En el visualizador había un segundo engrane justo debajo del de Ajustes de la app. Ahora es un
+  botón con icono de controles y texto, «Ajustar escena», abajo a la derecha junto a la imagen.
+
 ### 0.14.0: revisión y optimización del código (25-10-2026)
 
 - «Reproduciendo» (ancho): controles a la izquierda, portada a la derecha, «⋮» arriba a la izquierda.
