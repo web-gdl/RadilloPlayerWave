@@ -146,7 +146,11 @@ class LibraryRepositoryImpl @Inject constructor(
         _isScanning.value = true
         try {
             val started = System.currentTimeMillis()
-            val scanned = scanner.scan()
+            val scanned = scanner.scan() ?: run {
+                // MediaStore no respondió: se conserva la caché y no se guarda la huella (se reintentará).
+                EventLog.log("Biblioteca: MediaStore no respondió; se conserva la caché")
+                return@withLock ScanResult.unchanged(cachedCount)
+            }
             val diff = LibraryDiff.compute(dao.allEntities(), scanned)
             if (diff.upserts.isNotEmpty() || diff.deletes.isNotEmpty()) {
                 database.withTransaction {

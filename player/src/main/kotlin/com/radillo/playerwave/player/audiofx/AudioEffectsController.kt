@@ -150,15 +150,15 @@ class AudioEffectsController @Inject constructor() {
             _state.value = AudioEffectsState(available = false, checked = true)
             return
         }
-        if (eq.numberOfBands <= 0) {
-            eq.release()
+        val bandCount = runCatching { eq.numberOfBands.toInt() }.getOrDefault(0)
+        if (bandCount <= 0) {
+            runCatching { eq.release() }
             _state.value = AudioEffectsState(available = false, checked = true)
             return
         }
         equalizer = eq
         try {
             eq.setEnabled(true)
-            val bandCount = eq.numberOfBands.toInt()
             if (desired.bandLevelsMb.size == bandCount) {
                 val range = eq.bandLevelRange
                 desired.bandLevelsMb.forEachIndexed { i, mb ->
@@ -173,8 +173,18 @@ class AudioEffectsController @Inject constructor() {
         } catch (e: Exception) {
             Log.w(TAG, "No se pudieron aplicar los niveles del ecualizador", e)
         }
-        bassBoost = try {
-            val bb = BassBoost(0, sessionId)
+        bassBoost = createBassBoost()
+        publish()
+    }
+
+    /** Refuerzo de graves con la fuerza deseada, o `null` si no hay; si falla al ajustarlo, se libera. */
+    private fun createBassBoost(): BassBoost? {
+        val bb = try {
+            BassBoost(0, sessionId)
+        } catch (e: Exception) {
+            return null
+        }
+        return try {
             if (bb.strengthSupported) {
                 bb.setStrength(desired.bassBoostStrength.coerceIn(0, 1000).toShort())
                 bb.setEnabled(desired.bassBoostStrength > 0)
@@ -184,18 +194,21 @@ class AudioEffectsController @Inject constructor() {
                 null
             }
         } catch (e: Exception) {
+            runCatching { bb.release() }
             null
         }
-        publish()
     }
 
     /** Comprueba la disponibilidad sin dejar el efecto creado. */
     private fun probe(): AudioEffectsState {
         return try {
             val eq = Equalizer(0, sessionId)
-            val state = snapshot(eq, null)
-            eq.release()
-            state
+            // Si leer el efecto falla, se libera igual: si no, el efecto nativo queda vivo hasta el GC.
+            try {
+                snapshot(eq, null)
+            } finally {
+                runCatching { eq.release() }
+            }
         } catch (e: Exception) {
             AudioEffectsState(available = false, checked = true)
         }
@@ -203,7 +216,12 @@ class AudioEffectsController @Inject constructor() {
 
     private fun publish() {
         val eq = equalizer ?: return
-        _state.value = snapshot(eq, bassBoost)
+        // Leer el efecto puede fallar (p. ej. otra app tomó su control): se conserva el último estado.
+        try {
+            _state.value = snapshot(eq, bassBoost)
+        } catch (e: Exception) {
+            Log.w(TAG, "No se pudo leer el estado del ecualizador", e)
+        }
     }
 
     private fun snapshot(eq: Equalizer, bb: BassBoost?): AudioEffectsState {

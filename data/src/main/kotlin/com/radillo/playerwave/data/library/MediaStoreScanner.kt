@@ -1,7 +1,6 @@
 package com.radillo.playerwave.data.library
 
 import android.content.ContentResolver
-import android.content.ContentUris
 import android.database.Cursor
 import android.provider.MediaStore
 import com.radillo.playerwave.data.library.db.TrackEntity
@@ -49,7 +48,12 @@ class MediaStoreScanner @Inject constructor(
         }
     }
 
-    suspend fun scan(): List<TrackEntity> = withContext(Dispatchers.IO) {
+    /**
+     * Todas las pistas musicales. Lista vacía si no hay permiso; `null` si MediaStore no respondió
+     * (`query` devuelve null cuando el proveedor no está disponible o se cayó, algo habitual en los
+     * estéreos mientras indexan una USB): no es lo mismo que «no hay música» y no debe vaciar la caché.
+     */
+    suspend fun scan(): List<TrackEntity>? = withContext(Dispatchers.IO) {
         val projection = arrayOf(
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.TITLE,
@@ -66,23 +70,20 @@ class MediaStoreScanner @Inject constructor(
             MediaStore.Audio.Media.DATE_ADDED,
             MediaStore.Audio.Media.SIZE,
         )
-        val selection = SELECTION
-        val args = selectionArgs()
-
-        val result = ArrayList<TrackEntity>()
-        val cursor: Cursor? = try {
-            contentResolver.query(
-                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                projection,
-                selection,
-                args,
-                "${MediaStore.Audio.Media.TITLE} COLLATE NOCASE ASC",
-            )
+        // Sin orden: el resultado solo se compara con la caché (Room ordena al consultar), y así
+        // MediaProvider no tiene que ordenar miles de filas en el equipo.
+        val cursor: Cursor = try {
+            contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, projection, SELECTION, selectionArgs(), null)
         } catch (e: SecurityException) {
             // Sin permiso: biblioteca vacía; la UI muestra la pantalla de permisos.
-            null
-        }
-        cursor?.use { c ->
+            return@withContext emptyList()
+        } ?: return@withContext null
+        val result = ArrayList<TrackEntity>()
+        // Misma cadena que ContentUris.withAppendedId(EXTERNAL_CONTENT_URI, id).toString(), sin crear
+        // un Uri.Builder y un Uri por canción.
+        val uriPrefix = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + "/"
+        cursor.use { c ->
+            result.ensureCapacity(c.count)
             val idCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
             val titleCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
             val artistCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
@@ -104,7 +105,7 @@ class MediaStoreScanner @Inject constructor(
                 val fileName = c.getStringOrNull(nameCol) ?: data.substringAfterLast('/')
                 result += TrackEntity(
                     id = id,
-                    uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id).toString(),
+                    uri = uriPrefix + id,
                     title = c.getStringOrNull(titleCol)?.takeIf { it.isNotBlank() } ?: fileName.substringBeforeLast('.'),
                     artist = normalizeUnknown(c.getStringOrNull(artistCol)),
                     artistId = c.getLong(artistIdCol),

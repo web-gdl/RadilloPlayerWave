@@ -15,39 +15,39 @@ import java.nio.ByteBuffer
  *
  * Solo acepta PCM de 16 bits y float. Con `enableFloatOutput = false` (valor por defecto del
  * sink) todo el audio llega como 16 bits, incluidas las fuentes de alta resolución.
+ *
+ * El formato nuevo se aplica al hacer `flush`, no en `configure`: entre ambos todavía puede llegar
+ * audio del formato anterior (p. ej. el final de la canción que se va, que el recorte de silencio
+ * retenía), y leerlo con el número de canales o la frecuencia nuevos lo desordenaría.
  */
 @OptIn(UnstableApi::class)
 class PcmTapAudioProcessor(private val source: TapAudioSource) : BaseAudioProcessor() {
 
-    private var bytesPerFrame = 0
-
-    override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
-        return when (inputAudioFormat.encoding) {
-            C.ENCODING_PCM_16BIT, C.ENCODING_PCM_FLOAT -> {
-                bytesPerFrame = inputAudioFormat.bytesPerFrame
-                source.onConfigured(inputAudioFormat.sampleRate, inputAudioFormat.channelCount, inputAudioFormat.encoding)
-                inputAudioFormat
-            }
-            else -> {
-                bytesPerFrame = 0
-                source.onUnsupported()
-                AudioProcessor.AudioFormat.NOT_SET
-            }
-        }
-    }
+    override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat =
+        if (isSupported(inputAudioFormat.encoding)) inputAudioFormat else AudioProcessor.AudioFormat.NOT_SET
 
     override fun queueInput(inputBuffer: ByteBuffer) {
         val remaining = inputBuffer.remaining()
         if (remaining == 0) return
-        source.write(inputBuffer, bytesPerFrame)
+        // inputAudioFormat es el formato ya aplicado (el del audio que llega ahora).
+        source.write(inputBuffer, inputAudioFormat.bytesPerFrame)
         replaceOutputBuffer(remaining).put(inputBuffer).flip()
     }
 
     override fun onFlush(streamMetadata: AudioProcessor.StreamMetadata) {
+        val format = inputAudioFormat
+        when {
+            format == AudioProcessor.AudioFormat.NOT_SET -> Unit // sin configurar todavía
+            isSupported(format.encoding) -> source.onConfigured(format.sampleRate, format.channelCount, format.encoding)
+            else -> source.onUnsupported()
+        }
         source.onFlush(streamMetadata.positionOffsetUs)
     }
 
     override fun onReset() {
         source.onReset()
     }
+
+    private fun isSupported(encoding: Int): Boolean =
+        encoding == C.ENCODING_PCM_16BIT || encoding == C.ENCODING_PCM_FLOAT
 }

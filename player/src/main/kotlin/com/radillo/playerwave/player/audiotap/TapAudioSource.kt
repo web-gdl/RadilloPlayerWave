@@ -78,11 +78,11 @@ class TapAudioSource : AudioSource {
                 }
             }
             C.ENCODING_PCM_FLOAT -> {
-                val floats = input.asFloatBuffer()
+                // Lectura absoluta en el orden del buffer (como haría asFloatBuffer), sin crear una vista por bloque.
                 for (f in 0 until frames) {
-                    val base = f * ch
-                    val l = floats.get(base)
-                    val r = if (ch > 1) floats.get(base + 1) else l
+                    val idx = start + f * bytesPerFrame
+                    val l = input.getFloat(idx)
+                    val r = if (ch > 1) input.getFloat(idx + 4) else l
                     conversion[f * 2] = l
                     conversion[f * 2 + 1] = r
                 }

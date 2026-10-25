@@ -63,6 +63,9 @@ class ArtworkLoader private constructor(context: Context) {
         if (misses.get(key) != null) return
         pending[view] = executor.submit(Runnable {
             val bitmap = decode(Uri.parse(uri), sizePx)
+            // Cancelada (la fila se recicló o se volvió a enlazar): ese null no significa «sin
+            // carátula» y no debe quedar en `misses`, o la portada no volvería a cargarse.
+            if (bitmap == null && Thread.currentThread().isInterrupted) return@Runnable
             main.post {
                 if (bitmap == null) misses.put(key, true) else cache.put(key, bitmap)
                 if (requested[view] == key) {

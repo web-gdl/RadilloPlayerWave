@@ -47,6 +47,11 @@ class MediaControllerPlaybackController @Inject constructor(
     private var controller: MediaController? = null
     private val pending = ArrayDeque<(MediaController) -> Unit>()
     private var progressJob: Job? = null
+    /**
+     * Cola ya convertida a [Track]: solo se recalcula cuando cambia la línea de tiempo. Con miles de
+     * canciones, convertirla en cada salto, pausa o cambio de canción costaba en el hilo principal.
+     */
+    private var cachedQueue: List<Track>? = null
 
     /**
      * Copia del reloj de reproducción para el visualizador. `MediaController` solo se puede usar
@@ -82,6 +87,7 @@ class MediaControllerPlaybackController @Inject constructor(
                     Player.EVENT_PLAYBACK_PARAMETERS_CHANGED,
                 )
             ) {
+                if (events.contains(Player.EVENT_TIMELINE_CHANGED)) cachedQueue = null
                 publish(player)
             }
         }
@@ -105,6 +111,7 @@ class MediaControllerPlaybackController @Inject constructor(
                     return@addListener
                 }
                 controller = c
+                cachedQueue = null
                 c.addListener(listener)
                 publish(c)
                 while (pending.isNotEmpty()) pending.removeFirst().invoke(c)
@@ -123,7 +130,7 @@ class MediaControllerPlaybackController @Inject constructor(
 
     private fun publish(player: Player) {
         updateClock(player)
-        val queue = readQueue(player)
+        val queue = cachedQueue ?: readQueue(player).also { cachedQueue = it }
         val index = player.currentMediaItemIndex
         val current = player.currentMediaItem?.let(MediaItemMapper::toTrack)
         val duration = player.duration.takeIf { it != C.TIME_UNSET } ?: current?.durationMs ?: 0L

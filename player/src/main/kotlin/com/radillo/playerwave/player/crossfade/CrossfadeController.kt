@@ -138,16 +138,7 @@ internal class CrossfadeController(
         val position = player.currentPosition
         if (!CrossfadePlan.skipEligible(position, player.duration.takeIf { it != C.TIME_UNSET } ?: 0L)) return false
         tailStartMs = position + CrossfadePlan.SKIP_LEAD_MS
-        tail = try {
-            buildTail().apply {
-                setMediaItem(item, tailStartMs)
-                playWhenReady = false
-                prepare()
-            }
-        } catch (e: Exception) {
-            EventLog.log("Crossfade: no se pudo mezclar el salto (${e.javaClass.simpleName})")
-            null
-        }
+        tail = prepareTail(item, tailStartMs, "no se pudo mezclar el salto")
         if (tail == null) return false
         outgoingUid = player.currentPeriodUid()
         pendingSkip = skip
@@ -187,16 +178,7 @@ internal class CrossfadeController(
         if (!eligible || !CrossfadePlan.shouldPrepare(player.currentPosition, duration, fadeMs)) return
         tailStartMs = CrossfadePlan.startAt(duration, fadeMs)
         outgoingUid = player.currentPeriodUid()
-        tail = try {
-            buildTail().apply {
-                setMediaItem(item, tailStartMs)
-                playWhenReady = false
-                prepare()
-            }
-        } catch (e: Exception) {
-            EventLog.log("Crossfade: no se pudo preparar la mezcla (${e.javaClass.simpleName})")
-            null
-        }
+        tail = prepareTail(item, tailStartMs, "no se pudo preparar la mezcla")
         if (tail != null) phase = Phase.PREPARING
     }
 
@@ -311,6 +293,25 @@ internal class CrossfadeController(
         val timeline = currentTimeline
         if (timeline.isEmpty) return null
         return timeline.getUidOfPeriod(currentPeriodIndex)
+    }
+
+    /**
+     * Auxiliar preparado (en pausa) con [item] desde [startMs], o `null` si no se pudo; en ese caso
+     * se libera lo que se hubiera creado y se apunta [failure] en el registro.
+     */
+    private fun prepareTail(item: MediaItem, startMs: Long, failure: String): ExoPlayer? {
+        var aux: ExoPlayer? = null
+        return try {
+            buildTail().also { aux = it }.apply {
+                setMediaItem(item, startMs)
+                playWhenReady = false
+                prepare()
+            }
+        } catch (e: Exception) {
+            aux?.let { runCatching { it.release() } }
+            EventLog.log("Crossfade: $failure (${e.javaClass.simpleName})")
+            null
+        }
     }
 
     /** Reproductor mínimo: solo audio, búfer pequeño, sin tap del visualizador ni foco de audio. */

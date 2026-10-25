@@ -26,6 +26,8 @@ class PcmTapAudioProcessorTest {
         val out = processor.configure(format)
         assertThat(processor.isActive).isTrue()
         assertThat(out.sampleRate).isEqualTo(48_000)
+        // Como en el sink: el formato configurado se aplica al hacer flush.
+        processor.flush(AudioProcessor.StreamMetadata.DEFAULT)
         assertThat(source.status.value).isEqualTo(AudioSourceStatus.ACTIVE)
 
         // 4 frames estéreo de 16 bits: L = 16384 (0.5), R = -16384 (-0.5).
@@ -59,6 +61,33 @@ class PcmTapAudioProcessorTest {
         val out = processor.configure(AudioProcessor.AudioFormat(44_100, 2, C.ENCODING_PCM_24BIT))
         assertThat(processor.isActive).isFalse()
         assertThat(out).isEqualTo(AudioProcessor.AudioFormat.NOT_SET)
+        processor.flush(AudioProcessor.StreamMetadata.DEFAULT)
         assertThat(source.status.value).isEqualTo(AudioSourceStatus.UNAVAILABLE)
+    }
+
+    @Test
+    fun `el audio que llega entre configure y flush se lee con el formato anterior`() = runBlocking {
+        val source = TapAudioSource()
+        val processor = PcmTapAudioProcessor(source)
+        processor.configure(AudioProcessor.AudioFormat(48_000, 2, C.ENCODING_PCM_16BIT))
+        processor.flush(AudioProcessor.StreamMetadata.DEFAULT)
+
+        // La canción siguiente es mono: se configura, pero aún llega el final estéreo de la anterior.
+        processor.configure(AudioProcessor.AudioFormat(44_100, 1, C.ENCODING_PCM_16BIT))
+        val frames = 4
+        val input = ByteBuffer.allocateDirect(frames * 4).order(ByteOrder.LITTLE_ENDIAN)
+        repeat(frames) {
+            input.putShort(16_384)
+            input.putShort(-16_384)
+        }
+        input.flip()
+        processor.queueInput(input)
+
+        val block = source.blocks.first()
+        assertThat(block.sampleRateHz).isEqualTo(48_000)
+        assertThat(block.samples).hasLength(frames * 2)
+        assertThat(block.samples[0]).isWithin(1e-6f).of(0.5f)
+        assertThat(block.samples[1]).isWithin(1e-6f).of(-0.5f)
+        assertThat(source.writtenFrames).isEqualTo(frames.toLong())
     }
 }
