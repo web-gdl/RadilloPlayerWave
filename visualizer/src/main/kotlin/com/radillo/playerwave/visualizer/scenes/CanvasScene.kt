@@ -7,7 +7,10 @@ import com.radillo.playerwave.visualizer.engine.RenderBackend
 import com.radillo.playerwave.visualizer.engine.Scene
 import com.radillo.playerwave.visualizer.engine.SceneParams
 import com.radillo.playerwave.visualizer.engine.VisualPalette
+import kotlin.math.PI
+import kotlin.math.cos
 import kotlin.math.exp
+import kotlin.math.sin
 
 /**
  * Base para escenas dibujadas con `android.graphics.Canvas`: guarda parámetros, paleta y tamaño,
@@ -63,6 +66,29 @@ abstract class CanvasScene(
         fun smoothing(dt: Float, rate: Float): Float = (1f - exp(-dt * rate)).coerceIn(0f, 1f)
 
         fun lerp(a: Float, b: Float, t: Float): Float = a + (b - a) * t
+
+        /** Seguimiento asimétrico: avanza hacia `target` con `rise` si sube y con `fall` si baja. */
+        fun follow(current: Float, target: Float, rise: Float, fall: Float): Float =
+            current + (target - current) * (if (target > current) rise else fall)
+
+        /** Paso angular de un polígono regular de `vertices` lados, en radianes. */
+        fun polygonStep(vertices: Int): Float = (2.0 * PI / vertices).toFloat()
+
+        /**
+         * cos(v·paso) para v en 0 until `vertices`. Con [polygonSinTable] permite girar un polígono
+         * con la identidad del ángulo suma (cos(r+a) = cos r·cos a − sin r·sin a): dos llamadas
+         * trigonométricas por polígono en vez de dos por vértice.
+         */
+        fun polygonCosTable(vertices: Int): FloatArray {
+            val step = polygonStep(vertices)
+            return FloatArray(vertices) { v -> cos(v * step) }
+        }
+
+        /** sin(v·paso) para v en 0 until `vertices` (ver [polygonCosTable]). */
+        fun polygonSinTable(vertices: Int): FloatArray {
+            val step = polygonStep(vertices)
+            return FloatArray(vertices) { v -> sin(v * step) }
+        }
 
         /** Muestra lineal de `values` en la posición fraccional `pos` ∈ [0, size-1]. */
         fun sampleLinear(values: FloatArray, pos: Float): Float {

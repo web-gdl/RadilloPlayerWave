@@ -68,4 +68,14 @@ class AudioAnalyzerTest {
         assertThat(frame.bass).isLessThan(0.05f)
         assertThat(frame.onset).isWithin(1e-6f).of(0f)
     }
+
+    @Test
+    fun `una frecuencia fuera de rango no reinicia el analisis en cada bloque`() {
+        // Con 0 Hz (fuente que no conoce la frecuencia) se trabaja a 8 kHz; antes cada bloque
+        // reconfiguraba y reiniciaba el analizador, así que con bloques cortos nunca salía un frame.
+        val analyzer = AudioAnalyzer()
+        var frames = 0
+        repeat(100) { analyzer.push(PcmBlock(FloatArray(64 * 2) { 0.3f }, 2, 0, 0L)) { frames++ } }
+        assertThat(frames).isGreaterThan(0)
+    }
 }

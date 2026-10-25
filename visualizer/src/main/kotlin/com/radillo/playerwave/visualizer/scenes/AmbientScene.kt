@@ -92,11 +92,10 @@ class AmbientScene : CanvasScene(id = ID, displayName = "Ambiente") {
             var sum = 0f
             for (b in lo until hi) sum += bands[b]
             val target = (sum / (hi - lo) * s).coerceIn(0f, 1f)
-            val cur = energy[i]
-            energy[i] = cur + (target - cur) * (if (target > cur) rise else fall)
+            energy[i] = follow(energy[i], target, rise, fall)
         }
         val targetRms = (frame.rms * s).coerceIn(0f, 1f)
-        rms += (targetRms - rms) * (if (targetRms > rms) rise else fall)
+        rms = follow(rms, targetRms, rise, fall)
         flash = max(flash * exp(-deltaSeconds * 2.5f), if (frame.synthetic) 0f else frame.onset * 0.8f)
     }
 

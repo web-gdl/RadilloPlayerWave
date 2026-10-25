@@ -316,6 +316,19 @@ Conclusiones: el presupuesto de memoria (≤ 90 MB) se cumple con holgura; la el
 visualizador en Android 8.1 es la correcta. Restaurar una cola tan grande bloqueaba el hilo
 principal ~2 s al arrancar: desde la 0.10.2 se lee en segundo plano.
 
+### 0.14.0: revisión y optimización del código (25-10-2026)
+
+- «Reproduciendo» (ancho): controles a la izquierda, portada a la derecha, «⋮» arriba a la izquierda.
+- Correcciones: `MediaStoreScanner.scan()` devuelve null si MediaStore no responde y el repositorio
+  conserva la caché (antes la borraba entera); `ArtworkLoader` no guarda como «sin portada» una carga
+  cancelada; `PcmTapAudioProcessor` aplica el formato nuevo en `flush` (no en `configure`);
+  `AudioEffectsController` libera los efectos en los caminos de error; `AudioAnalyzer` ya no se
+  reinicia en cada bloque con frecuencias < 8 kHz; la biblioteca suelta el adaptador al destruir la vista.
+- Optimización: cola convertida en caché en el controlador; menos re-pintado por tick en
+  Reproduciendo/mini/visualizador; marcos sintéticos reutilizados (≈500 KB/s menos de basura en
+  pausa); tablas de seno/coseno en Túnel y Anillos; escaneo sin ordenar ni crear `Uri` por fila.
+- Limpieza: código duplicado, recursos y código muerto.
+
 ### 0.13.4: portada de cada canción (22-10-2026)
 
 - Reporte: a veces «Reproduciendo» mostraba una portada distinta a la del MP3 (el editor sí mostraba

@@ -231,9 +231,6 @@ class ParticlesScene : CanvasScene(id = ID, displayName = "Partículas") {
         }
     }
 
-    private fun follow(current: Float, target: Float, rise: Float, fall: Float): Float =
-        current + (target - current) * (if (target > current) rise else fall)
-
     companion object {
         const val ID = "particles"
         private const val BAND_SLOTS = 16

@@ -73,11 +73,10 @@ class LineFieldScene : CanvasScene(id = ID, displayName = "Campo de líneas") {
         for (c in 0 until cols) {
             val pos = if (cols == 1) 0f else c / (cols - 1f) * last
             val target = (sampleLinear(bands, pos) * s).coerceIn(0f, 1f)
-            val cur = columnEnergy[c]
-            columnEnergy[c] = cur + (target - cur) * (if (target > cur) rise else fall)
+            columnEnergy[c] = follow(columnEnergy[c], target, rise, fall)
         }
         val targetBass = (frame.bass * s).coerceIn(0f, 1f)
-        bass += (targetBass - bass) * (if (targetBass > bass) rise else fall)
+        bass = follow(bass, targetBass, rise, fall)
         rotation += deltaSeconds * (0.15f + 1.2f * bass) * params.speed
         if (rotation > TWO_PI) {
             // Mantener los ángulos acotados sin saltos visibles: se restan 2π a todos a la vez.
@@ -88,13 +87,18 @@ class LineFieldScene : CanvasScene(id = ID, displayName = "Campo de líneas") {
 
         val k = smoothing(deltaSeconds, 8f)
         val straighten = 0.8f * params.intensity.coerceIn(0.1f, 2f)
+        // Los términos que solo dependen del tiempo o de la fila se calculan fuera del bucle de
+        // columnas (mismo orden de operaciones: el resultado no cambia).
+        val timeX = time * 0.8f
         var i = 0
         for (r in 0 until rows) {
             val fy = (r + 0.5f) / rows
+            val rowWarp = sin(fy * 3.3f - time * 0.5f)
+            val rowPhase = fy * 4.7f - time * 0.6f
             for (c in 0 until cols) {
                 val fx = (c + 0.5f) / cols
-                val flow = sin(fx * 5.1f + time * 0.8f + sin(fy * 3.3f - time * 0.5f)) * 0.9f +
-                    cos(fy * 4.7f - time * 0.6f + fx * 2.0f) * 0.7f
+                val flow = sin(fx * 5.1f + timeX + rowWarp) * 0.9f +
+                    cos(rowPhase + fx * 2.0f) * 0.7f
                 val e = columnEnergy[c]
                 val target = rotation + flow * (1f - 0.7f * e) - HALF_PI * e * straighten
                 angle[i] += (target - angle[i]) * k

@@ -99,6 +99,13 @@ En la 0.13.3 el widget del escritorio vuelve a mostrar la última canción al en
 En la 0.13.4 cada canción muestra la portada que trae su propio archivo (la misma del editor de
 etiquetas), en «Reproduciendo», el mini reproductor, las listas y el widget del estéreo.
 
+**0.14.0 (revisión del código):** en «Reproduciendo» los controles pasan a la izquierda y la
+portada a la derecha. Revisión completa del código: la biblioteca ya no se vacía si Android no
+responde mientras indexa una USB, las portadas no se quedan en blanco al desplazarse rápido, el
+ecualizador no deja efectos abiertos si falla, el visualizador lee bien el audio al cambiar de
+formato entre canciones y ya no genera basura de memoria en pausa, y la interfaz hace menos
+trabajo cada medio segundo.
+
 **Funciones:** biblioteca de música local (canciones,
 álbumes, artistas, carpetas y listas), favoritos, búsqueda, reproducción en segundo plano con
 notificación y pantalla bloqueada, cola y mini reproductor, temporizador de apagado, ecualizador y

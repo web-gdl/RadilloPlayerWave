@@ -6,7 +6,6 @@ import android.graphics.RadialGradient
 import android.graphics.Shader
 import com.radillo.playerwave.visualizer.analysis.AudioFrame
 import com.radillo.playerwave.visualizer.engine.Argb
-import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.exp
 import kotlin.math.max
@@ -38,6 +37,8 @@ class TunnelScene : CanvasScene(id = ID, displayName = "Túnel") {
     private var curX = FloatArray(VERTICES)
     private var curY = FloatArray(VERTICES)
     private val railBuffer = FloatArray(VERTICES / RAIL_STEP * 4)
+    private val vertexCos = polygonCosTable(VERTICES)
+    private val vertexSin = polygonSinTable(VERTICES)
 
     private var centerX = 0f
     private var centerY = 0f
@@ -83,9 +84,9 @@ class TunnelScene : CanvasScene(id = ID, displayName = "Túnel") {
         val rise = smoothing(deltaSeconds, 10f)
         val fall = smoothing(deltaSeconds, 3f)
         val targetRms = (frame.rms * s).coerceIn(0f, 1f)
-        rms += (targetRms - rms) * (if (targetRms > rms) rise else fall)
+        rms = follow(rms, targetRms, rise, fall)
         val targetBass = (frame.bass * s).coerceIn(0f, 1f)
-        bass += (targetBass - bass) * (if (targetBass > bass) rise else fall)
+        bass = follow(bass, targetBass, rise, fall)
         flash = max(flash * exp(-deltaSeconds * 5f), if (frame.synthetic) 0f else frame.onset)
 
         // Deformación compartida, simétrica, suavizada.
@@ -132,7 +133,6 @@ class TunnelScene : CanvasScene(id = ID, displayName = "Túnel") {
         canvas.drawCircle(0f, 0f, glowRadius * (0.6f + 0.5f * bass + 0.6f * flash), glowPaint)
         canvas.restore()
 
-        val step = (2.0 * PI / VERTICES).toFloat()
         var hasPrev = false
         for (kIdx in 0 until ringCount) {
             val idx = (farthest + kIdx) % ringCount
@@ -147,12 +147,16 @@ class TunnelScene : CanvasScene(id = ID, displayName = "Túnel") {
             val rotation = twist[idx] + depth * 0.8f * intensity
             val color = colors[colorIndex[idx] % colors.size]
 
+            val cosR = cos(rotation)
+            val sinR = sin(rotation)
             path.rewind()
             for (v in 0 until VERTICES) {
-                val angle = rotation + v * step
+                // cos/sin(rotation + v·paso) por la identidad del ángulo suma (ver polygonCosTable).
+                val ca = vertexCos[v]
+                val sa = vertexSin[v]
                 val rad = radius * (1f + deform[v] * 0.28f * intensity)
-                val px = ringCx + cos(angle) * rad
-                val py = ringCy + sin(angle) * rad
+                val px = ringCx + (cosR * ca - sinR * sa) * rad
+                val py = ringCy + (sinR * ca + cosR * sa) * rad
                 curX[v] = px
                 curY[v] = py
                 if (v == 0) path.moveTo(px, py) else path.lineTo(px, py)

@@ -97,6 +97,8 @@ class VisualizerEngine(
     /** Parámetros elegidos por el usuario (quality y deviceScale siempre 1) y los efectivos. */
     private var userParams = SceneParams()
     private var params = SceneParams()
+    /** Paleta de [params], resuelta al cambiar los parámetros y no en cada frame. */
+    private var palette = Palettes.byId(params.paletteId)
     private var width = 0
     private var height = 0
     private var lastFrameNanos = 0L
@@ -136,6 +138,13 @@ class VisualizerEngine(
         }
     }
 
+    /** Destino de cada frame analizado; una sola instancia en vez de una lambda nueva por bloque. */
+    private val onAnalyzedFrame: (AudioFrame) -> Unit = { frame ->
+        val now = System.nanoTime()
+        history.add(frame, now)
+        lastRealFrameNanos = now
+    }
+
     /**
      * Arranca el análisis. Si una superficie se destruye y otra se crea casi a la vez (cambiar de
      * pantalla), el trabajo anterior puede seguir vivo un instante: el nuevo **espera** a que
@@ -150,13 +159,7 @@ class VisualizerEngine(
             if (previous != null) withContext(NonCancellable) { previous.join() }
             ensureActive()
             analyzer.reset()
-            source.blocks.collect { block ->
-                analyzer.push(block) { frame ->
-                    val now = System.nanoTime()
-                    history.add(frame, now)
-                    lastRealFrameNanos = now
-                }
-            }
+            source.blocks.collect { block -> analyzer.push(block, onAnalyzedFrame) }
         }
         analysisJob = job
         // Si el análisis falla, se olvida el trabajo para que la próxima superficie lo rearranque
@@ -261,6 +264,7 @@ class VisualizerEngine(
 
     private fun applyParams(effective: SceneParams) {
         if (effective == params) return
+        if (effective.paletteId != params.paletteId) palette = Palettes.byId(effective.paletteId)
         params = effective
         _quality.value = effective.quality
         scene?.onParamsChanged(effective)
@@ -364,7 +368,6 @@ class VisualizerEngine(
      * en vez de capas fuera de pantalla.
      */
     private fun draw(canvas: Canvas) {
-        val palette = Palettes.byId(params.paletteId)
         canvas.drawColor(palette.background)
         val current = scene ?: return
         val out = outgoing

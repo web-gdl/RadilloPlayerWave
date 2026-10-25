@@ -2,7 +2,6 @@ package com.radillo.playerwave.visualizer.scenes
 
 import android.graphics.Canvas
 import android.graphics.LinearGradient
-import android.graphics.Paint
 import android.graphics.RadialGradient
 import android.graphics.Shader
 import com.radillo.playerwave.visualizer.analysis.AudioFrame

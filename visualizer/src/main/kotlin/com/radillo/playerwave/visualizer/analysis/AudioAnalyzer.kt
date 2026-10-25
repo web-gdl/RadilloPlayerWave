@@ -52,6 +52,8 @@ class AudioAnalyzer(val config: AnalyzerConfig = AnalyzerConfig()) {
     private val rmsSmoother = ScalarSmoother(attackTau = 0.02f, releaseTau = 0.15f)
 
     private var sampleRate = 0
+    /** Frecuencia tal como llega en los bloques (sin acotar), para detectar cambios reales. */
+    private var blockRate = 0
     private var hop = 1
     private var dtSeconds = 1f / 60f
     private var mapper: BandMapper? = null
@@ -68,7 +70,9 @@ class AudioAnalyzer(val config: AnalyzerConfig = AnalyzerConfig()) {
 
     /** Procesa un bloque; invoca `onFrame` por cada [AudioFrame] completado. */
     fun push(block: PcmBlock, onFrame: (AudioFrame) -> Unit) {
-        if (block.sampleRateHz != sampleRate) reconfigure(block.sampleRateHz)
+        // Se compara con la frecuencia recibida y no con la acotada: con una frecuencia < 8 kHz
+        // (p. ej. 0 si la fuente no la conoce) se reconfiguraba, y reiniciaba, en cada bloque.
+        if (mapper == null || block.sampleRateHz != blockRate) reconfigure(block.sampleRateHz)
         val samples = block.samples
         val channels = block.channelCount.coerceAtLeast(1)
         val frames = samples.size / channels
@@ -105,6 +109,7 @@ class AudioAnalyzer(val config: AnalyzerConfig = AnalyzerConfig()) {
     }
 
     private fun reconfigure(rate: Int) {
+        blockRate = rate
         sampleRate = rate.coerceAtLeast(8_000)
         hop = max(64, sampleRate / config.framesPerSecond)
         dtSeconds = hop.toFloat() / sampleRate

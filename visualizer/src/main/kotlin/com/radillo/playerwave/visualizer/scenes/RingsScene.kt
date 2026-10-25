@@ -6,7 +6,6 @@ import android.graphics.RadialGradient
 import android.graphics.Shader
 import com.radillo.playerwave.visualizer.analysis.AudioFrame
 import com.radillo.playerwave.visualizer.engine.Argb
-import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
@@ -28,6 +27,8 @@ class RingsScene : CanvasScene(id = ID, displayName = "Anillos") {
 
     private val rings = arrayOf(Ring(VERTICES), Ring(VERTICES), Ring(VERTICES))
     private val path = Path()
+    private val vertexCos = polygonCosTable(VERTICES)
+    private val vertexSin = polygonSinTable(VERTICES)
     private val pulses = FloatArray(MAX_PULSES) { -1f } // edad en segundos; -1 = inactivo
     private var core = 0f
     private var centerX = 0f
@@ -78,7 +79,7 @@ class RingsScene : CanvasScene(id = ID, displayName = "Anillos") {
             val hi = max(lo + 1, n * (r + 1) / 3).coerceAtMost(max(n, 1))
             val count = max(1, hi - lo)
             val targetEnergy = (energies[r] * sensitivity).coerceIn(0f, 1f)
-            ring.energy += (targetEnergy - ring.energy) * (if (targetEnergy > ring.energy) rise else fall)
+            ring.energy = follow(ring.energy, targetEnergy, rise, fall)
             val half = ring.vertexCount / 2
             for (v in 0 until ring.vertexCount) {
                 // Simetría espejo: el vértice v y el vertexCount - v leen la misma banda.
@@ -86,8 +87,7 @@ class RingsScene : CanvasScene(id = ID, displayName = "Anillos") {
                 val pos = lo + mirrored.toFloat() / half * (count - 1)
                 val band = (sampleLinear(bands, pos.coerceIn(lo.toFloat(), max(lo, hi - 1).toFloat())) * sensitivity).coerceIn(0f, 1f)
                 val target = 1f + band * 0.22f * params.intensity
-                val cur = ring.radii[v]
-                ring.radii[v] = cur + (target - cur) * (if (target > cur) rise else fall)
+                ring.radii[v] = follow(ring.radii[v], target, rise, fall)
             }
             ring.rotation += deltaSeconds * SPIN[r] * params.speed
         }
@@ -143,13 +143,16 @@ class RingsScene : CanvasScene(id = ID, displayName = "Anillos") {
 
     private fun buildRing(ring: Ring, radius: Float) {
         path.rewind()
+        // Todos los anillos tienen VERTICES vértices: se gira con las tablas (ver polygonCosTable).
         val n = ring.vertexCount
-        val step = (2.0 * PI / n).toFloat()
+        val cosR = cos(ring.rotation)
+        val sinR = sin(ring.rotation)
         for (v in 0 until n) {
-            val angle = ring.rotation + v * step
+            val ca = vertexCos[v]
+            val sa = vertexSin[v]
             val rad = radius * ring.radii[v]
-            val x = centerX + cos(angle) * rad
-            val y = centerY + sin(angle) * rad
+            val x = centerX + (cosR * ca - sinR * sa) * rad
+            val y = centerY + (sinR * ca + cosR * sa) * rad
             if (v == 0) path.moveTo(x, y) else path.lineTo(x, y)
         }
         path.close()
