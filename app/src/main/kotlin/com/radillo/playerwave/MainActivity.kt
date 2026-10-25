@@ -15,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.radillo.playerwave.core.device.DeviceProfile
 import com.radillo.playerwave.core.model.ThemeMode
+import com.radillo.playerwave.core.model.Track
 import com.radillo.playerwave.core.ui.ArtworkLoader
 import com.radillo.playerwave.data.permissions.AudioPermission
 import com.radillo.playerwave.data.settings.AppSettingsRepository
@@ -58,6 +59,7 @@ class MainActivity : FragmentActivity(), Navigator {
 
     private val uiPrefs by lazy { getSharedPreferences("ui_state", MODE_PRIVATE) }
     private var lastMiniPlaying: Boolean? = null
+    private var lastMiniTrack: Track? = null
 
     private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
@@ -240,8 +242,12 @@ class MainActivity : FragmentActivity(), Navigator {
         val visible = track != null && current?.hidesMiniPlayer != true
         mini.root.visibleIf(visible)
         if (track == null) return
-        mini.miniTitle.text = track.title
-        mini.miniSubtitle.text = track.subtitle(this)
+        // Los textos solo al cambiar de canción: el estado llega dos veces por segundo con el progreso.
+        if (lastMiniTrack != track) {
+            lastMiniTrack = track
+            mini.miniTitle.text = track.title
+            mini.miniSubtitle.text = track.subtitle(this)
+        }
         mini.miniProgress.progress = if (state.durationMs > 0) (state.positionMs * 1000L / state.durationMs).toInt().coerceIn(0, 1000) else 0
         if (lastMiniPlaying != state.isPlaying) {
             lastMiniPlaying = state.isPlaying
@@ -266,9 +272,8 @@ class MainActivity : FragmentActivity(), Navigator {
     /** `POST_NOTIFICATIONS` (Android 13+) se pide una sola vez; la app funciona igual sin él. */
     private fun requestNotificationPermissionOnce() {
         val permission = AudioPermission.notificationPermissionOrNull() ?: return
-        val prefs = getSharedPreferences("ui_state", MODE_PRIVATE)
-        if (prefs.getBoolean(KEY_ASKED_NOTIFICATIONS, false)) return
-        prefs.edit().putBoolean(KEY_ASKED_NOTIFICATIONS, true).apply()
+        if (uiPrefs.getBoolean(KEY_ASKED_NOTIFICATIONS, false)) return
+        uiPrefs.edit().putBoolean(KEY_ASKED_NOTIFICATIONS, true).apply()
         notificationPermission.launch(permission)
     }
 

@@ -140,8 +140,6 @@ class TagEditorViewModel @Inject constructor(
         retry(consentGranted = false)
     }
 
-    fun canPickFolders(): Boolean = writer.canPickFolders()
-
     private fun run(edit: TagEdit, consentGranted: Boolean) {
         val track = _state.value.track ?: return
         if (_state.value.saving) return

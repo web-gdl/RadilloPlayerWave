@@ -117,11 +117,14 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
         binding = null
         lastArt = null
         lastPlaying = null
+        lastRendered = null
         super.onDestroyView()
     }
 
     /** Evita repintar iconos dos veces por segundo (el estado cambia con cada tic de progreso). */
     private var lastPlaying: Boolean? = null
+    /** Último estado pintado, sin la posición. */
+    private var lastRendered: PlaybackState? = null
 
     private fun render(state: PlaybackState) {
         val b = binding ?: return
@@ -130,24 +133,29 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
         b.btnMore.visibleIf(track != null)
         b.emptyText.visibleIf(track == null)
         if (track == null) return
-        b.trackTitle.text = track.title
-        b.trackSubtitle.text = track.subtitle(requireContext())
         if (lastArt != track.coverUri) {
             lastArt = track.coverUri
             ArtworkLoader.get(requireContext()).load(b.art, track.coverUri, b.artFrame.layoutParams.width, R.drawable.tile_note)
         }
-        if (lastPlaying != state.isPlaying) {
-            lastPlaying = state.isPlaying
-            b.btnPlay.setImageResource(if (state.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
-            b.btnPlay.contentDescription = getString(if (state.isPlaying) R.string.action_pause else R.string.action_play)
+        // Textos, iconos y botones solo cuando cambia algo más que la posición (no a cada tic).
+        val withoutPosition = state.copy(positionMs = 0L)
+        if (withoutPosition != lastRendered) {
+            lastRendered = withoutPosition
+            b.trackTitle.text = track.title
+            b.trackSubtitle.text = track.subtitle(requireContext())
+            if (lastPlaying != state.isPlaying) {
+                lastPlaying = state.isPlaying
+                b.btnPlay.setImageResource(if (state.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+                b.btnPlay.contentDescription = getString(if (state.isPlaying) R.string.action_pause else R.string.action_play)
+            }
+            val next = state.queue.getOrNull(state.queueIndex + 1)
+                ?: if (state.repeatMode == RepeatMode.ALL) state.queue.firstOrNull() else null
+            b.queueInfo.text = next?.let { getString(R.string.np_up_next, it.title) }.orEmpty()
+            b.btnShuffle.isActivated = state.shuffleEnabled
+            b.btnRepeat.isActivated = state.repeatMode != RepeatMode.OFF
+            b.btnRepeat.setImageResource(if (state.repeatMode == RepeatMode.ONE) R.drawable.ic_repeat_one else R.drawable.ic_repeat)
+            b.duration.text = formatDuration(state.durationMs)
         }
-        val next = state.queue.getOrNull(state.queueIndex + 1)
-            ?: if (state.repeatMode == RepeatMode.ALL) state.queue.firstOrNull() else null
-        b.queueInfo.text = next?.let { getString(R.string.np_up_next, it.title) }.orEmpty()
-        b.btnShuffle.isActivated = state.shuffleEnabled
-        b.btnRepeat.isActivated = state.repeatMode != RepeatMode.OFF
-        b.btnRepeat.setImageResource(if (state.repeatMode == RepeatMode.ONE) R.drawable.ic_repeat_one else R.drawable.ic_repeat)
-        b.duration.text = formatDuration(state.durationMs)
         if (!dragging) {
             val duration = state.durationMs.coerceAtLeast(1L)
             b.seek.progress = (state.positionMs * 1000L / duration).toInt().coerceIn(0, 1000)

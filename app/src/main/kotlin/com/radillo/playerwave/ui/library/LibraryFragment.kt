@@ -1,6 +1,7 @@
 package com.radillo.playerwave.ui.library
 
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -114,6 +115,9 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
     }
 
     override fun onDestroyView() {
+        // El adaptador sobrevive a la vista (el fragment queda en la pila): sin esto retiene la
+        // RecyclerView destruida, y con ella toda la jerarquía, a través de su observador.
+        binding?.list?.adapter = null
         binding = null
         super.onDestroyView()
     }
@@ -161,11 +165,7 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
     /** Resultado visible de «Buscar música nueva» (sin él, no se sabe si el botón hizo algo). */
     private fun announce(result: ScanResult) {
         val ctx = context ?: return
-        val parts = buildList {
-            if (result.added > 0) add(resources.getQuantityString(R.plurals.scan_added, result.added, result.added))
-            if (result.removed > 0) add(resources.getQuantityString(R.plurals.scan_removed, result.removed, result.removed))
-        }
-        ctx.toast(if (parts.isEmpty()) getString(R.string.scan_none) else parts.joinToString(" · "))
+        ctx.toast(ctx.scanSummary(result))
     }
 
     private fun onRowClick(position: Int) {
@@ -226,4 +226,13 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", requireContext().packageName, null))
         startActivity(intent)
     }
+}
+
+/** «12 canciones nuevas · 3 quitadas» o «sin cambios» (biblioteca y Ajustes). */
+internal fun Context.scanSummary(result: ScanResult): String {
+    val parts = buildList {
+        if (result.added > 0) add(resources.getQuantityString(R.plurals.scan_added, result.added, result.added))
+        if (result.removed > 0) add(resources.getQuantityString(R.plurals.scan_removed, result.removed, result.removed))
+    }
+    return if (parts.isEmpty()) getString(R.string.scan_none) else parts.joinToString(" · ")
 }

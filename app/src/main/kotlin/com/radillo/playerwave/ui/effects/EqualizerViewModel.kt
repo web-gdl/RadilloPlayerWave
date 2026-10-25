@@ -2,17 +2,13 @@ package com.radillo.playerwave.ui.effects
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.radillo.playerwave.R
 import com.radillo.playerwave.data.settings.AudioEffectsSettingsRepository
 import com.radillo.playerwave.player.audiofx.AudioEffectsController
 import com.radillo.playerwave.player.audiofx.AudioEffectsState
-import com.radillo.playerwave.player.audiofx.EqBand
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.util.Locale
 import javax.inject.Inject
-import kotlin.math.roundToInt
 
 /**
  * Ecualizador: los cambios se aplican al instante en [AudioEffectsController] y se persisten

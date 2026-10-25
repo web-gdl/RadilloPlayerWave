@@ -12,6 +12,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.radillo.playerwave.R
+import com.radillo.playerwave.core.model.Track
 import com.radillo.playerwave.databinding.FragmentVisualizerBinding
 import com.radillo.playerwave.ui.ChromeMode
 import com.radillo.playerwave.ui.common.collectWhenStarted
@@ -20,6 +21,8 @@ import com.radillo.playerwave.ui.navigator
 import com.radillo.playerwave.visualizer.engine.DataState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 /**
  * Visualizador. La imagen la dibuja `VisualizerSurfaceView` en su propio hilo; aquí solo hay
@@ -63,7 +66,9 @@ class VisualizerFragment : Fragment(R.layout.fragment_visualizer), ChromeMode {
             b.sceneName.setText(sceneLabelRes(s.sceneId))
             b.root.keepScreenOn = s.keepScreenOn
         }
-        collectWhenStarted(combine(viewModel.playbackState, viewModel.dataState) { p, d -> p to d }) { (p, d) ->
+        // Solo canción y play/pausa: el estado completo cambia con cada tic de progreso.
+        val playback = viewModel.playbackState.map { TrackAndPlaying(it.currentTrack, it.isPlaying) }.distinctUntilChanged()
+        collectWhenStarted(combine(playback, viewModel.dataState) { p, d -> p to d }) { (p, d) ->
             val track = p.currentTrack
             b.trackTitle.text = track?.title.orEmpty()
             b.trackSubtitle.text = track?.artist.orEmpty()
@@ -148,6 +153,8 @@ class VisualizerFragment : Fragment(R.layout.fragment_visualizer), ChromeMode {
         handler.removeCallbacks(hideControls)
         if (playing || immersive) handler.postDelayed(hideControls, if (immersive) 4_000L else 6_000L)
     }
+
+    private data class TrackAndPlaying(val currentTrack: Track?, val isPlaying: Boolean)
 
     companion object {
         private const val ARG_IMMERSIVE = "immersive"

@@ -36,13 +36,13 @@ class QueueFragment : Fragment(R.layout.fragment_track_list), ChromeMode {
         b.actions.visibleIf(false)
         b.btnBack.setOnClickListener { navigator.back() }
         b.empty.setText(R.string.queue_empty)
+        b.title.setText(R.string.queue_title)
         var scrolled = false
         // Solo cuando cambia la cola o la canción actual: el estado también cambia con cada tic de
         // progreso y rehacer miles de filas dos veces por segundo se nota en un A7.
         val queueState = viewModel.state.map { it.queue to it.queueIndex }.distinctUntilChanged()
         collectWhenStarted(queueState) { (queue, queueIndex) ->
             val ctx = requireContext()
-            b.title.setText(R.string.queue_title)
             b.listCount.text = resources.getQuantityString(R.plurals.track_count, queue.size, queue.size)
             adapter.submitList(
                 queue.mapIndexed { index, track ->

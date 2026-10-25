@@ -14,6 +14,7 @@ import com.radillo.playerwave.databinding.FragmentSettingsBinding
 import com.radillo.playerwave.ui.common.collectWhenStarted
 import com.radillo.playerwave.ui.diagnostics.DiagnosticsFragment
 import com.radillo.playerwave.ui.effects.EqualizerFragment
+import com.radillo.playerwave.ui.library.scanSummary
 import com.radillo.playerwave.ui.navigator
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -55,11 +56,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             b.rescanHint.setText(if (scanning) R.string.empty_scanning else R.string.settings_rescan_hint)
         }
         collectWhenStarted(viewModel.scanResults) { result ->
-            val parts = buildList {
-                if (result.added > 0) add(resources.getQuantityString(R.plurals.scan_added, result.added, result.added))
-                if (result.removed > 0) add(resources.getQuantityString(R.plurals.scan_removed, result.removed, result.removed))
-            }
-            Toast.makeText(requireContext(), if (parts.isEmpty()) getString(R.string.scan_none) else parts.joinToString(" · "), Toast.LENGTH_SHORT).show()
+            val ctx = requireContext()
+            Toast.makeText(ctx, ctx.scanSummary(result), Toast.LENGTH_SHORT).show()
         }
         b.versionText.text = getString(R.string.app_name) + " · " + getString(R.string.settings_version, BuildConfig.VERSION_NAME)
         b.profileText.setText(if (viewModel.profile.lowEnd) R.string.diag_profile_low_end_short else R.string.diag_profile_normal)

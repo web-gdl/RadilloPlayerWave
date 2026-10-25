@@ -44,7 +44,6 @@
     <string name="tab_artists">Artistas</string>
     <string name="tab_folders">Carpetas</string>
 
-    <string name="action_rescan">Volver a buscar música</string>
     <string name="action_play_all">Reproducir</string>
     <string name="action_shuffle">Aleatorio</string>
     <string name="action_play_next">Reproducir a continuación</string>
@@ -68,7 +67,6 @@
     <string name="permission_title">Acceso a tu música</string>
     <string name="permission_body">RadilloPlayerWave necesita permiso para leer los archivos de audio del dispositivo. No se sube nada a ningún servidor.</string>
     <string name="permission_grant">Permitir acceso</string>
-    <string name="permission_retry">Volver a intentar</string>
     <string name="permission_open_settings">Abrir ajustes de la aplicación</string>
 
     <!-- Fase 3: listas, favoritos, búsqueda -->
@@ -123,7 +121,6 @@
     <string name="theme_dark">Oscuro</string>
     <string name="settings_artwork_colors">Colores de la carátula</string>
     <string name="settings_artwork_colors_hint">Tiñe la interfaz con el color dominante de la carátula en reproducción</string>
-    <string name="settings_audio">Audio</string>
     <string name="settings_about">Acerca de</string>
     <string name="settings_version">Versión %s</string>
     <string name="settings_privacy">Todo funciona en el dispositivo: sin cuentas, sin anuncios y sin telemetría.</string>
@@ -210,7 +207,6 @@
     <string name="np_crossfade_toggle">Activar o desactivar el crossfade</string>
     <string name="toast_crossfade_on">Crossfade activado (%d s)</string>
     <string name="toast_crossfade_off">Crossfade desactivado</string>
-    <string name="np_sleep">Temporizador</string>
     <string name="np_equalizer">Ecualizador</string>
     <string name="np_queue">Cola</string>
     <string name="vis_scene_previous">Escena anterior</string>
@@ -274,7 +270,6 @@
     <string name="tag_error_io">No se pudo guardar. El archivo quedó como estaba.</string>
     <string name="tag_error_no_picker">No hay ninguna app para elegir imágenes en este equipo.</string>
     <string name="tag_error_image">No se pudo abrir esa imagen.</string>
-    <string name="tag_error_permission">Sin el permiso de almacenamiento no se pueden guardar los cambios.</string>
     <string name="tag_discard_title">¿Descartar los cambios?</string>
     <string name="tag_discard">Descartar</string>
     <string name="tag_keep_editing">Seguir editando</string>

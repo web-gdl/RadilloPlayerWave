@@ -41,9 +41,12 @@ class PlayerViewModel @Inject constructor(
 
     val state: StateFlow<PlaybackState> = playback.state
 
-    val isFavorite: StateFlow<Boolean> = combine(playback.state, playlists.favoriteIds) { s, favs ->
-        s.currentTrack?.id?.let { it in favs } ?: false
-    }.stateIn(viewModelScope, sharing, false)
+    // Solo la canción actual: el estado cambia con cada tic de progreso y no hace falta recalcular.
+    val isFavorite: StateFlow<Boolean> = combine(
+        playback.state.map { it.currentTrack?.id }.distinctUntilChanged(),
+        playlists.favoriteIds,
+    ) { id, favs -> id != null && id in favs }
+        .stateIn(viewModelScope, sharing, false)
 
     val sleepRemainingMs: StateFlow<Long?> = sleepTimer.remainingMs
 
