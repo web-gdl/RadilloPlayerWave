@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Pantalla ancha (propuesta 1, autoestéreo 1024×534 útiles): carátula grande a la izquierda,
-     información y controles a la derecha, de arriba abajo por orden de lectura: qué suena → progreso →
-     controles → extras en tarjetas. -->
+<!-- Pantalla ancha (propuesta 1, autoestéreo 1024×534 útiles): información y controles a la
+     izquierda y carátula grande a la derecha. Controles de arriba abajo por orden de lectura:
+     qué suena → progreso → controles → extras en tarjetas. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -15,35 +15,11 @@
         android:paddingStart="36dp"
         android:paddingEnd="36dp">
 
-            <FrameLayout
-                android:id="@+id/artFrame"
-                android:layout_width="@dimen/np_art"
-                android:layout_height="@dimen/np_art"
-                android:background="@drawable/bg_art_rounded"
-                android:clickable="true"
-                android:contentDescription="@string/np_toggle_visualizer"
-                android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackground"
-                android:layout_gravity="center_vertical">
-
-                <ImageView
-                    android:id="@+id/art"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:importantForAccessibility="no"
-                    android:scaleType="centerCrop" />
-
-                <com.radillo.playerwave.visualizer.render.VisualizerSurfaceView
-                    android:id="@+id/artVisualizer"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:visibility="gone" />
-            </FrameLayout>
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="40dp"
+            android:layout_marginEnd="40dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
@@ -195,13 +171,38 @@
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
+
+            <FrameLayout
+                android:id="@+id/artFrame"
+                android:layout_width="@dimen/np_art"
+                android:layout_height="@dimen/np_art"
+                android:background="@drawable/bg_art_rounded"
+                android:clickable="true"
+                android:contentDescription="@string/np_toggle_visualizer"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:layout_gravity="center_vertical">
+
+                <ImageView
+                    android:id="@+id/art"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:importantForAccessibility="no"
+                    android:scaleType="centerCrop" />
+
+                <com.radillo.playerwave.visualizer.render.VisualizerSurfaceView
+                    android:id="@+id/artVisualizer"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="gone" />
+            </FrameLayout>
     </LinearLayout>
 
     <!-- Mismo menú «⋮» que en las listas (cola, favoritos, listas, editar etiquetas). -->
     <ImageButton
         android:id="@+id/btnMore"
         style="@style/IconButton"
-        android:layout_gravity="top|end"
+        android:layout_gravity="top|start"
         android:layout_margin="@dimen/space_s"
         android:contentDescription="@string/cd_more"
         android:src="@drawable/ic_more_vert" />
