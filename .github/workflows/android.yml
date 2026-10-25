@@ -196,6 +196,8 @@ jobs:
             echo "**Instalación:** descarga \`RadilloPlayerWave.apk\`, ábrelo en el dispositivo y acepta la"
             echo "instalación desde origen desconocido. Compilación release (optimizada con R8). Firma: $SIGNING_MODE."
             echo
+            # Novedades de la versión, escritas a mano en docs/NOVEDADES.md.
+            if [ -f docs/NOVEDADES.md ]; then cat docs/NOVEDADES.md; echo; fi
             cat summary.md
           } > notes.md
           if gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
