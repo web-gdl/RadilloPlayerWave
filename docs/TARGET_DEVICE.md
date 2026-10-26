@@ -324,6 +324,10 @@ principal ~2 s al arrancar: desde la 0.10.2 se lee en segundo plano.
   `com.jancar.audiosettings/.ui.activity.MainActivity` (como el escritorio y la música de fábrica),
   luego `com.jancar.settings/.activity.AudioSettingActivity` (variante de cliente 3 de la música de
   fábrica), el lanzador del paquete y, en teléfonos, el panel estándar de Android.
+- En el equipo del usuario esas rutas no abrían. Ahora también se detecta una app cuyo nombre o
+  paquete parezca ecualizador/audio y, si nada abre, se elige de una lista (★ las probables) y se
+  recuerda; se cambia en Ajustes ▸ «App del ecualizador». Diagnóstico muestra qué encontró y el
+  registro anota por qué falló cada intento. **Confirmado por el usuario** (26-10).
 
 ### 0.14.1: «⋮» junto al título y ajustes del visualizador (25-10-2026)
 

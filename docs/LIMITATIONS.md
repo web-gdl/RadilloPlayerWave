@@ -120,7 +120,8 @@ el coste de mantenimiento.
   Jancar es la app de audio del equipo (`com.jancar.audiosettings`, la misma que abren el escritorio
   y la música de fábrica), con ecualizador, balance y fader, y se aplica a todo el audio del equipo.
   En un teléfono se abre el panel estándar de Android (`ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL`)
-  si el fabricante trae uno; si no hay ninguno, la app lo avisa. La app anuncia su sesión de audio
+  si el fabricante trae uno. Si no encuentra cuál abrir, deja elegir la app de una lista y la
+  recuerda (Ajustes ▸ «App del ecualizador»). La app anuncia su sesión de audio
   (`ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION`) para los ecualizadores que actúan por sesión.
 - **Favoritos y listas** se guardan en la base de datos local de la app (Room), no en MediaStore:
   no se comparten con otros reproductores y se pierden al desinstalar la app. Durante el

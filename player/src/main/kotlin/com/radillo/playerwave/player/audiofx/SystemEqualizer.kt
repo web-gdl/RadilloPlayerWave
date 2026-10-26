@@ -30,11 +30,14 @@ object SystemEqualizer {
     /** App de ecualizador instalada (o la elegida), para mostrarla y abrirla. */
     data class App(val label: String, val component: ComponentName)
 
+    /** Candidata a ecualizador: [likely] si su nombre o paquete lo parece. */
+    data class Candidate(val app: App, val likely: Boolean)
+
     private val KNOWN_TARGETS = listOf(
         ComponentName("com.jancar.audiosettings", "com.jancar.audiosettings.ui.activity.MainActivity"),
         ComponentName("com.jancar.settings", "com.jancar.settings.activity.AudioSettingActivity"),
     )
-    private val KNOWN_PACKAGES = listOf("com.jancar.audiosettings")
+    private const val JANCAR_AUDIO_PACKAGE = "com.jancar.audiosettings"
 
     /** Palabras que delatan una app de ecualizador o de audio del equipo. */
     private val KEYWORDS = listOf(
@@ -58,9 +61,8 @@ object SystemEqualizer {
         for (target in KNOWN_TARGETS) {
             if (start(context, Intent().setComponent(target), target.flattenToShortString())) return true
         }
-        val pm = context.packageManager
-        for (pkg in KNOWN_PACKAGES) {
-            pm.getLaunchIntentForPackage(pkg)?.let { if (start(context, it, "lanzador de $pkg")) return true }
+        context.packageManager.getLaunchIntentForPackage(JANCAR_AUDIO_PACKAGE)?.let {
+            if (start(context, it, "lanzador de $JANCAR_AUDIO_PACKAGE")) return true
         }
         val likely = candidates(context).filter { it.likely }
         if (likely.size == 1) {
@@ -77,9 +79,6 @@ object SystemEqualizer {
         EventLog.log("Ecualizador: no se encontró ninguno que abrir (${likely.size} posibles)")
         return false
     }
-
-    /** Candidata a ecualizador: [likely] si su nombre o paquete lo parece. */
-    data class Candidate(val app: App, val likely: Boolean)
 
     /**
      * Apps con icono en el escritorio, primero las que parecen ecualizador o audio del equipo.

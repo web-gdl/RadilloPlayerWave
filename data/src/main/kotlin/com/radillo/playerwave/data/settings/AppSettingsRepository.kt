@@ -23,7 +23,7 @@ class PrefsAppSettingsRepository @Inject constructor(
     @ApplicationContext context: Context,
 ) : AppSettingsRepository {
 
-    internal val prefs: SharedPreferences = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
     private val lock = Any()
 
     override val settings: Flow<AppSettings> = prefs.observe { it.toAppSettings() }
