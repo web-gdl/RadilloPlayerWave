@@ -316,6 +316,15 @@ Conclusiones: el presupuesto de memoria (≤ 90 MB) se cumple con holgura; la el
 visualizador en Android 8.1 es la correcta. Restaurar una cola tan grande bloqueaba el hilo
 principal ~2 s al arrancar: desde la 0.10.2 se lee en segundo plano.
 
+### 0.15.0: ecualizador del sistema (26-10-2026)
+
+- Pedido del usuario: el estéreo trae un ecualizador mejor (con balance izquierda/derecha y
+  adelante/atrás). Se quitó el ecualizador propio (`AudioEffectsController`, `EqualizerFragment`,
+  sus ajustes guardados) y `SystemEqualizer` abre el del sistema:
+  `com.jancar.audiosettings/.ui.activity.MainActivity` (como el escritorio y la música de fábrica),
+  luego `com.jancar.settings/.activity.AudioSettingActivity` (variante de cliente 3 de la música de
+  fábrica), el lanzador del paquete y, en teléfonos, el panel estándar de Android.
+
 ### 0.14.1: «⋮» junto al título y ajustes del visualizador (25-10-2026)
 
 - Captura del usuario: el «⋮» se encimaba sobre el título. Ahora va al final de la fila del título

@@ -23,7 +23,7 @@ import com.radillo.playerwave.core.device.DeviceProfile
 import com.radillo.playerwave.core.diagnostics.EventLog
 import com.radillo.playerwave.core.model.Track
 import com.radillo.playerwave.core.settings.PlaybackSettings
-import com.radillo.playerwave.player.audiofx.AudioEffectsHub
+import com.radillo.playerwave.player.audiofx.SystemEqualizer
 import com.radillo.playerwave.player.audiotap.AudioTapHub
 import com.radillo.playerwave.player.audiotap.RadilloRenderersFactory
 import com.radillo.playerwave.player.crossfade.CrossfadeController
@@ -145,7 +145,7 @@ class PlaybackService : MediaLibraryService() {
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
         // El ecualizador de la plataforma se liga al id de sesión de audio del reproductor.
-        AudioEffectsHub.onSessionId(player.audioSessionId)
+        SystemEqualizer.onSessionId(this, player.audioSessionId)
         player.addListener(PlayerEvents())
         return player
     }
@@ -217,7 +217,7 @@ class PlaybackService : MediaLibraryService() {
         }
 
         override fun onAudioSessionIdChanged(audioSessionId: Int) {
-            AudioEffectsHub.onSessionId(audioSessionId)
+            SystemEqualizer.onSessionId(this@PlaybackService, audioSessionId)
         }
 
         override fun onTimelineChanged(timeline: Timeline, reason: Int) {
@@ -354,7 +354,7 @@ class PlaybackService : MediaLibraryService() {
         crossfade = null
         focus?.release()
         focus = null
-        AudioEffectsHub.onSessionId(0)
+        SystemEqualizer.onSessionId(this, 0)
         session?.run {
             player.release()
             release()

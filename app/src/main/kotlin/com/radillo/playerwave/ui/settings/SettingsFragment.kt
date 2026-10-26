@@ -13,7 +13,7 @@ import com.radillo.playerwave.core.settings.PlaybackSettings
 import com.radillo.playerwave.databinding.FragmentSettingsBinding
 import com.radillo.playerwave.ui.common.collectWhenStarted
 import com.radillo.playerwave.ui.diagnostics.DiagnosticsFragment
-import com.radillo.playerwave.ui.effects.EqualizerFragment
+import com.radillo.playerwave.ui.common.openSystemEqualizer
 import com.radillo.playerwave.ui.library.scanSummary
 import com.radillo.playerwave.ui.navigator
 import dagger.hilt.android.AndroidEntryPoint
@@ -35,7 +35,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val b = FragmentSettingsBinding.bind(view)
         b.btnBack.setOnClickListener { navigator.back() }
-        b.rowEqualizer.setOnClickListener { navigator.push(EqualizerFragment()) }
+        b.rowEqualizer.setOnClickListener { openSystemEqualizer() }
         b.rowDiagnostics.setOnClickListener { navigator.push(DiagnosticsFragment()) }
         b.rowLicenses.setOnClickListener { showLicenses() }
         b.rowRescan.setOnClickListener { viewModel.rescan() }

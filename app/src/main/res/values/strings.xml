@@ -104,13 +104,6 @@
 
     <!-- Fase 3: ecualizador -->
     <string name="equalizer_title">Ecualizador</string>
-    <string name="eq_enable">Activar ecualizador</string>
-    <string name="eq_presets">Preajustes</string>
-    <string name="eq_bands">Bandas</string>
-    <string name="eq_bass_boost">Refuerzo de graves</string>
-    <string name="eq_reset">Restablecer</string>
-    <string name="eq_needs_playback">Inicia la reproducción para configurar el ecualizador.\nLos efectos se aplican a la sesión de audio del reproductor.</string>
-    <string name="eq_unavailable">Este dispositivo no ofrece un ecualizador compatible.\nRadilloPlayerWave no simula efectos que no puede aplicar de verdad.</string>
 
     <!-- Fase 3: ajustes -->
     <string name="settings_title">Ajustes</string>
@@ -207,6 +200,7 @@
     <string name="np_crossfade_toggle">Activar o desactivar el crossfade</string>
     <string name="toast_crossfade_on">Crossfade activado (%d s)</string>
     <string name="toast_crossfade_off">Crossfade desactivado</string>
+    <string name="equalizer_system_missing">Este equipo no tiene ecualizador del sistema.</string>
     <string name="np_equalizer">Ecualizador</string>
     <string name="np_queue">Cola</string>
     <string name="vis_scene_previous">Escena anterior</string>

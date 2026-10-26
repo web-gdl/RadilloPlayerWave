@@ -3,7 +3,6 @@ package com.radillo.playerwave.data.settings
 import android.content.Context
 import android.content.SharedPreferences
 import com.radillo.playerwave.core.model.AppSettings
-import com.radillo.playerwave.core.model.AudioEffectsSettings
 import com.radillo.playerwave.core.model.ThemeMode
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -18,13 +17,7 @@ interface AppSettingsRepository {
     suspend fun update(transform: (AppSettings) -> AppSettings)
 }
 
-interface AudioEffectsSettingsRepository {
-    val settings: Flow<AudioEffectsSettings>
-    fun snapshot(): AudioEffectsSettings
-    suspend fun update(transform: (AudioEffectsSettings) -> AudioEffectsSettings)
-}
-
-/** Ajustes generales y de efectos en `SharedPreferences` (archivo "app_settings"). */
+/** Ajustes generales en `SharedPreferences` (archivo "app_settings"). */
 @Singleton
 class PrefsAppSettingsRepository @Inject constructor(
     @ApplicationContext context: Context,
@@ -48,21 +41,6 @@ class PrefsAppSettingsRepository @Inject constructor(
         }
     }
 
-    val effects: Flow<AudioEffectsSettings> = prefs.observe { it.toEffects() }
-    fun effectsSnapshot(): AudioEffectsSettings = prefs.toEffects()
-
-    fun updateEffects(transform: (AudioEffectsSettings) -> AudioEffectsSettings) {
-        synchronized(lock) {
-            val next = transform(prefs.toEffects())
-            prefs.edit()
-                .putBoolean(KEY_EQ_ENABLED, next.enabled)
-                .putString(KEY_EQ_BANDS, next.bandLevelsMb.joinToString(","))
-                .putInt(KEY_EQ_PRESET, next.presetIndex)
-                .putInt(KEY_BASS_BOOST, next.bassBoostStrength)
-                .apply()
-        }
-    }
-
     private fun SharedPreferences.toAppSettings(): AppSettings {
         val d = AppSettings()
         val mode = getString(KEY_THEME, null)?.let { name -> ThemeMode.entries.firstOrNull { it.name == name } } ?: d.themeMode
@@ -70,18 +48,6 @@ class PrefsAppSettingsRepository @Inject constructor(
             themeMode = mode,
             artworkColors = getBoolean(KEY_ARTWORK_COLORS, d.artworkColors),
             lockLandscape = when (getInt(KEY_LOCK_LANDSCAPE, -1)) { 0 -> false; 1 -> true; else -> null },
-        )
-    }
-
-    private fun SharedPreferences.toEffects(): AudioEffectsSettings {
-        val d = AudioEffectsSettings()
-        val bands = getString(KEY_EQ_BANDS, null)?.takeIf { it.isNotBlank() }
-            ?.split(',')?.mapNotNull { it.trim().toIntOrNull() } ?: d.bandLevelsMb
-        return AudioEffectsSettings(
-            enabled = getBoolean(KEY_EQ_ENABLED, d.enabled),
-            bandLevelsMb = bands,
-            presetIndex = getInt(KEY_EQ_PRESET, d.presetIndex),
-            bassBoostStrength = getInt(KEY_BASS_BOOST, d.bassBoostStrength),
         )
     }
 
@@ -100,19 +66,6 @@ class PrefsAppSettingsRepository @Inject constructor(
         private const val KEY_THEME = "theme_mode"
         private const val KEY_ARTWORK_COLORS = "artwork_colors"
         private const val KEY_LOCK_LANDSCAPE = "lock_landscape"
-        private const val KEY_EQ_ENABLED = "eq_enabled"
-        private const val KEY_EQ_BANDS = "eq_bands_mb"
-        private const val KEY_EQ_PRESET = "eq_preset"
-        private const val KEY_BASS_BOOST = "bass_boost"
     }
 }
 
-/** Adaptador para exponer la parte de efectos como su propia interfaz. */
-@Singleton
-class AudioEffectsSettingsAdapter @Inject constructor(
-    private val delegate: PrefsAppSettingsRepository,
-) : AudioEffectsSettingsRepository {
-    override val settings: Flow<AudioEffectsSettings> get() = delegate.effects
-    override fun snapshot(): AudioEffectsSettings = delegate.effectsSnapshot()
-    override suspend fun update(transform: (AudioEffectsSettings) -> AudioEffectsSettings) = delegate.updateEffects(transform)
-}

@@ -20,7 +20,7 @@ import com.radillo.playerwave.ui.common.collectWhenStarted
 import com.radillo.playerwave.ui.common.onUserChange
 import com.radillo.playerwave.ui.common.subtitle
 import com.radillo.playerwave.ui.common.visibleIf
-import com.radillo.playerwave.ui.effects.EqualizerFragment
+import com.radillo.playerwave.ui.common.openSystemEqualizer
 import com.radillo.playerwave.ui.library.TrackActionsViewModel
 import com.radillo.playerwave.ui.library.showTrackActions
 import com.radillo.playerwave.ui.navigator
@@ -62,7 +62,7 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
                 Toast.LENGTH_SHORT,
             ).show()
         }
-        b.btnEqualizer.setOnClickListener { navigator.push(EqualizerFragment()) }
+        b.btnEqualizer.setOnClickListener { openSystemEqualizer() }
         b.btnQueue.setOnClickListener { navigator.push(QueueFragment()) }
         // El temporizador de apagado pasó al menú «⋮» (su lugar en las tarjetas es ahora el crossfade).
         b.btnMore.setOnClickListener {

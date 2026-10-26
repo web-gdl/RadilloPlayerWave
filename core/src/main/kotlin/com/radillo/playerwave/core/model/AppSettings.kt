@@ -14,15 +14,3 @@ data class AppSettings(
     val lockLandscape: Boolean? = null,
 )
 
-/**
- * Ajustes del ecualizador y efectos. Las bandas se guardan en milibelios (como las expone
- * `android.media.audiofx.Equalizer`); una lista vacía significa "plano".
- */
-data class AudioEffectsSettings(
-    val enabled: Boolean = false,
-    val bandLevelsMb: List<Int> = emptyList(),
-    /** Índice del preajuste de la plataforma aplicado, o -1 si los niveles son manuales. */
-    val presetIndex: Int = -1,
-    /** Refuerzo de graves, 0..1000. */
-    val bassBoostStrength: Int = 0,
-)

@@ -19,8 +19,8 @@ en una memoria USB, organiza por canciones, álbumes, artistas, carpetas y lista
 busca, sigue sonando en segundo plano con controles en la notificación y la pantalla bloqueada
 (también cuando el escritorio o la radio del coche piden el audio), recuerda dónde te quedaste,
 permite **editar etiquetas y portada** de los MP3 (se guardan dentro del archivo),
-tiene temporizador de apagado y usa el ecualizador y el refuerzo de graves del propio dispositivo
-cuando existen de verdad (nunca los simula).
+tiene temporizador de apagado y abre el ecualizador del propio equipo (en el estéreo, el del
+sistema, con balance izquierda/derecha y adelante/atrás).
 
 Lo que lo distingue es el **visualizador**: analiza el audio que reproduce (FFT en tiempo real
 sobre el PCM, sin micrófono) y lo convierte en siete escenas originales — Espectro, Osciloscopio,
@@ -108,10 +108,14 @@ trabajo cada medio segundo. En la 0.14.1 el menú «⋮» va junto al título de
 ajustes del visualizador son un botón con texto, «Ajustar escena», abajo a la derecha (ya no un
 segundo engrane bajo el de Ajustes).
 
+**0.15.0:** la app ya no trae ecualizador propio. El botón «Ecualizador» (en «Reproduciendo» y en
+Ajustes) abre el ecualizador del estéreo, que además controla el balance izquierda/derecha y
+adelante/atrás de las bocinas. En un teléfono abre el ecualizador de Android, si el teléfono tiene.
+
 **Funciones:** biblioteca de música local (canciones,
 álbumes, artistas, carpetas y listas), favoritos, búsqueda, reproducción en segundo plano con
-notificación y pantalla bloqueada, cola y mini reproductor, temporizador de apagado, ecualizador y
-refuerzo de graves del dispositivo (solo cuando existen de verdad), tema claro/oscuro con acento de
+notificación y pantalla bloqueada, cola y mini reproductor, temporizador de apagado, acceso al
+ecualizador del sistema (balance y fader en el estéreo), tema claro/oscuro con acento de
 la carátula, disposición adaptada a pantallas anchas, y el visualizador con siete escenas, modo
 inmersivo, paletas, ajustes y gobernador de calidad. Pendiente de prueba en el equipo real por
 parte de sus usuarios (ver la pantalla Diagnóstico).

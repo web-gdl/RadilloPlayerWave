@@ -9,6 +9,12 @@
          (exportado y sin permiso en el equipo). Necesario para verlo desde Android 11. -->
     <queries>
         <package android:name="com.jancar.services" />
+        <!-- Ecualizador del sistema (SystemEqualizer): la app de audio del estéreo o el panel de Android. -->
+        <package android:name="com.jancar.audiosettings" />
+        <package android:name="com.jancar.settings" />
+        <intent>
+            <action android:name="android.media.action.DISPLAY_AUDIO_EFFECT_CONTROL_PANEL" />
+        </intent>
     </queries>
 
     <application>

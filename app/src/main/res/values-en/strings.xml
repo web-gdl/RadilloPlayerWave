@@ -102,13 +102,6 @@
 
     <!-- Phase 3: equalizer -->
     <string name="equalizer_title">Equalizer</string>
-    <string name="eq_enable">Enable equalizer</string>
-    <string name="eq_presets">Presets</string>
-    <string name="eq_bands">Bands</string>
-    <string name="eq_bass_boost">Bass boost</string>
-    <string name="eq_reset">Reset</string>
-    <string name="eq_needs_playback">Start playback to set up the equalizer.\nEffects are applied to the player’s audio session.</string>
-    <string name="eq_unavailable">This device doesn’t offer a compatible equalizer.\nRadilloPlayerWave doesn’t simulate effects it can’t really apply.</string>
 
     <!-- Phase 3: settings -->
     <string name="settings_title">Settings</string>
@@ -205,6 +198,7 @@
     <string name="np_crossfade_toggle">Turn crossfade on or off</string>
     <string name="toast_crossfade_on">Crossfade on (%d s)</string>
     <string name="toast_crossfade_off">Crossfade off</string>
+    <string name="equalizer_system_missing">This device has no system equalizer.</string>
     <string name="np_equalizer">Equalizer</string>
     <string name="np_queue">Queue</string>
     <string name="vis_scene_previous">Previous scene</string>

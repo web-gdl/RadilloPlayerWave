@@ -9,8 +9,6 @@ import com.radillo.playerwave.data.library.LibraryRepository
 import com.radillo.playerwave.data.library.LibraryRepositoryImpl
 import com.radillo.playerwave.data.library.db.RadilloDatabase
 import com.radillo.playerwave.data.settings.AppSettingsRepository
-import com.radillo.playerwave.data.settings.AudioEffectsSettingsAdapter
-import com.radillo.playerwave.data.settings.AudioEffectsSettingsRepository
 import com.radillo.playerwave.data.settings.PrefsAppSettingsRepository
 import com.radillo.playerwave.data.settings.PrefsVisualizerSettingsRepository
 import com.radillo.playerwave.data.settings.VisualizerSettingsRepository
@@ -57,8 +55,4 @@ abstract class DataBindsModule {
     @Binds
     @Singleton
     abstract fun bindAppSettings(impl: PrefsAppSettingsRepository): AppSettingsRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindAudioEffectsSettings(impl: AudioEffectsSettingsAdapter): AudioEffectsSettingsRepository
 }

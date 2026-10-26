@@ -116,15 +116,12 @@ el coste de mantenimiento.
 
 ## Favoritos, listas, ajustes y efectos (Fase 3)
 
-- **Ecualizador y refuerzo de graves** usan los efectos del propio dispositivo
-  (`android.media.audiofx`) sobre la sesión de audio del reproductor. Hace falta haber iniciado la
-  reproducción al menos una vez para que exista la sesión; hasta entonces la pantalla lo indica.
-  Si el dispositivo no ofrece un `Equalizer` operativo, la pantalla dice que no está disponible:
-  no se simula nada. El número de bandas, su rango (normalmente ±15 dB) y los nombres de los
-  preajustes los decide el fabricante (suelen venir en inglés).
-- Los efectos se aplican al `audioSessionId` del ExoPlayer de esta app; no afectan a otras apps.
-  Con salida Bluetooth algunos dispositivos aplican su propio procesado y el efecto puede ser
-  menos perceptible.
+- **Ecualizador (desde la 0.15.0):** la app no trae uno propio; abre el del sistema. En el estéreo
+  Jancar es la app de audio del equipo (`com.jancar.audiosettings`, la misma que abren el escritorio
+  y la música de fábrica), con ecualizador, balance y fader, y se aplica a todo el audio del equipo.
+  En un teléfono se abre el panel estándar de Android (`ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL`)
+  si el fabricante trae uno; si no hay ninguno, la app lo avisa. La app anuncia su sesión de audio
+  (`ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION`) para los ecualizadores que actúan por sesión.
 - **Favoritos y listas** se guardan en la base de datos local de la app (Room), no en MediaStore:
   no se comparten con otros reproductores y se pierden al desinstalar la app. Durante el
   desarrollo la base de datos usa *migración destructiva*: al cambiar el esquema entre versiones

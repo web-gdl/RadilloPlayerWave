@@ -32,7 +32,6 @@ class ResourcesInflationTest {
         R.layout.fragment_now_playing,
         R.layout.fragment_visualizer,
         R.layout.dialog_visualizer_settings,
-        R.layout.fragment_equalizer,
         R.layout.fragment_settings,
         R.layout.fragment_diagnostics,
         R.layout.fragment_tag_editor,
