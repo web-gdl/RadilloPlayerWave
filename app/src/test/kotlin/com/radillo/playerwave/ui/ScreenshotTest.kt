@@ -50,15 +50,17 @@ class ScreenshotTest {
 
     private val outDir = File("build/outputs/screenshots").apply { mkdirs() }
 
+    // Canciones y artistas inventados: las capturas también van a la ficha de Google Play, donde no
+    // deben aparecer nombres de artistas ni obras reales.
     private val songs = listOf(
-        "Bohemian Rhapsody" to "Queen · A Night at the Opera",
-        "Hotel California" to "Eagles · Hotel California",
-        "La Bamba" to "Ritchie Valens · La Bamba",
-        "Rayando el sol" to "Maná · Falta amor",
-        "De música ligera" to "Soda Stereo · Canción animal",
-        "Oye cómo va" to "Santana · Abraxas",
-        "Clandestino" to "Manu Chao · Clandestino",
-        "Lamento boliviano" to "Enanitos Verdes · Big Bang",
+        "Luces de carretera" to "Los Kilómetros · Ruta nocturna",
+        "Kilómetro cero" to "Marea Alta · Mapa de sal",
+        "Ciudad en espejo" to "Nube Norte · Reflejos",
+        "Sol de mediodía" to "Arena Roja · Verano largo",
+        "Frecuencia modulada" to "Radio Faro · Onda corta",
+        "Volver al mar" to "Brisa Sur · Puerto",
+        "Señales" to "Los Kilómetros · Ruta nocturna",
+        "Camino de vuelta" to "Marea Alta · Mapa de sal",
     )
 
     private fun themed(night: Boolean): Context {
@@ -94,8 +96,8 @@ class ScreenshotTest {
         listOf("navLibrary", "navNowPlaying", "navVisualizer").forEach { root.find(it)?.isSelected = it == selectedNav }
         val miniRoot = root.find("miniPlayer")
         miniRoot?.visibility = if (mini) View.VISIBLE else View.GONE
-        miniRoot?.text("miniTitle", "Hotel California")
-        miniRoot?.text("miniSubtitle", "Eagles · Hotel California")
+        miniRoot?.text("miniTitle", "Luces de carretera")
+        miniRoot?.text("miniSubtitle", "Los Kilómetros · Ruta nocturna")
         (miniRoot?.find("miniArt") as? ImageView)?.setImageResource(R.drawable.tile_note)
         (miniRoot?.find("miniPlay") as? ImageView)?.setImageResource(R.drawable.ic_pause)
         (miniRoot?.find("miniProgress") as? android.widget.ProgressBar)?.progress = 420
@@ -134,11 +136,11 @@ class ScreenshotTest {
     private fun nowPlaying(ctx: Context): View {
         val v = LayoutInflater.from(ctx).inflate(R.layout.fragment_now_playing, null, false)
         v.show("emptyText", false)
-        v.text("trackTitle", "Hotel California")
-        v.text("trackSubtitle", "Eagles · Hotel California")
+        v.text("trackTitle", "Luces de carretera")
+        v.text("trackSubtitle", "Los Kilómetros · Ruta nocturna")
         v.text("position", "2:41")
         v.text("duration", "6:30")
-        v.text("queueInfo", "A continuación: La Bamba")
+        v.text("queueInfo", "A continuación: Kilómetro cero")
         (v.find("seek") as? SeekBar)?.progress = 420
         (v.find("art") as? ImageView)?.setImageResource(R.drawable.tile_note)
         v.find("artFrame")?.clipToOutline = true
@@ -183,8 +185,8 @@ class ScreenshotTest {
         val v = LayoutInflater.from(ctx).inflate(R.layout.fragment_visualizer, null, false)
         v.background = null
         v.find("surface")?.visibility = View.INVISIBLE
-        v.text("trackTitle", "Hotel California")
-        v.text("trackSubtitle", "Eagles")
+        v.text("trackTitle", "Luces de carretera")
+        v.text("trackSubtitle", "Los Kilómetros")
         v.show("status", false)
         v.text("sceneName", "Espectro")
         (v.find("btnPlay") as? ImageView)?.setImageResource(R.drawable.ic_pause)

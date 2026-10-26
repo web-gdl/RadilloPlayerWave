@@ -16,6 +16,9 @@
     <!-- Los permisos del servicio en primer plano los declara el módulo :player. -->
     <!-- Seguir con la música al encender el estéreo si la app ya no estaba abierta. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Sin internet (política de privacidad): por si alguna biblioteca lo pidiera, se quita. -->
+    <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />
 
     <!-- Saber si el equipo tiene selector de carpetas (para conceder la USB al editor). -->
     <queries>

@@ -112,6 +112,10 @@ segundo engrane bajo el de Ajustes).
 Ajustes) abre el ecualizador del estéreo, que además controla el balance izquierda/derecha y
 adelante/atrás de las bocinas. En un teléfono abre el ecualizador de Android, si el teléfono tiene.
 
+**0.15.1:** preparada para Google Play: paquete `.aab` firmado, [política de privacidad](docs/PRIVACY.md)
+(la app no recopila datos ni usa internet), ficha de la tienda en `docs/play/` y guía de
+publicación en [docs/PLAY_STORE.md](docs/PLAY_STORE.md).
+
 **Funciones:** biblioteca de música local (canciones,
 álbumes, artistas, carpetas y listas), favoritos, búsqueda, reproducción en segundo plano con
 notificación y pantalla bloqueada, cola y mini reproductor, temporizador de apagado, acceso al
