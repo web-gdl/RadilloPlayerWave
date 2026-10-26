@@ -18,6 +18,7 @@ import com.radillo.playerwave.core.device.GpuProbe
 import com.radillo.playerwave.core.diagnostics.EventLog
 import com.radillo.playerwave.core.diagnostics.RenderMode
 import com.radillo.playerwave.data.settings.VisualizerSettingsRepository
+import com.radillo.playerwave.player.audiofx.SystemEqualizer
 import com.radillo.playerwave.player.jancar.JancarStatus
 import com.radillo.playerwave.visualizer.engine.VisualizerEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -103,6 +104,7 @@ class DiagnosticsViewModel @Inject constructor(
             appendLine("Dibujo: elegido ${RenderMode.choice} · efectivo ${if (RenderMode.useGpu()) "GPU" else "CPU"}" + if (RenderMode.forcedCpuAfterCrash) " · CPU forzada tras un cierre" else "")
             appendLine("Estéreo: ${JancarStatus.summary()}")
             appendLine("Señales del auto: ${CarSignals.summary()}")
+            appendLine("Ecualizador: ${SystemEqualizer.summary(context)}")
             appendLine()
             appendLine("— Registro —")
             EventLog.entries().forEach { appendLine(it) }

@@ -201,6 +201,9 @@
     <string name="toast_crossfade_on">Crossfade activado (%d s)</string>
     <string name="toast_crossfade_off">Crossfade desactivado</string>
     <string name="equalizer_system_missing">Este equipo no tiene ecualizador del sistema.</string>
+    <string name="equalizer_choose_app">Elige la app del ecualizador del equipo</string>
+    <string name="equalizer_app">App del ecualizador</string>
+    <string name="equalizer_app_auto">Automática</string>
     <string name="np_equalizer">Ecualizador</string>
     <string name="np_queue">Cola</string>
     <string name="vis_scene_previous">Escena anterior</string>

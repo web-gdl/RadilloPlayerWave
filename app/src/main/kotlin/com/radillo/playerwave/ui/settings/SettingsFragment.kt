@@ -13,6 +13,8 @@ import com.radillo.playerwave.core.settings.PlaybackSettings
 import com.radillo.playerwave.databinding.FragmentSettingsBinding
 import com.radillo.playerwave.ui.common.collectWhenStarted
 import com.radillo.playerwave.ui.diagnostics.DiagnosticsFragment
+import com.radillo.playerwave.player.audiofx.SystemEqualizer
+import com.radillo.playerwave.ui.common.chooseSystemEqualizer
 import com.radillo.playerwave.ui.common.openSystemEqualizer
 import com.radillo.playerwave.ui.library.scanSummary
 import com.radillo.playerwave.ui.navigator
@@ -36,6 +38,11 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         val b = FragmentSettingsBinding.bind(view)
         b.btnBack.setOnClickListener { navigator.back() }
         b.rowEqualizer.setOnClickListener { openSystemEqualizer() }
+        val showEqualizerApp = {
+            b.equalizerAppValue.text = SystemEqualizer.chosen(requireContext())?.label ?: getString(R.string.equalizer_app_auto)
+        }
+        showEqualizerApp()
+        b.rowEqualizerApp.setOnClickListener { chooseSystemEqualizer(openAfter = false, onChosen = showEqualizerApp) }
         b.rowDiagnostics.setOnClickListener { navigator.push(DiagnosticsFragment()) }
         b.rowLicenses.setOnClickListener { showLicenses() }
         b.rowRescan.setOnClickListener { viewModel.rescan() }

@@ -111,6 +111,41 @@
                 android:drawableTint="@color/text_secondary"
                 android:text="@string/equalizer_title" />
 
+            <!-- Qué app es el ecualizador del equipo (se detecta sola; aquí se puede cambiar). -->
+            <LinearLayout
+                android:id="@+id/rowEqualizerApp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:minHeight="@dimen/row_height"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:paddingStart="40dp"
+                    android:text="@string/equalizer_app"
+                    android:textColor="@color/text_primary"
+                    android:textSize="@dimen/text_body" />
+
+                <TextView
+                    android:id="@+id/equalizerAppValue"
+                    style="@style/Text.Secondary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/space_s"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:drawablePadding="@dimen/space_s"
+                    android:drawableTint="@color/text_secondary"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:maxWidth="320dp" />
+            </LinearLayout>
+
             <!-- Biblioteca -->
             <TextView
                 style="@style/Text.Section"

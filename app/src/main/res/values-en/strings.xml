@@ -199,6 +199,9 @@
     <string name="toast_crossfade_on">Crossfade on (%d s)</string>
     <string name="toast_crossfade_off">Crossfade off</string>
     <string name="equalizer_system_missing">This device has no system equalizer.</string>
+    <string name="equalizer_choose_app">Choose the device equalizer app</string>
+    <string name="equalizer_app">Equalizer app</string>
+    <string name="equalizer_app_auto">Automatic</string>
     <string name="np_equalizer">Equalizer</string>
     <string name="np_queue">Queue</string>
     <string name="vis_scene_previous">Previous scene</string>
