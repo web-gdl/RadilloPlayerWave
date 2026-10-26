@@ -50,20 +50,30 @@ jobs:
             echo "mode=temporal (debug)" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Pruebas unitarias y APK release
+      - name: Pruebas unitarias, APK y AAB release
         shell: bash
         env:
           RADILLO_KEYSTORE_PASSWORD: ${{ secrets.RADILLO_KEYSTORE_PASSWORD }}
           RADILLO_KEY_PASSWORD: ${{ secrets.RADILLO_KEYSTORE_PASSWORD }}
         run: |
           set -o pipefail
-          ./gradlew testDebugUnitTest :app:assembleRelease --no-daemon --stacktrace --console=plain 2>&1 | tee build.log
+          ./gradlew testDebugUnitTest :app:assembleRelease :app:bundleRelease --no-daemon --stacktrace --console=plain 2>&1 | tee build.log
 
       - name: Publicar APK como artefacto
         uses: actions/upload-artifact@v4
         with:
           name: RadilloPlayerWave-release-apk
           path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      # Paquete para Google Play (.aab). Solo sirve firmado con la clave propia (la de subida).
+      - name: Publicar AAB para Google Play como artefacto
+        if: steps.signing.outputs.mode == 'propia'
+        uses: actions/upload-artifact@v4
+        with:
+          name: RadilloPlayerWave-google-play-aab
+          path: app/build/outputs/bundle/release/*.aab
           if-no-files-found: error
           retention-days: 30
 
