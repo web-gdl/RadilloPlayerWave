@@ -316,6 +316,34 @@ Conclusiones: el presupuesto de memoria (≤ 90 MB) se cumple con holgura; la el
 visualizador en Android 8.1 es la correcta. Restaurar una cola tan grande bloqueaba el hilo
 principal ~2 s al arrancar: desde la 0.10.2 se lee en segundo plano.
 
+### 0.16.0: tirones del visualizador y cambio de escena desde la carátula (12-11-2026)
+
+Reporte de varios usuarios: la app da tirones o se congela varios segundos al entrar al
+visualizador, sobre todo «Espectro» a pantalla completa; la música no se corta y, al volver, hay
+menos barras. Causas encontradas y corrección:
+
+- **Gobernador de calidad lento** (demostrado con pruebas): con frames de 120 ms y tope de 30 fps
+  tardaba 43,8 s en llegar al mínimo (ventanas de 60 frames + 1,5 s de gracia por paso), y con
+  frames de 300 ms no bajaba **nunca** (un `dt` > 250 ms se tomaba por pausa). Ahora una ventana
+  mala se cierra al segundo, una media de más del doble del umbral baja × 0,5 y la pausa es > 1 s:
+  4,3 s y 4,5 s respectivamente. Cada cambio de calidad queda en el registro de Diagnóstico.
+- **El hilo de render acaparaba el cerrojo de la superficie:** `SurfaceHolder.lockCanvas` lo
+  mantiene tomado todo el frame y el bucle lo retomaba enseguida; el hilo principal lo necesita
+  para cambiar tamaño o visibilidad (pantalla completa) y podía esperar varios frames. Ahora hay
+  una pausa obligada entre frames (3–20 ms, ⅛ del frame) y el hilo corre con prioridad normal.
+- **Ajustes bloqueados tras el frame:** `VisualizerEngine` aplicaba cada ajuste con `synchronized`
+  sobre el mismo cerrojo del render. Ahora `configure` usa `tryLock` y, si está ocupado, encola el
+  cambio para que lo aplique el hilo de render.
+- **Píxeles:** `VisualizerCostTest` (Skia real, lienzo de mapa de bits) mide que «Espectro» a
+  1024×600 cuesta 3,4 veces lo que en el recuadro de 360×360. En gama baja sin GPU la superficie usa
+  un búfer de ≤ 300 000 px (714×418) que el compositor amplía: 45 % menos en «Espectro».
+- **Espectro:** el halo radial es más de la mitad del frame (1,39 ms con todo → 0,19 ms sin halo ni
+  resplandores y con menos barras, en la máquina de CI). Se apaga con calidad < 0,7 y los
+  resplandores con < 0,4.
+
+Además, en «Reproduciendo»: con el visualizador en el recuadro, doble toque o deslizar cambia de
+escena (con su nombre) y un toque vuelve a la carátula. Pendiente de confirmar en el equipo.
+
 ### 0.15.0: ecualizador del sistema (26-10-2026)
 
 - Pedido del usuario: el estéreo trae un ecualizador mejor (con balance izquierda/derecha y

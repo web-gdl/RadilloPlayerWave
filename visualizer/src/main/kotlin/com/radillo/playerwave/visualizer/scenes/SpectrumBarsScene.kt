@@ -15,10 +15,11 @@ import kotlin.math.roundToInt
  * graves tras las barras y destello en los transitorios. El número de barras depende de la
  * densidad; las bandas del analizador se remuestrean linealmente.
  *
- * Es la escena que más píxeles translúcidos pinta por frame (un resplandor por barra, más ancho
- * que la barra, y un halo radial de media pantalla): dibujando con la CPU eso pesa más que las
- * propias barras. Por eso, cuando el gobernador baja la calidad, además de quitar barras se
- * apagan primero los resplandores y después el halo.
+ * Es de las escenas que más píxeles translúcidos pinta por frame (un halo radial de media pantalla
+ * y un resplandor por barra, más ancho que la barra). Medido con `VisualizerCostTest` dibujando
+ * con la CPU, **el halo es más de la mitad del coste del frame**: pesa más que todas las barras
+ * juntas. Por eso, cuando el gobernador baja la calidad, además de quitar barras se apaga primero
+ * el halo y después los resplandores.
  */
 class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Espectro") {
 
@@ -146,9 +147,9 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Espectro") {
 
     companion object {
         const val ID = "spectrum"
-        /** Por debajo de esta calidad del gobernador se apagan los resplandores de las barras. */
-        const val GLOW_MIN_QUALITY = 0.7f
-        /** Y por debajo de esta, también el halo de graves. */
-        const val HALO_MIN_QUALITY = 0.4f
+        /** Por debajo de esta calidad del gobernador se apaga el halo de graves (lo más caro). */
+        const val HALO_MIN_QUALITY = 0.7f
+        /** Y por debajo de esta, también los resplandores de las barras. */
+        const val GLOW_MIN_QUALITY = 0.4f
     }
 }
