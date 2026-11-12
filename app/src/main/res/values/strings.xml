@@ -172,7 +172,8 @@
     <string name="diag_no">No</string>
 
     <string name="cd_more">Más opciones</string>
-    <string name="np_toggle_visualizer">Alternar carátula y visualizador</string>
+    <string name="np_toggle_visualizer">Carátula o visualizador. Con el visualizador: doble toque o deslizar cambia de visualizador; un toque vuelve a la carátula</string>
+    <string name="np_visualizer_hint">Doble toque o desliza: otro visualizador\nUn toque: carátula</string>
     <plurals name="track_count">
         <item quantity="one">%d canción</item>
         <item quantity="other">%d canciones</item>

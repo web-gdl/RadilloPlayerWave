@@ -128,4 +128,43 @@ class QualityGovernorTest {
         }
         assertThat(governor.quality).isEqualTo(1f)
     }
+
+    /** Segundos de frames de [dt] hasta que la calidad llega a [target]. */
+    private fun QualityGovernor.secondsUntil(target: Float, dt: Float, limitSeconds: Float = 120f): Float {
+        var t = 0f
+        while (quality > target + 1e-6f && t < limitSeconds) {
+            onFrame(dt)
+            t += dt
+        }
+        return t
+    }
+
+    @Test
+    fun `heavy stutter reaches the floor in a few seconds, not most of a minute`() {
+        // Autoestéreo: tope de 30 fps y frames de 120 ms (el reporte: tirones en pantalla completa).
+        val governor = QualityGovernor(minQuality = 0.25f)
+        governor.targetFrameSeconds = 1f / 30f
+        val seconds = governor.secondsUntil(0.25f, dt = 0.12f)
+        assertThat(governor.quality).isWithin(1e-6f).of(0.25f)
+        // Antes: ventanas de 60 frames (7,2 s) + 1,5 s de gracia por paso ≈ 43 s de tirones.
+        assertThat(seconds).isLessThan(6f)
+    }
+
+    @Test
+    fun `very slow frames are stutter, not a pause`() {
+        // Frames de 300 ms: antes cada uno se tomaba por una «pausa» y la calidad no bajaba nunca.
+        val governor = QualityGovernor(minQuality = 0.25f)
+        governor.targetFrameSeconds = 1f / 30f
+        val seconds = governor.secondsUntil(0.25f, dt = 0.3f)
+        assertThat(governor.quality).isWithin(1e-6f).of(0.25f)
+        assertThat(seconds).isLessThan(8f)
+    }
+
+    @Test
+    fun `mild jank still steps down gently`() {
+        val governor = QualityGovernor(warmUpSeconds = 0f)
+        // 50 ms a 60 Hz: tardío, pero no el doble del umbral (26,7 ms × 2): paso suave de × 0,75.
+        val changes = governor.feed(janky, 40)
+        assertThat(changes.first()).isWithin(1e-6f).of(0.75f)
+    }
 }

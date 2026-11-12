@@ -21,7 +21,11 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 /** Qué están viendo las escenas: audio real alineado, decaimiento en pausa, o respaldo sintético. */
 enum class DataState { LIVE, IDLE, SYNTHETIC }
@@ -39,7 +43,10 @@ enum class DataState { LIVE, IDLE, SYNTHETIC }
  *
  * Hilos: la configuración llega del hilo principal y el render de su propio hilo; todo el estado
  * de escenas se protege con un único cerrojo, de modo que ninguna escena se toca desde dos hilos
- * a la vez.
+ * a la vez. **El hilo principal nunca espera a que termine un frame:** si el cerrojo está ocupado
+ * (el hilo de render dibujando, que en un equipo modesto puede tardar más de 100 ms), el cambio se
+ * encola y lo aplica el propio hilo de render al empezar o terminar el frame ([configure]). Antes,
+ * cada ajuste desde la interfaz se quedaba bloqueado detrás del frame en curso y la app daba tirones.
  */
 class VisualizerEngine(
     private val source: AudioSource,
@@ -58,7 +65,9 @@ class VisualizerEngine(
     private val analyzer = AudioAnalyzer(analyzerConfig)
     private val history = FrameHistory()
     private val synthetic = SyntheticFrameSource(analyzerConfig)
-    private val lock = Any()
+    private val lock = ReentrantLock()
+    /** Cambios de configuración que llegaron con el cerrojo ocupado; los aplica quien lo tenga. */
+    private val pending = ConcurrentLinkedQueue<() -> Unit>()
 
     private var analysisJob: Job? = null
     /** Trabajo cancelado que quizá aún no ha terminado (ver [startAnalysis]). */
@@ -122,19 +131,56 @@ class VisualizerEngine(
     // ---- Ciclo de vida ----
 
     fun attach() {
-        synchronized(lock) {
+        lock.withLock {
+            drainPending()
             attachedSurfaces++
             if (analysisJob == null) startAnalysis()
+            // El hueco entre una superficie y la siguiente no es un frame lento.
+            lastFrameNanos = 0L
+            governor.reset()
         }
     }
 
     fun detach() {
-        synchronized(lock) {
+        lock.withLock {
+            drainPending()
             attachedSurfaces = (attachedSurfaces - 1).coerceAtLeast(0)
             if (attachedSurfaces == 0) {
                 stoppingJob = analysisJob?.also { it.cancel() }
                 analysisJob = null
             }
+        }
+    }
+
+    /**
+     * Ejecuta un cambio de configuración bajo el cerrojo **sin esperar**: si está libre, ahora; si
+     * lo tiene el hilo de render, se encola y él lo aplica en este mismo frame o en el siguiente.
+     */
+    private fun configure(action: () -> Unit) {
+        if (pending.isEmpty() && lock.tryLock()) {
+            try {
+                action()
+            } finally {
+                lock.unlock()
+            }
+            return
+        }
+        pending.add(action)
+        // Si entretanto el cerrojo quedó libre (el render ya no dibuja), nadie vaciaría la cola.
+        if (lock.tryLock()) {
+            try {
+                drainPending()
+            } finally {
+                lock.unlock()
+            }
+        }
+    }
+
+    /** Aplica lo encolado; llamar con el cerrojo tomado. */
+    private fun drainPending() {
+        while (true) {
+            val action = pending.poll() ?: return
+            action()
         }
     }
 
@@ -166,7 +212,7 @@ class VisualizerEngine(
         // (si no, seguiría «activo» y el visualizador quedaría en modo sintético hasta salir).
         job.invokeOnCompletion { cause ->
             if (cause != null && cause !is kotlinx.coroutines.CancellationException) {
-                synchronized(lock) { if (analysisJob === job) analysisJob = null }
+                lock.withLock { if (analysisJob === job) analysisJob = null }
             }
         }
     }
@@ -174,9 +220,9 @@ class VisualizerEngine(
     // ---- Configuración (cualquier hilo) ----
 
     fun setScene(id: String) {
-        synchronized(lock) {
-            if (id == scene?.id) return
-            val next = registry.create(id) ?: return
+        configure {
+            if (id == scene?.id) return@configure
+            val next = registry.create(id) ?: return@configure
             next.onAttach(params)
             if (width > 0 && height > 0) next.onResize(width, height)
             val previous = scene
@@ -192,9 +238,9 @@ class VisualizerEngine(
     }
 
     fun setParams(newParams: SceneParams) {
-        synchronized(lock) {
+        configure {
             val normalized = newParams.copy(quality = 1f, deviceScale = 1f)
-            if (normalized == userParams) return
+            if (normalized == userParams) return@configure
             userParams = normalized
             applyParams(effectiveParams())
         }
@@ -202,9 +248,9 @@ class VisualizerEngine(
 
     /** Factor fijo del perfil del dispositivo (0.6 en gama baja) que reduce la densidad de las escenas. */
     fun setDeviceScale(scale: Float) {
-        synchronized(lock) {
+        configure {
             val clamped = scale.coerceIn(0.2f, 1f)
-            if (clamped == deviceScale) return
+            if (clamped == deviceScale) return@configure
             deviceScale = clamped
             applyParams(effectiveParams())
         }
@@ -212,7 +258,7 @@ class VisualizerEngine(
 
     /** Calidad mínima a la que puede bajar el gobernador. */
     fun setMinQuality(min: Float) {
-        synchronized(lock) {
+        configure {
             governor.minQuality = min
             applyParams(effectiveParams())
         }
@@ -223,9 +269,9 @@ class VisualizerEngine(
      * calor). 0 o un valor ≥ al de la pantalla no tienen efecto.
      */
     fun setMaxFps(fps: Int) {
-        synchronized(lock) {
+        configure {
             val clamped = fps.coerceIn(0, 240)
-            if (clamped == maxFps) return
+            if (clamped == maxFps) return@configure
             maxFps = clamped
             governor.targetFrameSeconds = if (clamped > 0) 1f / clamped else 0f
         }
@@ -236,22 +282,22 @@ class VisualizerEngine(
      * densidad elegida por el usuario.
      */
     fun setAutoQuality(enabled: Boolean) {
-        synchronized(lock) {
-            if (governor.enabled == enabled) return
+        configure {
+            if (governor.enabled == enabled) return@configure
             governor.enabled = enabled
             applyParams(effectiveParams())
         }
     }
 
     fun setSyncOffsetMs(ms: Int) {
-        synchronized(lock) {
+        configure {
             syncOffsetUs = ms.toLong() * 1_000L
         }
     }
 
     fun onResize(widthPx: Int, heightPx: Int) {
-        synchronized(lock) {
-            if (widthPx == width && heightPx == height) return
+        configure {
+            if (widthPx == width && heightPx == height) return@configure
             width = widthPx
             height = heightPx
             scene?.onResize(widthPx, heightPx)
@@ -278,9 +324,12 @@ class VisualizerEngine(
      * [nowNanos] es `System.nanoTime()` al empezar el frame.
      */
     fun render(canvas: Canvas, nowNanos: Long) {
-        synchronized(lock) {
+        lock.withLock {
+            drainPending()
             step(nowNanos)
             draw(canvas)
+            // Lo que llegó mientras se dibujaba se aplica ya, sin esperar al siguiente frame.
+            drainPending()
         }
     }
 
@@ -291,7 +340,14 @@ class VisualizerEngine(
         lastFrameNanos = nowNanos
 
         // El gobernador decide con la duración real del frame (una pausa larga no cuenta como tardío).
-        governor.onFrame(rawDt)?.let { q -> applyParams(userParams.copy(quality = q, deviceScale = deviceScale)) }
+        governor.onFrame(rawDt)?.let { q ->
+            // Queda en el registro de Diagnóstico: sirve para saber si un equipo no da abasto.
+            EventLog.log(
+                "Visualizador: calidad ${(params.quality * 100).roundToInt()} % → ${(q * 100).roundToInt()} % " +
+                    "(${scene?.id}, ${width}×$height, último frame ${(rawDt * 1000).roundToInt()} ms)",
+            )
+            applyParams(userParams.copy(quality = q, deviceScale = deviceScale))
+        }
 
         val frame = pickFrame(nowNanos, dt)
         lastShown = frame

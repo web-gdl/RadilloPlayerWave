@@ -14,6 +14,11 @@ import kotlin.math.roundToInt
  * Escena A: espectro de barras suaves con capuchones de pico que caen por gravedad, halo de
  * graves tras las barras y destello en los transitorios. El número de barras depende de la
  * densidad; las bandas del analizador se remuestrean linealmente.
+ *
+ * Es la escena que más píxeles translúcidos pinta por frame (un resplandor por barra, más ancho
+ * que la barra, y un halo radial de media pantalla): dibujando con la CPU eso pesa más que las
+ * propias barras. Por eso, cuando el gobernador baja la calidad, además de quitar barras se
+ * apagan primero los resplandores y después el halo.
  */
 class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Espectro") {
 
@@ -35,6 +40,8 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Espectro") {
     private var barWidth = 0f
     private var gap = 0f
     private var leftPadding = 0f
+    private var drawGlow = true
+    private var drawHalo = true
 
     override fun rebuild() {
         val newCount = (40f * params.effectiveDensity).roundToInt().coerceIn(12, 96)
@@ -46,6 +53,8 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Espectro") {
             targets = FloatArray(barCount)
         }
         capPaint.color = palette.accent
+        drawGlow = params.quality >= GLOW_MIN_QUALITY
+        drawHalo = params.quality >= HALO_MIN_QUALITY
         if (!hasSize) return
         val w = width.toFloat()
         val h = height.toFloat()
@@ -104,8 +113,10 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Espectro") {
         val w = width.toFloat()
 
         // Halo de graves tras las barras.
-        haloPaint.alpha = alpha255((0.25f + 0.55f * bassGlow) * intensity.coerceAtMost(1f))
-        canvas.drawCircle(w * 0.5f, baseline, w * (0.35f + 0.45f * bassGlow), haloPaint)
+        if (drawHalo) {
+            haloPaint.alpha = alpha255((0.25f + 0.55f * bassGlow) * intensity.coerceAtMost(1f))
+            canvas.drawCircle(w * 0.5f, baseline, w * (0.35f + 0.45f * bassGlow), haloPaint)
+        }
 
         val minHeight = barWidth * 0.5f
         glowPaint.alpha = alpha255((0.16f + 0.45f * flash) * intensity.coerceAtMost(1f))
@@ -118,11 +129,13 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Espectro") {
             val top = baseline - barHeight
 
             // Resplandor (más ancho, translúcido).
-            canvas.drawRoundRect(
-                x - barWidth * 0.45f, top - barWidth * 0.6f,
-                x + barWidth * 1.45f, baseline + barWidth * 0.6f,
-                radius, radius, glowPaint,
-            )
+            if (drawGlow) {
+                canvas.drawRoundRect(
+                    x - barWidth * 0.45f, top - barWidth * 0.6f,
+                    x + barWidth * 1.45f, baseline + barWidth * 0.6f,
+                    radius, radius, glowPaint,
+                )
+            }
             // Barra.
             canvas.drawRoundRect(x, top, x + barWidth, baseline, radius, radius, barPaint)
             // Capuchón de pico.
@@ -133,5 +146,9 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Espectro") {
 
     companion object {
         const val ID = "spectrum"
+        /** Por debajo de esta calidad del gobernador se apagan los resplandores de las barras. */
+        const val GLOW_MIN_QUALITY = 0.7f
+        /** Y por debajo de esta, también el halo de graves. */
+        const val HALO_MIN_QUALITY = 0.4f
     }
 }

@@ -4,7 +4,12 @@ import com.radillo.playerwave.ui.library.ExtraAction
 import android.widget.Toast
 import android.app.AlertDialog
 import android.content.res.ColorStateList
+import android.annotation.SuppressLint
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -25,6 +30,8 @@ import com.radillo.playerwave.ui.library.TrackActionsViewModel
 import com.radillo.playerwave.ui.library.showTrackActions
 import com.radillo.playerwave.ui.navigator
 import com.radillo.playerwave.ui.visualizer.VisualizerViewModel
+import com.radillo.playerwave.ui.visualizer.sceneLabelRes
+import kotlin.math.abs
 import dagger.hilt.android.AndroidEntryPoint
 
 /** Pantalla «Reproduciendo»: carátula, progreso, controles, favorito, temporizador, ecualizador y cola. */
@@ -33,6 +40,11 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
 
     private companion object {
         const val KEY_ART_VISUALIZER = "now_playing_visualizer"
+        private const val KEY_ART_HINT_SHOWN = "now_playing_visualizer_hint"
+        private const val SCENE_LABEL_MS = 1_500L
+        private const val HINT_MS = 4_500L
+        /** Deslizamiento mínimo (fracción del ancho del recuadro) para cambiar de visualizador. */
+        private const val SWIPE_FRACTION = 0.15f
     }
 
     override val hidesMiniPlayer: Boolean get() = true
@@ -43,6 +55,8 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
     private val visualizer: VisualizerViewModel by viewModels()
     private var binding: FragmentNowPlayingBinding? = null
     private var dragging = false
+    private val handler = Handler(Looper.getMainLooper())
+    private val hideSceneLabel = Runnable { binding?.artSceneLabel?.visibleIf(false) }
     private var lastArt: String? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -73,14 +87,14 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
 
         // El recuadro de la carátula alterna con el visualizador en vivo (un toque cambia).
         b.artVisualizer.setEngine(visualizer.engine)
-        showVisualizerInArt(prefs().getBoolean(KEY_ART_VISUALIZER, true))
+        val visualizerInArt = prefs().getBoolean(KEY_ART_VISUALIZER, true)
+        showVisualizerInArt(visualizerInArt)
+        if (visualizerInArt) showArtHintOnce()
         // Esquinas redondeadas de la carátula (el fondo redondeado no recorta la imagen por sí solo).
         b.artFrame.clipToOutline = true
-        b.artFrame.setOnClickListener {
-            val next = b.artVisualizer.visibility != View.VISIBLE
-            prefs().edit().putBoolean(KEY_ART_VISUALIZER, next).apply()
-            showVisualizerInArt(next)
-        }
+        // Lectores de pantalla y teclado: «activar» alterna carátula y visualizador.
+        b.artFrame.setOnClickListener { toggleArtVisualizer() }
+        setUpArtGestures(b)
         b.seek.onUserChange(
             onChange = { progress ->
                 val duration = viewModel.state.value.durationMs
@@ -114,6 +128,7 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
     }
 
     override fun onDestroyView() {
+        handler.removeCallbacks(hideSceneLabel)
         binding = null
         lastArt = null
         lastPlaying = null
@@ -170,6 +185,91 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
         val b = binding ?: return
         b.artVisualizer.visibleIf(show)
         b.art.visibleIf(!show)
+        if (!show) {
+            handler.removeCallbacks(hideSceneLabel)
+            b.artSceneLabel.visibleIf(false)
+        }
+    }
+
+    private fun toggleArtVisualizer() {
+        val b = binding ?: return
+        val next = b.artVisualizer.visibility != View.VISIBLE
+        prefs().edit().putBoolean(KEY_ART_VISUALIZER, next).apply()
+        showVisualizerInArt(next)
+        if (next) showArtHintOnce()
+    }
+
+    /** La primera vez que aparece el visualizador en el recuadro se explica cómo cambiarlo desde aquí. */
+    private fun showArtHintOnce() {
+        if (prefs().getBoolean(KEY_ART_HINT_SHOWN, false)) return
+        prefs().edit().putBoolean(KEY_ART_HINT_SHOWN, true).apply()
+        showSceneLabel(getString(R.string.np_visualizer_hint), HINT_MS)
+    }
+
+    /**
+     * Gestos del recuadro:
+     * - con la carátula, un toque muestra el visualizador (al instante);
+     * - con el visualizador, **doble toque** o **deslizar** a los lados cambia de visualizador y
+     *   **un toque** vuelve a la carátula (se confirma tras el margen del doble toque).
+     */
+    @SuppressLint("ClickableViewAccessibility") // la activación accesible va por el OnClickListener
+    private fun setUpArtGestures(b: FragmentNowPlayingBinding) {
+        val listener = object : GestureDetector.SimpleOnGestureListener() {
+            /** El toque ya hizo su efecto al levantar el dedo (mostrar el visualizador). */
+            private var handledOnUp = false
+
+            override fun onDown(e: MotionEvent): Boolean {
+                handledOnUp = false
+                return true
+            }
+
+            override fun onSingleTapUp(e: MotionEvent): Boolean {
+                if (b.artVisualizer.visibility != View.VISIBLE) {
+                    handledOnUp = true
+                    toggleArtVisualizer()
+                }
+                return true
+            }
+
+            override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                if (!handledOnUp && b.artVisualizer.visibility == View.VISIBLE) toggleArtVisualizer()
+                return true
+            }
+
+            override fun onDoubleTap(e: MotionEvent): Boolean {
+                if (b.artVisualizer.visibility == View.VISIBLE) stepArtScene(1)
+                return true
+            }
+
+            override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+                if (e1 == null || b.artVisualizer.visibility != View.VISIBLE) return false
+                val dx = e2.x - e1.x
+                val dy = e2.y - e1.y
+                if (abs(dx) < b.artFrame.width * SWIPE_FRACTION || abs(dx) < abs(dy) * 1.5f) return false
+                stepArtScene(if (dx < 0) 1 else -1)
+                return true
+            }
+        }
+        val detector = GestureDetector(requireContext(), listener)
+        b.artFrame.setOnTouchListener { _, event -> detector.onTouchEvent(event) }
+    }
+
+    /** Visualizador siguiente o anterior, en bucle, sin salir de «Reproduciendo». */
+    private fun stepArtScene(delta: Int) {
+        val ids = visualizer.sceneIds
+        if (ids.isEmpty()) return
+        val current = ids.indexOf(visualizer.settings.value.sceneId).coerceAtLeast(0)
+        val next = ids[(current + delta).mod(ids.size)]
+        visualizer.selectScene(next)
+        showSceneLabel(getString(sceneLabelRes(next)), SCENE_LABEL_MS)
+    }
+
+    private fun showSceneLabel(text: String, millis: Long) {
+        val b = binding ?: return
+        b.artSceneLabel.text = text
+        b.artSceneLabel.visibleIf(true)
+        handler.removeCallbacks(hideSceneLabel)
+        handler.postDelayed(hideSceneLabel, millis)
     }
 
     private fun showSleepDialog() {

@@ -15,10 +15,16 @@ package com.radillo.playerwave.visualizer.engine
  *   (× 0.75); si ninguno lo fue durante [goodWindowsNeeded] ventanas seguidas y la calidad no es
  *   máxima, sube (× 1.2). Si una subida provoca una bajada poco después, la siguiente subida
  *   exige el doble de ventanas buenas (hasta 32), para no oscilar.
- * - Tras cada cambio, cambio de escena o de tamaño hay un periodo de gracia ([warmUpSeconds])
- *   sin decisiones, porque los primeros frames siempre son más lentos.
- * - Un `dt` mayor de 250 ms se interpreta como una pausa (vuelta del segundo plano) y reinicia
- *   la ventana en vez de contarse como tardío.
+ * - **Reacción rápida a los tirones:** una ventana que va mal no espera a llenarse; se cierra al
+ *   cumplir [BAD_WINDOW_SECONDS]. Y si de media los frames duran más del doble de lo tolerable, la
+ *   calidad baja de golpe a la mitad. (Antes, con frames de 120 ms una ventana de 60 frames
+ *   tardaba 7 s en cerrarse y llegar al mínimo llevaba ~40 s de tirones.)
+ * - Tras cada cambio de escena o de tamaño hay un periodo de gracia ([warmUpSeconds]) sin
+ *   decisiones, porque los primeros frames siempre son más lentos; tras bajar la calidad la gracia
+ *   es corta ([AFTER_DROP_WARM_UP_SECONDS]) para poder seguir bajando si aún no alcanza.
+ * - Un `dt` mayor de 1 s se interpreta como una pausa (vuelta del segundo plano) y reinicia la
+ *   ventana. Un frame de 300 ms **sí** es un tirón: antes se confundía con una pausa y, con
+ *   frames así de lentos, la calidad no bajaba nunca.
  */
 class QualityGovernor(
     minQuality: Float = 0.3f,
@@ -55,6 +61,7 @@ class QualityGovernor(
 
     private var frames = 0
     private var late = 0
+    private var windowSeconds = 0f
     private var windowMinDt = Float.MAX_VALUE
     private var period = 1f / 60f
     private var warmUpLeft = warmUpSeconds
@@ -66,6 +73,7 @@ class QualityGovernor(
     fun reset() {
         frames = 0
         late = 0
+        windowSeconds = 0f
         windowMinDt = Float.MAX_VALUE
         warmUpLeft = warmUpSeconds
         goodWindows = 0
@@ -87,13 +95,19 @@ class QualityGovernor(
         }
         if (dtSeconds < windowMinDt) windowMinDt = dtSeconds
         frames++
+        windowSeconds += dtSeconds
         val basePeriod = maxOf(period, targetFrameSeconds)
-        if (dtSeconds > maxOf(basePeriod * LATE_FACTOR, LATE_FLOOR_SECONDS)) late++
-        if (frames < windowFrames) return null
+        val lateThreshold = maxOf(basePeriod * LATE_FACTOR, LATE_FLOOR_SECONDS)
+        if (dtSeconds > lateThreshold) late++
+        // Una ventana que ya va mal se cierra por tiempo: no hay que aguantar 60 frames lentos.
+        val badSoFar = frames >= MIN_BAD_WINDOW_FRAMES && late >= frames * LATE_RATIO
+        if (frames < windowFrames && !(badSoFar && windowSeconds >= BAD_WINDOW_SECONDS)) return null
 
         val ratio = late.toFloat() / frames
+        val severe = windowSeconds / frames > lateThreshold * SEVERE_FACTOR
         frames = 0
         late = 0
+        windowSeconds = 0f
         // El periodo solo puede acortarse: una ventana en la que todos los frames son lentos no
         // debe hacernos creer que la pantalla es lenta (se asume un mínimo de 60 Hz).
         period = minOf(period, windowMinDt.coerceAtLeast(1f / 144f))
@@ -108,10 +122,10 @@ class QualityGovernor(
                     goodWindowsNeeded = minOf(goodWindowsNeeded * 2, MAX_GOOD_WINDOWS)
                     probing = 0
                 }
-                val next = (quality * DOWN_FACTOR).coerceAtLeast(minQuality)
+                val next = (quality * if (severe) SEVERE_DOWN_FACTOR else DOWN_FACTOR).coerceAtLeast(minQuality)
                 if (next != quality) {
                     quality = next
-                    warmUpLeft = warmUpSeconds
+                    warmUpLeft = minOf(warmUpSeconds, AFTER_DROP_WARM_UP_SECONDS)
                     next
                 } else {
                     null
@@ -137,7 +151,14 @@ class QualityGovernor(
     }
 
     private companion object {
-        const val PAUSE_SECONDS = 0.25f
+        const val PAUSE_SECONDS = 1f
+        /** Una ventana con ≥ 20 % de frames tardíos se cierra al cumplir este tiempo. */
+        const val BAD_WINDOW_SECONDS = 1f
+        const val MIN_BAD_WINDOW_FRAMES = 3
+        /** Media de la ventana por encima de este múltiplo del umbral: bajada de golpe. */
+        const val SEVERE_FACTOR = 2f
+        const val SEVERE_DOWN_FACTOR = 0.5f
+        const val AFTER_DROP_WARM_UP_SECONDS = 0.5f
         const val LATE_FACTOR = 1.6f
         const val LATE_FLOOR_SECONDS = 0.022f
         const val LATE_RATIO = 0.2f

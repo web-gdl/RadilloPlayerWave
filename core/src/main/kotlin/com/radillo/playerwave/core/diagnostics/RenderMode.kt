@@ -57,6 +57,15 @@ object RenderMode {
     }
 
     /**
+     * Presupuesto de píxeles por frame al dibujar con la CPU en un equipo de gama baja (0 = sin
+     * tope). La pantalla completa del autoestéreo (1024×600) se dibuja con la mitad de píxeles y
+     * el sistema la amplía; el recuadro de la carátula ya cabe y no cambia.
+     */
+    fun softwarePixelBudget(): Int = if (lowEnd && !useGpu()) LOW_END_SOFTWARE_PIXELS else 0
+
+    private const val LOW_END_SOFTWARE_PIXELS = 300_000
+
+    /**
      * Llamar justo antes de crear o destruir una superficie dibujada con GPU. Devuelve una ficha
      * para [endGpuTransition]: así el cierre retrasado de un cambio anterior no borra la marca
      * de uno más reciente.

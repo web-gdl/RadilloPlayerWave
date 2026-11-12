@@ -183,6 +183,11 @@ jobs:
           } > summary.md
           cat summary.md >> "$GITHUB_STEP_SUMMARY"
           jq -Rs '{body: .}' summary.md | gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" --input -
+          # Mediciones de VisualizerCostTest (coste de dibujar cada escena con la CPU), aparte.
+          if [ -f app/build/outputs/screenshots/visualizer_cost.txt ]; then
+            { echo '### Coste del visualizador dibujando con CPU'; echo '```'; cat app/build/outputs/screenshots/visualizer_cost.txt; echo '```'; } > cost.md
+            jq -Rs '{body: .}' cost.md | gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" --input - || true
+          fi
 
       # Liga fija de descarga: cada push a main publica (o reemplaza) la release v<versionName>
       # con el APK, de modo que .../releases/latest/download/RadilloPlayerWave.apk apunta siempre

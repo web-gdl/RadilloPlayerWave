@@ -102,4 +102,55 @@ class VisualizerEngineRenderTest {
         assertThat(maxActive.get()).isEqualTo(1)
         engine.detach()
     }
+
+    /**
+     * Regresión de los tirones en pantalla completa: los ajustes llegan del hilo principal mientras
+     * el hilo de render dibuja un frame lento. El hilo principal no debe quedarse esperando al
+     * frame; el cambio se aplica en cuanto el frame termina.
+     */
+    @Test
+    fun `configuration from the main thread never waits for a slow frame`() {
+        val drawing = java.util.concurrent.CountDownLatch(1)
+        val release = java.util.concurrent.CountDownLatch(1)
+        val applied = java.util.concurrent.atomic.AtomicReference<SceneParams?>(null)
+        val slowScene = object : Scene {
+            override val id = "slow"
+            override val displayName = "slow"
+            override val backend = RenderBackend.CANVAS
+            override fun onAttach(params: SceneParams) = Unit
+            override fun onParamsChanged(params: SceneParams) { applied.set(params) }
+            override fun onResize(widthPx: Int, heightPx: Int) = Unit
+            override fun update(frame: com.radillo.playerwave.visualizer.analysis.AudioFrame, deltaSeconds: Float) = Unit
+            override fun onDetach() = Unit
+            override fun draw(canvas: Canvas) {
+                drawing.countDown()
+                release.await() // un frame «eterno»
+            }
+        }
+        val clock = object : PlaybackClock {
+            override fun positionUs(): Long? = null
+            override fun isPlaying(): Boolean = false
+        }
+        val engine = VisualizerEngine(SilentSource(), clock, SceneRegistry(listOf("slow" to SceneFactory { slowScene })))
+        engine.setScene("slow")
+        engine.onResize(1024, 600)
+        val render = Thread { engine.render(Canvas(), 1_000_000_000L) }.apply { start() }
+        assertThat(drawing.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue()
+
+        // «Hilo principal»: con el frame a medias, cambiar ajustes debe volver al instante.
+        val started = System.nanoTime()
+        engine.setParams(SceneParams(sensitivity = 2f))
+        engine.setMaxFps(30)
+        engine.setSyncOffsetMs(40)
+        engine.onResize(800, 480)
+        val waitedMs = (System.nanoTime() - started) / 1_000_000L
+        assertThat(waitedMs).isLessThan(500L)
+        assertThat(applied.get()).isNull() // aún no: el frame sigue en curso
+
+        release.countDown()
+        render.join(5_000)
+        // Al terminar el frame, el propio hilo de render aplicó lo encolado, en orden.
+        assertThat(applied.get()?.sensitivity).isEqualTo(2f)
+        assertThat(engine.minFrameIntervalNanos).isEqualTo(1_000_000_000L / 30)
+    }
 }

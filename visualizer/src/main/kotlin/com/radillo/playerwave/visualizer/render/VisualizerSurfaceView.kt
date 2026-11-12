@@ -29,6 +29,10 @@ import com.radillo.playerwave.visualizer.engine.VisualizerEngine
  *   [VisualizerEngine.detach]), de modo que en segundo plano no se gasta CPU.
  * - Mientras la cámara de reversa del estéreo está en pantalla ([CarSignals.reverseActive]) no se
  *   dibuja: en un procesador modesto, la cámara necesita esa CPU.
+ * - **Sin acaparar:** entre frame y frame el hilo hace una pausa corta ([RenderSize.yieldNanos]) y
+ *   corre con prioridad normal, para que el hilo principal pueda tomar el cerrojo de la superficie
+ *   (cambios de tamaño, pantalla completa) y atender los toques. Dibujando con la CPU en gama baja,
+ *   la superficie usa un búfer más pequeño ([RenderSize.fit]) que el sistema amplía.
  */
 class VisualizerSurfaceView @JvmOverloads constructor(
     context: Context,
@@ -38,6 +42,8 @@ class VisualizerSurfaceView @JvmOverloads constructor(
     private var engine: VisualizerEngine? = null
     private var thread: RenderThread? = null
     private var surfaceReady = false
+    private var bufferWidth = 0
+    private var bufferHeight = 0
 
     init {
         holder.addCallback(this)
@@ -56,6 +62,31 @@ class VisualizerSurfaceView @JvmOverloads constructor(
             engine.attach()
             engine.onResize(width, height)
             startThread()
+        }
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        // Fuera del pase de diseño en curso: fijar el tamaño del búfer pide otro diseño.
+        post { applyRenderSize() }
+    }
+
+    /** Búfer reducido si la vista supera el presupuesto de píxeles del equipo (ver [RenderSize]). */
+    private fun applyRenderSize() {
+        val w = width
+        val h = height
+        if (w <= 0 || h <= 0) return
+        val packed = RenderSize.fit(w, h, RenderMode.softwarePixelBudget())
+        val bw = RenderSize.widthOf(packed)
+        val bh = RenderSize.heightOf(packed)
+        if (bw == bufferWidth && bh == bufferHeight) return
+        bufferWidth = bw
+        bufferHeight = bh
+        if (bw == w && bh == h) {
+            holder.setSizeFromLayout()
+        } else {
+            holder.setFixedSize(bw, bh)
+            EventLog.log("Visualizador: vista de ${w}×$h dibujada a ${bw}×$bh (equipo modesto, sin GPU)")
         }
     }
 
@@ -96,11 +127,18 @@ class VisualizerSurfaceView @JvmOverloads constructor(
         thread = null
         t.running = false
         t.interrupt()
+        val started = System.nanoTime()
         try {
             // Hay que esperar a que termine: si siguiera dibujando tras liberar la superficie, el
             // cierre sería nativo. Un frame tarda milisegundos; el límite solo evita un bloqueo eterno.
             t.join(STOP_TIMEOUT_MS)
-            if (t.isAlive) EventLog.log("El hilo del visualizador no terminó a tiempo")
+            val waitedMs = (System.nanoTime() - started) / 1_000_000L
+            if (t.isAlive) {
+                EventLog.log("El hilo del visualizador no terminó a tiempo")
+            } else if (waitedMs >= SLOW_STOP_MS) {
+                // El hilo principal estuvo parado este tiempo: útil para diagnosticar «congelones».
+                EventLog.log("Visualizador: parar el dibujo tardó $waitedMs ms")
+            }
         } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
         }
@@ -121,9 +159,11 @@ class VisualizerSurfaceView @JvmOverloads constructor(
 
         override fun run() {
             try {
-                Process.setThreadPriority(Process.THREAD_PRIORITY_DISPLAY)
+                // Prioridad normal, no la de «pantalla»: dibujando con la CPU este hilo puede ocupar
+                // un núcleo entero, y la interfaz (toques, cambios de pantalla) va primero.
+                Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT)
             } catch (_: Throwable) {
-                // Sin permiso para cambiar la prioridad: se sigue con la normal.
+                // Sin permiso para cambiar la prioridad: se sigue con la que tenga.
             }
             var lastFrameStart = 0L
             while (running) {
@@ -163,6 +203,8 @@ class VisualizerSurfaceView @JvmOverloads constructor(
                     firstFramePosted = true
                     onFirstFrame()
                 }
+                // Pausa obligada: suelta de verdad el cerrojo de la superficie para el hilo principal.
+                if (!sleepNanos(RenderSize.yieldNanos(System.nanoTime() - lastFrameStart))) break
             }
         }
 
@@ -204,6 +246,7 @@ class VisualizerSurfaceView @JvmOverloads constructor(
         const val TAG = "VisualizerSurface"
         const val REVERSE_POLL_NANOS = 250_000_000L
         const val STOP_TIMEOUT_MS = 3_000L
+        const val SLOW_STOP_MS = 250L
         const val TRANSITION_GRACE_MS = 1_500L
     }
 }
