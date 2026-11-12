@@ -116,6 +116,11 @@ adelante/atrás de las bocinas. En un teléfono abre el ecualizador de Android, 
 (la app no recopila datos ni usa internet), ficha de la tienda en `docs/play/` y guía de
 publicación en [docs/PLAY_STORE.md](docs/PLAY_STORE.md).
 
+**0.16.0:** el visualizador ya no da tirones ni congela la app en equipos modestos (la calidad se
+ajusta en segundos, el dibujo no acapara la pantalla y la pantalla completa se dibuja con menos
+píxeles). En «Reproduciendo», con el visualizador en el recuadro de la carátula, doble toque o
+deslizar cambia de visualizador y un toque vuelve a la carátula.
+
 **Funciones:** biblioteca de música local (canciones,
 álbumes, artistas, carpetas y listas), favoritos, búsqueda, reproducción en segundo plano con
 notificación y pantalla bloqueada, cola y mini reproductor, temporizador de apagado, acceso al
