@@ -37,7 +37,7 @@ class CollectionsBackupTest {
     )
 
     @Test
-    fun `reinstalar con ids nuevos recupera favoritos y listas en orden`() = runBlocking {
+    fun `reinstalar con ids nuevos recupera favoritos y listas en orden`(): Unit = runBlocking {
         // Instalación anterior.
         val old = newDb()
         old.trackDao().upsertAll(listOf(track(1, "a"), track(2, "b"), track(3, "c")))
@@ -64,7 +64,7 @@ class CollectionsBackupTest {
     }
 
     @Test
-    fun `lo que no esta queda pendiente y se agrega cuando aparece sin duplicar`() = runBlocking {
+    fun `lo que no esta queda pendiente y se agrega cuando aparece sin duplicar`(): Unit = runBlocking {
         val db = newDb()
         db.trackDao().upsertAll(listOf(track(1, "a")))
         val backup = CollectionsSnapshot(
@@ -91,7 +91,7 @@ class CollectionsBackupTest {
     }
 
     @Test
-    fun `la foto conserva canciones de una USB quitada usando el respaldo anterior`() = runBlocking {
+    fun `la foto conserva canciones de una USB quitada usando el respaldo anterior`(): Unit = runBlocking {
         val db = newDb()
         db.trackDao().upsertAll(listOf(track(1, "a"), track(2, "b")))
         val repo = PlaylistRepositoryImpl(db)
