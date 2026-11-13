@@ -27,4 +27,14 @@ object AudioPermission {
     /** `POST_NOTIFICATIONS` solo existe desde API 33; en versiones anteriores no hace falta pedir nada. */
     fun notificationPermissionOrNull(sdkInt: Int = Build.VERSION.SDK_INT): String? =
         if (sdkInt >= Build.VERSION_CODES.TIRAMISU) Manifest.permission.POST_NOTIFICATIONS else null
+
+    /**
+     * Android 9 o anterior: escribir el respaldo de listas en Documentos necesita
+     * `WRITE_EXTERNAL_STORAGE`. Es del mismo grupo que la lectura, así que con la lectura concedida
+     * el sistema lo da sin preguntar.
+     */
+    fun legacyWriteMissing(context: Context, sdkInt: Int = Build.VERSION.SDK_INT): Boolean =
+        sdkInt <= Build.VERSION_CODES.P &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+            PackageManager.PERMISSION_GRANTED
 }

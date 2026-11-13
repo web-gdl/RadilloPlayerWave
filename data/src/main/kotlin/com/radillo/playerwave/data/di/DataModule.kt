@@ -28,8 +28,10 @@ object DataProvidesModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): RadilloDatabase =
         Room.databaseBuilder(context, RadilloDatabase::class.java, RadilloDatabase.NAME)
-            // La tabla es una caché de MediaStore: ante un cambio de esquema se regenera escaneando.
-            .fallbackToDestructiveMigration(dropAllTables = true)
+            // Solo la versión 1 (caché de MediaStore, sin datos del usuario) se puede tirar. Desde la 2
+            // hay favoritos y listas: un cambio de esquema futuro debe llevar su migración; sin ella
+            // la app falla en pruebas en vez de borrar en silencio lo del usuario al actualizar.
+            .fallbackToDestructiveMigrationFrom(dropAllTables = true, 1)
             .build()
 
     @Provides

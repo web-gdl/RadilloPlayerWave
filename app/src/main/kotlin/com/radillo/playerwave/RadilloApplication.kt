@@ -5,6 +5,7 @@ import com.radillo.playerwave.core.device.DeviceProfile
 import com.radillo.playerwave.core.diagnostics.EventLog
 import com.radillo.playerwave.core.diagnostics.RenderMode
 import com.radillo.playerwave.core.ui.CoverOverrides
+import com.radillo.playerwave.data.backup.CollectionsBackupManager
 import com.radillo.playerwave.data.tags.TagWriter
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.MainScope
@@ -16,6 +17,7 @@ class RadilloApplication : Application() {
 
     @Inject lateinit var profile: DeviceProfile
     @Inject lateinit var tagWriter: TagWriter
+    @Inject lateinit var collectionsBackup: CollectionsBackupManager
 
     private val scope = MainScope()
 
@@ -31,5 +33,7 @@ class RadilloApplication : Application() {
         EventLog.log("Proceso iniciado (${BuildConfig.VERSION_NAME})")
         // Si una edición de etiquetas se cortó (se quitó la llave a mitad), se termina o se deshace.
         scope.launch { tagWriter.recoverPending() }
+        // Favoritos y listas: respaldo fuera de la app y recuperación tras reinstalar.
+        collectionsBackup.start(scope)
     }
 }

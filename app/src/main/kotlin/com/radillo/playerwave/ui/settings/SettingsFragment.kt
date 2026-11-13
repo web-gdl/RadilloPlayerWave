@@ -6,6 +6,12 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.lifecycleScope
+import android.net.Uri
+import com.radillo.playerwave.data.backup.CollectionsBackupManager
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 import com.radillo.playerwave.BuildConfig
 import com.radillo.playerwave.R
 import com.radillo.playerwave.core.model.ThemeMode
@@ -34,6 +40,15 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
     private val viewModel: SettingsViewModel by viewModels()
 
+    @Inject lateinit var collectionsBackup: CollectionsBackupManager
+
+    private val exportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) exportBackup(uri)
+    }
+    private val importLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) importBackup(uri)
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val b = FragmentSettingsBinding.bind(view)
         b.btnBack.setOnClickListener { navigator.back() }
@@ -46,6 +61,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         b.rowDiagnostics.setOnClickListener { navigator.push(DiagnosticsFragment()) }
         b.rowLicenses.setOnClickListener { showLicenses() }
         b.rowRescan.setOnClickListener { viewModel.rescan() }
+        b.rowBackupExport.setOnClickListener { launchSafely { exportLauncher.launch(CollectionsBackupManager.FILE_NAME) } }
+        b.rowBackupImport.setOnClickListener { launchSafely { importLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) } }
         b.switchKeepPlaying.setOnCheckedChangeListener { _, checked -> if (!binding) viewModel.setKeepPlaying(checked) }
         collectWhenStarted(viewModel.keepPlaying) { bind { b.switchKeepPlaying.isChecked = it } }
         b.rowCrossfade.setOnClickListener { chooseCrossfade() }
@@ -96,6 +113,52 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             block()
         } finally {
             binding = false
+        }
+    }
+
+    /** Algunos estéreos no traen el selector de archivos del sistema. */
+    private inline fun launchSafely(block: () -> Unit) {
+        try {
+            block()
+        } catch (e: android.content.ActivityNotFoundException) {
+            toast(getString(R.string.backup_failed))
+        }
+    }
+
+    private fun toast(text: String) = Toast.makeText(requireContext(), text, Toast.LENGTH_LONG).show()
+
+    private fun exportBackup(uri: Uri) {
+        val resolver = requireContext().contentResolver
+        viewLifecycleOwner.lifecycleScope.launch {
+            val saved = runCatching {
+                resolver.openOutputStream(uri, "wt")?.use { collectionsBackup.exportTo(it) }
+            }.getOrNull()
+            if (!isAdded) return@launch
+            toast(if (saved == null) getString(R.string.backup_failed) else getString(R.string.backup_exported, saved.favorites.size, saved.playlists.size))
+        }
+    }
+
+    private fun importBackup(uri: Uri) {
+        val resolver = requireContext().contentResolver
+        viewLifecycleOwner.lifecycleScope.launch {
+            val outcome = runCatching { resolver.openInputStream(uri)?.use { collectionsBackup.importFrom(it) } }
+            if (!isAdded) return@launch
+            val result = outcome.getOrNull()
+            when {
+                outcome.isFailure -> toast(getString(R.string.backup_failed))
+                result == null -> toast(getString(R.string.backup_invalid))
+                else -> {
+                    val message = buildString {
+                        append(getString(R.string.backup_imported, result.favoritesAdded, result.playlistsCreated, result.tracksAdded))
+                        if (result.pending.trackCount > 0) append("\n\n").append(getString(R.string.backup_imported_pending, result.pending.trackCount))
+                    }
+                    AlertDialog.Builder(requireContext())
+                        .setTitle(R.string.settings_backup_import)
+                        .setMessage(message)
+                        .setPositiveButton(R.string.action_close, null)
+                        .show()
+                }
+            }
         }
     }
 

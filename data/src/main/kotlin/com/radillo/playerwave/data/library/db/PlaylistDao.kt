@@ -76,4 +76,26 @@ interface PlaylistDao {
 
     @Query("UPDATE playlist_tracks SET position = :position WHERE playlistId = :playlistId AND trackId = :trackId")
     suspend fun updatePosition(playlistId: Long, trackId: Long, position: Int)
+
+    // ---- Respaldo de favoritos y listas ----
+
+    @Query("SELECT * FROM favorites ORDER BY addedAtMs ASC")
+    suspend fun allFavorites(): List<FavoriteEntity>
+
+    @Query("SELECT * FROM playlists ORDER BY id ASC")
+    suspend fun allPlaylists(): List<PlaylistEntity>
+
+    @Query("SELECT id FROM playlists WHERE name = :name COLLATE NOCASE ORDER BY id LIMIT 1")
+    suspend fun playlistIdByName(name: String): Long?
+
+    @Query("SELECT (SELECT COUNT(*) FROM favorites) + (SELECT COUNT(*) FROM playlists)")
+    suspend fun collectionsCount(): Int
+
+    /** Cambia con cualquier alta, baja o reordenación de favoritos o listas (para el respaldo automático). */
+    @Query(
+        """SELECT (SELECT COUNT(*) FROM favorites) || ':' || (SELECT COALESCE(SUM(trackId), 0) FROM favorites)
+           || ':' || (SELECT COUNT(*) FROM playlists) || ':' || (SELECT COALESCE(GROUP_CONCAT(name, '/'), '') FROM playlists)
+           || ':' || (SELECT COUNT(*) FROM playlist_tracks) || ':' || (SELECT COALESCE(SUM(trackId * (position + 1)), 0) FROM playlist_tracks)""",
+    )
+    fun observeCollectionsSignature(): Flow<String>
 }

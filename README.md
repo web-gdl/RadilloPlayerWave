@@ -120,6 +120,10 @@ publicación en [docs/PLAY_STORE.md](docs/PLAY_STORE.md).
 [GitHub Releases](https://github.com/web-gdl/RadilloPlayerWave/releases) (última versión). Los
 materiales de preparación de Play (`docs/PLAY_STORE.md`, `docs/play/`) quedan como referencia.
 
+**0.17.0:** favoritos y listas a salvo: copia automática fuera de la app que se recupera sola al
+reinstalar (aunque cambien los ids de las canciones o la USB no esté puesta), exportar/importar en
+Ajustes, y la base de datos ya no se puede borrar sola al actualizar.
+
 **0.16.1:** los títulos y artistas largos se desplazan como marquesina (en «Reproduciendo», mini
 reproductor y visualizador).
 
@@ -147,6 +151,15 @@ reducidos) y lo publica en **Releases**: <https://github.com/web-gdl/RadilloPlay
 También queda como artefacto de la ejecución (**Actions ▸ ejecución ▸ Artifacts**), con 30 días
 de caducidad. Para instalarlo en el equipo: descargar el archivo, abrirlo y aceptar la instalación
 desde origen desconocido.
+
+**Actualizar sin desinstalar:** desde la 0.16.0 todas las versiones van firmadas con la misma clave,
+así que la nueva se instala **encima** de la anterior y conserva todo (favoritos, listas, cola,
+ajustes). Solo si el equipo tiene una versión **anterior a la 0.16.0** (firmada con una clave
+temporal) Android pide desinstalar una última vez. Para no perder nada aun así, desde la 0.17.0 los
+favoritos y las listas se copian solos en `Documentos/RadilloPlayerWave/listas-y-favoritos.json` y
+vuelven solos al reinstalar (en Android 11 o más nuevo: **Ajustes ▸ Importar favoritos y listas**).
+Si ya tienes una versión anterior a la 0.17.0 con listas y debes desinstalarla, ver
+[docs/ACTUALIZAR.md](docs/ACTUALIZAR.md).
 
 **Firma:** la clave de release viaja cifrada en `keystore/radillo-release.jks.enc` y CI la descifra
 con el secreto `RADILLO_KEYSTORE_PASSWORD`. Sin el secreto, el APK se firma con la clave de

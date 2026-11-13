@@ -1,5 +1,6 @@
 package com.radillo.playerwave.ui.library
 
+import android.Manifest
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
@@ -48,6 +49,10 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         if (!granted) denials++
         refreshPermission()
     }
+
+    /** Escritura para el respaldo de listas (Android ≤ 9); se pide una vez y sin insistir. */
+    private val writeLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    private var askedWrite = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val b = FragmentLibraryBinding.bind(view)
@@ -134,6 +139,10 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         b.permissionPanel.visibleIf(!granted)
         b.btnOpenSettings.visibleIf(denials >= 2)
         if (granted) viewModel.ensureScanned()
+        if (granted && !askedWrite && AudioPermission.legacyWriteMissing(requireContext())) {
+            askedWrite = true
+            writeLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }
     }
 
     private fun render(c: LibraryContent) {
