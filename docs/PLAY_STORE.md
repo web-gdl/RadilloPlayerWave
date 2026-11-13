@@ -1,3 +1,6 @@
+> **Estado: descartado.** Se decidió no publicar en Google Play; la app se distribuye solo por GitHub
+> Releases. Este documento queda como referencia por si se retoma.
+
 # Publicar RadilloPlayerWave en Google Play: paso a paso
 
 Lo técnico ya está listo en el repositorio: firma, paquete `.aab`, política de privacidad, textos,
