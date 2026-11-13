@@ -116,6 +116,9 @@ adelante/atrás de las bocinas. En un teléfono abre el ecualizador de Android, 
 (la app no recopila datos ni usa internet), ficha de la tienda en `docs/play/` y guía de
 publicación en [docs/PLAY_STORE.md](docs/PLAY_STORE.md).
 
+**0.16.1:** los títulos y artistas largos se desplazan como marquesina (en «Reproduciendo», mini
+reproductor y visualizador).
+
 **0.16.0:** el visualizador ya no da tirones ni congela la app en equipos modestos (la calidad se
 ajusta en segundos, el dibujo no acapara la pantalla y la pantalla completa se dibuja con menos
 píxeles). En «Reproduciendo», con el visualizador en el recuadro de la carátula, doble toque o
