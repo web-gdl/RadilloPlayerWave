@@ -27,6 +27,7 @@ import com.radillo.playerwave.player.service.BootResume
 import com.radillo.playerwave.ui.ChromeMode
 import com.radillo.playerwave.ui.Navigator
 import com.radillo.playerwave.ui.Tab
+import com.radillo.playerwave.ui.common.setMarqueeText
 import com.radillo.playerwave.ui.common.subtitle
 import com.radillo.playerwave.ui.common.visibleIf
 import com.radillo.playerwave.ui.library.CollectionDetailFragment
@@ -245,8 +246,8 @@ class MainActivity : FragmentActivity(), Navigator {
         // Los textos solo al cambiar de canción: el estado llega dos veces por segundo con el progreso.
         if (lastMiniTrack != track) {
             lastMiniTrack = track
-            mini.miniTitle.text = track.title
-            mini.miniSubtitle.text = track.subtitle(this)
+            mini.miniTitle.setMarqueeText(track.title)
+            mini.miniSubtitle.setMarqueeText(track.subtitle(this))
         }
         mini.miniProgress.progress = if (state.durationMs > 0) (state.positionMs * 1000L / state.durationMs).toInt().coerceIn(0, 1000) else 0
         if (lastMiniPlaying != state.isPlaying) {

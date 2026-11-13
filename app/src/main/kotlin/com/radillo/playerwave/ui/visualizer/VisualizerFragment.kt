@@ -16,6 +16,7 @@ import com.radillo.playerwave.core.model.Track
 import com.radillo.playerwave.databinding.FragmentVisualizerBinding
 import com.radillo.playerwave.ui.ChromeMode
 import com.radillo.playerwave.ui.common.collectWhenStarted
+import com.radillo.playerwave.ui.common.setMarqueeText
 import com.radillo.playerwave.ui.common.visibleIf
 import com.radillo.playerwave.ui.navigator
 import com.radillo.playerwave.visualizer.engine.DataState
@@ -70,8 +71,8 @@ class VisualizerFragment : Fragment(R.layout.fragment_visualizer), ChromeMode {
         val playback = viewModel.playbackState.map { TrackAndPlaying(it.currentTrack, it.isPlaying) }.distinctUntilChanged()
         collectWhenStarted(combine(playback, viewModel.dataState) { p, d -> p to d }) { (p, d) ->
             val track = p.currentTrack
-            b.trackTitle.text = track?.title.orEmpty()
-            b.trackSubtitle.text = track?.artist.orEmpty()
+            b.trackTitle.setMarqueeText(track?.title.orEmpty())
+            b.trackSubtitle.setMarqueeText(track?.artist.orEmpty())
             b.trackTitle.visibleIf(track != null)
             b.trackSubtitle.visibleIf(track != null)
             val status = when {

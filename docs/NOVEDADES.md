@@ -1,3 +1,9 @@
+### Novedades de la 0.16.1
+
+- **Marquesina en títulos y artistas largos:** si el título de la canción o el artista no caben, el
+  texto se desplaza solo, de forma continua, en «Reproduciendo», en el mini reproductor y en el
+  visualizador. Los textos cortos se quedan quietos.
+
 ### Novedades de la 0.16.0
 
 - **Visualizador sin tirones ni congelones** (sobre todo «Espectro» a pantalla completa en el estéreo):
