@@ -316,6 +316,21 @@ Conclusiones: el presupuesto de memoria (≤ 90 MB) se cumple con holgura; la el
 visualizador en Android 8.1 es la correcta. Restaurar una cola tan grande bloqueaba el hilo
 principal ~2 s al arrancar: desde la 0.10.2 se lee en segundo plano.
 
+### 0.17.0: favoritos y listas a salvo al reinstalar (13-11-2026)
+
+- El usuario confirmó en el equipo la 0.16.1 (marquesina) y la 0.17.0 («funcionó»).
+- Las versiones anteriores a la 0.16.0 se firmaban con una clave temporal distinta en cada
+  compilación: Android no deja actualizar entre claves y obligaba a desinstalar (y se perdían
+  favoritos y listas). Desde la 0.16.0 la firma es siempre la propia.
+- Copia automática de favoritos y listas en `Documentos/RadilloPlayerWave/listas-y-favoritos.json`
+  (a los 2 s de cada cambio, escritura atómica). Se recupera sola al reinstalar en cuanto aparece la
+  biblioteca (Android ≤ 10, como el estéreo); en Android 11+ con «Importar». Las canciones se
+  buscan por ruta, por id y por título + artista + duración (±2 s); lo que no aparece (USB quitada)
+  queda pendiente. En Android 9 o menos se pide `WRITE_EXTERNAL_STORAGE` una vez.
+- Room: la migración destructiva solo se permite desde la versión 1; desde la 2 un cambio de esquema
+  sin migración ya no puede borrar los datos del usuario.
+- Guía: `docs/ACTUALIZAR.md`.
+
 ### 0.16.0: tirones del visualizador y cambio de escena desde la carátula (12-11-2026)
 
 Reporte de varios usuarios: la app da tirones o se congela varios segundos al entrar al
