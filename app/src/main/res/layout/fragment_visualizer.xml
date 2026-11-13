@@ -94,8 +94,10 @@
                 android:id="@+id/trackTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="1"
+                android:ellipsize="marquee"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:scrollHorizontally="true"
+                android:singleLine="true"
                 android:textColor="#FFFFFFFF"
                 android:textSize="@dimen/text_title"
                 android:textStyle="bold" />
@@ -104,8 +106,10 @@
                 android:id="@+id/trackSubtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="1"
+                android:ellipsize="marquee"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:scrollHorizontally="true"
+                android:singleLine="true"
                 android:textColor="#B3FFFFFF"
                 android:textSize="@dimen/text_secondary" />
         </LinearLayout>

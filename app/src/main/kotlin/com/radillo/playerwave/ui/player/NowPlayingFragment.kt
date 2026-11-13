@@ -23,6 +23,7 @@ import com.radillo.playerwave.player.engine.RepeatMode
 import com.radillo.playerwave.ui.ChromeMode
 import com.radillo.playerwave.ui.common.collectWhenStarted
 import com.radillo.playerwave.ui.common.onUserChange
+import com.radillo.playerwave.ui.common.setMarqueeText
 import com.radillo.playerwave.ui.common.subtitle
 import com.radillo.playerwave.ui.common.visibleIf
 import com.radillo.playerwave.ui.common.openSystemEqualizer
@@ -156,8 +157,8 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
         val withoutPosition = state.copy(positionMs = 0L)
         if (withoutPosition != lastRendered) {
             lastRendered = withoutPosition
-            b.trackTitle.text = track.title
-            b.trackSubtitle.text = track.subtitle(requireContext())
+            b.trackTitle.setMarqueeText(track.title)
+            b.trackSubtitle.setMarqueeText(track.subtitle(requireContext()))
             if (lastPlaying != state.isPlaying) {
                 lastPlaying = state.isPlaying
                 b.btnPlay.setImageResource(if (state.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)

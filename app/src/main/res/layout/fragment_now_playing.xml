@@ -71,9 +71,11 @@
                 style="@style/Text.Headline"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:gravity="center"
-                android:maxLines="2" />
+                android:ellipsize="marquee"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:scrollHorizontally="true"
+                android:singleLine="true"
+                android:gravity="center" />
 
             <TextView
                 android:id="@+id/trackSubtitle"
@@ -81,9 +83,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:ellipsize="end"
-                android:gravity="center"
-                android:maxLines="1" />
+                android:ellipsize="marquee"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:scrollHorizontally="true"
+                android:singleLine="true"
+                android:gravity="center" />
 
             <SeekBar
                 android:id="@+id/seek"
