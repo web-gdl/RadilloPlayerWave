@@ -1,3 +1,18 @@
+### Novedades de la 0.17.0
+
+- **Favoritos y listas a salvo al reinstalar:**
+  - cada vez que cambian, se guarda una copia en `Documentos/RadilloPlayerWave/listas-y-favoritos.json`
+    (fuera de la app, así que no se borra al desinstalar);
+  - al instalar de nuevo se recuperan solos en cuanto la app encuentra la música, aunque el sistema
+    haya cambiado los números internos de las canciones;
+  - si alguna canción está en una USB que no está puesta, queda pendiente y se agrega sola al
+    ponerla;
+  - **Ajustes ▸ Biblioteca:** «Exportar favoritos y listas» guarda una copia donde quieras e
+    «Importar» la recupera (en Android 11 o más nuevo es la forma de recuperarlos tras reinstalar).
+- **Actualizar sin desinstalar:** desde la 0.16.0 todas las versiones van firmadas con la misma
+  clave: la nueva se instala encima y conserva todo. Además, la base de datos ya no puede
+  borrarse sola en una actualización futura.
+
 ### Novedades de la 0.16.1
 
 - **Marquesina en títulos y artistas largos:** si el título de la canción o el artista no caben, el

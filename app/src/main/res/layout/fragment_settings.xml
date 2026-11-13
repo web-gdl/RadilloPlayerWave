@@ -168,6 +168,29 @@
                 android:layout_height="wrap_content"
                 android:text="@string/settings_rescan_hint" />
 
+            <TextView
+                android:id="@+id/rowBackupExport"
+                style="@style/SettingRow"
+                android:layout_marginTop="@dimen/space_s"
+                android:drawableStart="@drawable/ic_queue_music"
+                android:drawablePadding="@dimen/space_l"
+                android:drawableTint="@color/text_secondary"
+                android:text="@string/settings_backup_export" />
+
+            <TextView
+                android:id="@+id/rowBackupImport"
+                style="@style/SettingRow"
+                android:drawableStart="@drawable/ic_favorite_border"
+                android:drawablePadding="@dimen/space_l"
+                android:drawableTint="@color/text_secondary"
+                android:text="@string/settings_backup_import" />
+
+            <TextView
+                style="@style/Text.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_backup_hint" />
+
             <!-- Apariencia -->
             <TextView
                 style="@style/Text.Section"

@@ -64,4 +64,8 @@ interface TrackDao {
 
     @Query("SELECT COUNT(*) FROM tracks")
     suspend fun count(): Int
+
+    /** Cambia cuando entran o salen canciones (para recuperar respaldos pendientes). */
+    @Query("SELECT COUNT(*) || ':' || COALESCE(MAX(id), 0) || ':' || COALESCE(SUM(id), 0) FROM tracks")
+    fun observeSignature(): Flow<String>
 }

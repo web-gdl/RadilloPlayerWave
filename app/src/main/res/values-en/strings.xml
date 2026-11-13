@@ -271,4 +271,12 @@
     <string name="tag_discard">Discard</string>
     <string name="tag_keep_editing">Keep editing</string>
     <string name="tag_error_pending">A previous edit was interrupted (was the unit switched off?) and its file couldn’t be checked yet. Connect the storage it was on and try again.</string>
+    <string name="settings_backup_export">Export favorites and playlists</string>
+    <string name="settings_backup_import">Import favorites and playlists</string>
+    <string name="settings_backup_hint">A copy is saved automatically in Documents/RadilloPlayerWave whenever they change. After reinstalling the app they come back on their own (on Android 11 or newer, use \"Import\").</string>
+    <string name="backup_exported">Copy saved: %1$d favorites and %2$d playlists</string>
+    <string name="backup_imported">Restored: %1$d favorites, %2$d new playlists and %3$d songs in playlists</string>
+    <string name="backup_imported_pending">%1$d songs are not in the library yet: they will be added when they show up (for example, when the USB drive is plugged in).</string>
+    <string name="backup_invalid">This file is not a RadilloPlayerWave favorites and playlists copy</string>
+    <string name="backup_failed">The file could not be used</string>
 </resources>
