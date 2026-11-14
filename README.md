@@ -122,6 +122,8 @@ publicación en [docs/PLAY_STORE.md](docs/PLAY_STORE.md).
 [GitHub Releases](https://github.com/web-gdl/RadilloPlayerWave/releases) (última versión). Los
 materiales de preparación de Play (`docs/PLAY_STORE.md`, `docs/play/`) quedan como referencia.
 
+**0.18.1:** la barra inferior del teléfono en vertical muestra completo «Reproduciendo».
+
 **0.18.0:** barra superior con el color dinámico de la portada (igual que el botón de reproducir),
 botón «Favoritos» que reproduce tu lista, y el teclado de Buscar se esconde solo a los 1,5 s.
 
