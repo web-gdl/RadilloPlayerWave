@@ -1,3 +1,15 @@
+### Novedades de la 0.18.0
+
+- **Barra superior con color dinámico:** la sección activa (Biblioteca, Reproduciendo, Visualizador…)
+  usa el mismo color que el botón de reproducir, tomado de la portada de la canción que suena. También
+  la barra de progreso del mini reproductor. Si el color es muy oscuro (o muy claro en el tema claro) se
+  ajusta para que siempre se distinga.
+- **Botón «Favoritos» en la barra** (entre Biblioteca y Reproduciendo): reproduce tu lista de
+  favoritos desde el principio, respeta el aleatorio y abre «Reproduciendo». Si esa lista ya está
+  sonando, solo abre «Reproduciendo»; si aún no tienes favoritos, te avisa.
+- **Buscar:** el teclado se esconde solo 1,5 s después de la última letra para dejar ver los
+  resultados (tocar el campo lo muestra de nuevo).
+
 ### Novedades de la 0.17.0
 
 - **Favoritos y listas a salvo al reinstalar:**

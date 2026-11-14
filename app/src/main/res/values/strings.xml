@@ -281,4 +281,6 @@
     <string name="backup_imported_pending">%1$d canciones aún no están en la biblioteca: se agregarán solas cuando aparezcan (por ejemplo, al poner la USB).</string>
     <string name="backup_invalid">El archivo no es una copia de favoritos y listas de RadilloPlayerWave</string>
     <string name="backup_failed">No se pudo usar el archivo</string>
+    <string name="nav_favorites">Favoritos</string>
+    <string name="favorites_none_to_play">Aún no tienes favoritos: marca canciones con el corazón</string>
 </resources>

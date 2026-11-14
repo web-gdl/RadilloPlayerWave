@@ -2,6 +2,8 @@ package com.radillo.playerwave.ui.library
 
 import android.content.Context
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
@@ -21,13 +23,19 @@ import com.radillo.playerwave.ui.navigator
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.combine
 
-/** Búsqueda por título, artista o álbum (con espera de 250 ms entre pulsaciones). */
+/**
+ * Búsqueda por título, artista o álbum (con espera de 250 ms entre pulsaciones). En pantallas bajas el
+ * teclado tapa los resultados: se esconde solo 1,5 s después de la última pulsación (tocar el campo lo
+ * vuelve a mostrar).
+ */
 @AndroidEntryPoint
 class SearchFragment : Fragment(R.layout.fragment_track_list) {
 
     private val viewModel: SearchViewModel by viewModels()
     private val actions: TrackActionsViewModel by activityViewModels()
     private var tracks: List<Track> = emptyList()
+    private val handler = Handler(Looper.getMainLooper())
+    private var hideKeyboardTask: Runnable? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val b = FragmentTrackListBinding.bind(view)
@@ -51,6 +59,10 @@ class SearchFragment : Fragment(R.layout.fragment_track_list) {
                 val q = s?.toString().orEmpty()
                 viewModel.setQuery(q)
                 b.btnClear.visibleIf(q.isNotEmpty())
+                hideKeyboardTask?.let(handler::removeCallbacks)
+                if (q.isNotBlank()) {
+                    hideKeyboardTask = Runnable { hideKeyboard(b.searchField) }.also { handler.postDelayed(it, KEYBOARD_HIDE_DELAY_MS) }
+                }
             }
         })
         if (savedInstanceState == null) {
@@ -69,8 +81,18 @@ class SearchFragment : Fragment(R.layout.fragment_track_list) {
         }
     }
 
+    override fun onDestroyView() {
+        hideKeyboardTask?.let(handler::removeCallbacks)
+        hideKeyboardTask = null
+        super.onDestroyView()
+    }
+
     private fun hideKeyboard(v: View) {
         val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(v.windowToken, 0)
+    }
+
+    private companion object {
+        const val KEYBOARD_HIDE_DELAY_MS = 1_500L
     }
 }

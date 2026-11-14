@@ -1,5 +1,7 @@
 package com.radillo.playerwave
 
+import android.widget.Toast
+import com.radillo.playerwave.ui.common.AccentColors
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
@@ -93,6 +95,7 @@ class MainActivity : FragmentActivity(), Navigator {
         setContentView(binding.root)
 
         binding.navLibrary.setOnClickListener { openTab(Tab.LIBRARY) }
+        binding.navFavorites.setOnClickListener { playFavorites() }
         binding.navNowPlaying.setOnClickListener { openTab(Tab.NOW_PLAYING) }
         binding.navVisualizer.setOnClickListener { openTab(Tab.VISUALIZER) }
         // Barra superior de pantallas anchas: Buscar y Ajustes siempre a mano (en el móvil están en la biblioteca).
@@ -126,6 +129,7 @@ class MainActivity : FragmentActivity(), Navigator {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch { playerViewModel.state.collect(::renderMiniPlayer) }
+                launch { playerViewModel.accent.collect(::applyAccent) }
                 launch {
                     appSettings.settings.map { it.themeMode }.distinctUntilChanged().collect { mode ->
                         if (mode != appliedTheme) recreate()
@@ -228,6 +232,33 @@ class MainActivity : FragmentActivity(), Navigator {
         binding.navBar.visibleIf(current?.hidesNavigation != true)
         binding.navDivider?.visibleIf(current?.hidesNavigation != true)
         renderMiniPlayer(playerViewModel.state.value)
+    }
+
+    /** «Favoritos» reproduce la lista y abre «Reproduciendo»; no es una sección con pantalla propia. */
+    private fun playFavorites() {
+        playerViewModel.playFavorites { result ->
+            when (result) {
+                PlayerViewModel.FavoritesResult.NONE ->
+                    Toast.makeText(this, R.string.favorites_none_to_play, Toast.LENGTH_LONG).show()
+                else -> openTab(Tab.NOW_PLAYING)
+            }
+        }
+    }
+
+    /**
+     * Color dinámico de la barra de navegación y del progreso del mini reproductor: el mismo acento
+     * (de la portada) que el botón de reproducir. Sin portada, el celeste de siempre.
+     */
+    private fun applyAccent(accent: Int?) {
+        AccentColors.styleNav(
+            context = this,
+            sections = listOf(binding.navLibrary, binding.navFavorites, binding.navNowPlaying, binding.navVisualizer),
+            search = binding.topSearch,
+            favoritesIcon = binding.navFavoritesIcon,
+            miniProgress = binding.miniPlayer.miniProgress,
+            accent = accent,
+            wide = binding.topSearch != null,
+        )
     }
 
     private fun updateNavSelection() {
