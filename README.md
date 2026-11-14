@@ -64,7 +64,9 @@ Nombre provisional: comprobar disponibilidad de marca antes de cualquier uso com
 |---|---|
 | ![Biblioteca](docs/screenshots/biblioteca.png) | ![Reproduciendo](docs/screenshots/reproduciendo.png) |
 | **Visualizador** | **Ajustes** |
-| ![Visualizador](docs/screenshots/visualizador.png) | ![Ajustes](docs/screenshots/ajustes.png) |
+| ![Visualizador](docs/screenshots/visualizador.png) | ![Ajustes](docs/screenshots/ajustes.png)
+
+El naranja de la barra superior es un ejemplo: toma el color de la portada de la canción que suena. |
 
 ## Estado
 

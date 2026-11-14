@@ -10,6 +10,12 @@
 - **Buscar:** el teclado se esconde solo 1,5 s después de la última letra para dejar ver los
   resultados (tocar el campo lo muestra de nuevo).
 
+![Barra superior con color dinámico y Favoritos: Reproduciendo](https://raw.githubusercontent.com/web-gdl/RadilloPlayerWave/main/docs/screenshots/reproduciendo.png)
+
+![Barra superior con color dinámico y Favoritos: Biblioteca](https://raw.githubusercontent.com/web-gdl/RadilloPlayerWave/main/docs/screenshots/biblioteca.png)
+
+(Capturas del autoestéreo, 1024×534. El naranja es un ejemplo: el color cambia con la portada de cada canción.)
+
 ### Novedades de la 0.17.0
 
 - **Favoritos y listas a salvo al reinstalar:**
