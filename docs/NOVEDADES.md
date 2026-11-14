@@ -1,3 +1,8 @@
+### Novedades de la 0.18.1
+
+- En el teléfono en vertical, las cuatro secciones de la barra inferior caben completas («Reproduciendo»
+  ya no se corta). Las capturas de abajo corresponden a la 0.18.0, con la barra nueva.
+
 ### Novedades de la 0.18.0
 
 - **Barra superior con color dinámico:** la sección activa (Biblioteca, Reproduciendo, Visualizador…)
