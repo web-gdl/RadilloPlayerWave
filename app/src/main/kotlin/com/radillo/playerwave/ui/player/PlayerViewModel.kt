@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -80,6 +81,29 @@ class PlayerViewModel @Inject constructor(
     ) { uri, enabled -> if (enabled) uri else null }
         .mapLatest { uri -> uri?.let { accentExtractor.accentFor(it) } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /** Qué pasó al tocar «Favoritos» en la barra superior. */
+    enum class FavoritesResult { NONE, ALREADY_PLAYING, STARTED }
+
+    /**
+     * Reproduce la lista de favoritos (en el orden de su pantalla, respetando aleatorio y repetición).
+     * Si ya es la cola que está sonando, no la reinicia: [onResult] recibe ALREADY_PLAYING.
+     */
+    fun playFavorites(onResult: (FavoritesResult) -> Unit) {
+        viewModelScope.launch {
+            val favorites = playlists.favoriteTracks.first()
+            val result = when {
+                favorites.isEmpty() -> FavoritesResult.NONE
+                state.value.queue.map { it.id }.toSet() == favorites.map { it.id }.toSet() &&
+                    state.value.currentTrack != null -> FavoritesResult.ALREADY_PLAYING
+                else -> {
+                    playback.playQueue(favorites, 0)
+                    FavoritesResult.STARTED
+                }
+            }
+            onResult(result)
+        }
+    }
 
     fun togglePlayPause() = playback.togglePlayPause()
     fun next() = playback.next()

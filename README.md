@@ -120,6 +120,9 @@ publicación en [docs/PLAY_STORE.md](docs/PLAY_STORE.md).
 [GitHub Releases](https://github.com/web-gdl/RadilloPlayerWave/releases) (última versión). Los
 materiales de preparación de Play (`docs/PLAY_STORE.md`, `docs/play/`) quedan como referencia.
 
+**0.18.0:** barra superior con el color dinámico de la portada (igual que el botón de reproducir),
+botón «Favoritos» que reproduce tu lista, y el teclado de Buscar se esconde solo a los 1,5 s.
+
 **0.17.0:** favoritos y listas a salvo: copia automática fuera de la app que se recupera sola al
 reinstalar (aunque cambien los ids de las canciones o la USB no esté puesta), exportar/importar en
 Ajustes, y la base de datos ya no se puede borrar sola al actualizar.

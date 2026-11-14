@@ -15,6 +15,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ApplicationProvider
 import com.radillo.playerwave.R
+import com.radillo.playerwave.ui.common.AccentColors
 import com.radillo.playerwave.ui.common.Row
 import com.radillo.playerwave.ui.common.RowAdapter
 import com.radillo.playerwave.ui.common.setupList
@@ -94,6 +95,16 @@ class ScreenshotTest {
         val root = LayoutInflater.from(ctx).inflate(R.layout.activity_main, null, false)
         (root.find("content") as ViewGroup).addView(content, FrameLayout.LayoutParams(-1, -1))
         listOf("navLibrary", "navNowPlaying", "navVisualizer").forEach { root.find(it)?.isSelected = it == selectedNav }
+        // Color dinámico como en la app: acento de una portada de ejemplo (naranja), en el mismo orden que MainActivity.
+        AccentColors.styleNav(
+            context = ctx,
+            sections = listOf("navLibrary", "navFavorites", "navNowPlaying", "navVisualizer").mapNotNull { root.find(it) as? ViewGroup },
+            search = root.find("topSearch") as? ViewGroup,
+            favoritesIcon = root.find("navFavoritesIcon") as ImageView,
+            miniProgress = root.find("miniPlayer")!!.find("miniProgress") as android.widget.ProgressBar,
+            accent = 0xFFFF7A3D.toInt(),
+            wide = root.find("topSearch") != null,
+        )
         val miniRoot = root.find("miniPlayer")
         miniRoot?.visibility = if (mini) View.VISIBLE else View.GONE
         miniRoot?.text("miniTitle", "Luces de carretera")

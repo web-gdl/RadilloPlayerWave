@@ -279,4 +279,6 @@
     <string name="backup_imported_pending">%1$d songs are not in the library yet: they will be added when they show up (for example, when the USB drive is plugged in).</string>
     <string name="backup_invalid">This file is not a RadilloPlayerWave favorites and playlists copy</string>
     <string name="backup_failed">The file could not be used</string>
+    <string name="nav_favorites">Favorites</string>
+    <string name="favorites_none_to_play">No favorites yet: tap the heart on a song</string>
 </resources>

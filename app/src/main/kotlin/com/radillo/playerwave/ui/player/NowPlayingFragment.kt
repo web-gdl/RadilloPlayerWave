@@ -23,6 +23,7 @@ import com.radillo.playerwave.player.engine.RepeatMode
 import com.radillo.playerwave.ui.ChromeMode
 import com.radillo.playerwave.ui.common.collectWhenStarted
 import com.radillo.playerwave.ui.common.onUserChange
+import com.radillo.playerwave.ui.common.AccentColors
 import com.radillo.playerwave.ui.common.setMarqueeText
 import com.radillo.playerwave.ui.common.subtitle
 import com.radillo.playerwave.ui.common.visibleIf
@@ -121,7 +122,10 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
             b.btnCrossfadeLabel.text = if (seconds > 0) getString(R.string.np_crossfade_on, seconds) else getString(R.string.np_crossfade)
         }
         collectWhenStarted(viewModel.accent) { accent ->
-            val color = accent ?: requireContext().getColor(R.color.accent)
+            val color = AccentColors.visible(
+                accent ?: requireContext().getColor(R.color.accent),
+                requireContext().getColor(R.color.window_background),
+            )
             b.btnPlay.backgroundTintList = ColorStateList.valueOf(color)
             b.seek.progressTintList = ColorStateList.valueOf(color)
             b.seek.thumbTintList = ColorStateList.valueOf(color)
