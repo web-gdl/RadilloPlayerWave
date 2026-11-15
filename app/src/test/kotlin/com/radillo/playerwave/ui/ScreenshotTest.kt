@@ -157,10 +157,12 @@ class ScreenshotTest {
         v.find("artFrame")?.clipToOutline = true
         (v.find("btnPlay") as? ImageView)?.setImageResource(R.drawable.ic_pause)
         v.find("btnShuffle")?.isActivated = true
-        v.find("btnFavorite")?.isActivated = true
         v.find("btnCrossfade")?.isActivated = true
         (v.find("btnCrossfadeLabel") as? android.widget.TextView)?.text = "Crossfade 6 s"
-        (v.find("btnFavoriteIcon") as? ImageView)?.setImageResource(R.drawable.ic_favorite)
+        (v.find("btnFavorite") as? ImageView)?.apply {
+            setImageResource(R.drawable.ic_favorite)
+            imageTintList = android.content.res.ColorStateList.valueOf(0xFFFF7A3D.toInt())
+        }
         return v
     }
 

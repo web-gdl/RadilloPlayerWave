@@ -1,7 +1,11 @@
 ### Novedades de la 0.18.1
 
-- En el teléfono en vertical, las cuatro secciones de la barra inferior caben completas («Reproduciendo»
-  ya no se corta). Las capturas de abajo corresponden a la 0.18.0, con la barra nueva.
+- **Favorito en la portada:** el corazón para marcar la canción como favorita está ahora en la
+  esquina superior derecha de la portada (también cuando se muestra el visualizador). Relleno y en
+  el color de la portada si ya es favorita; contorno blanco si no. La ficha «Favorito» de abajo se
+  quitó.
+- En el teléfono en vertical, las cuatro secciones de la barra inferior caben completas
+  («Reproduciendo» ya no se corta).
 
 ### Novedades de la 0.18.0
 

@@ -112,8 +112,9 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
 
         collectWhenStarted(viewModel.state, ::render)
         collectWhenStarted(viewModel.isFavorite) { fav ->
-            b.btnFavoriteIcon.setImageResource(if (fav) R.drawable.ic_favorite else R.drawable.ic_favorite_border)
-            b.btnFavorite.isActivated = fav
+            isFavorite = fav
+            b.btnFavorite.setImageResource(if (fav) R.drawable.ic_favorite else R.drawable.ic_favorite_border)
+            tintFavorite()
             b.btnFavorite.contentDescription = getString(if (fav) R.string.action_remove_favorite else R.string.action_add_favorite)
         }
         collectWhenStarted(viewModel.crossfadeSeconds) { seconds ->
@@ -129,7 +130,19 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
             b.btnPlay.backgroundTintList = ColorStateList.valueOf(color)
             b.seek.progressTintList = ColorStateList.valueOf(color)
             b.seek.thumbTintList = ColorStateList.valueOf(color)
+            accentColor = color
+            tintFavorite()
         }
+    }
+
+    private var isFavorite = false
+    private var accentColor = 0
+
+    /** Corazón de la carátula: relleno y en el color de acento si la canción es favorita; contorno blanco si no. */
+    private fun tintFavorite() {
+        val b = binding ?: return
+        val color = if (isFavorite && accentColor != 0) accentColor else 0xFFFFFFFF.toInt()
+        b.btnFavorite.imageTintList = ColorStateList.valueOf(color)
     }
 
     override fun onDestroyView() {
