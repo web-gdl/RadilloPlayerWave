@@ -5,6 +5,7 @@
     <color name="surface">#FFFFFF</color>
     <color name="surface_alt">#E6E9EF</color>
     <color name="text_primary">#12141A</color>
+    <color name="seek_pending">#C3C8D2</color>
     <color name="text_secondary">#596070</color>
     <color name="accent">#0A7FB8</color>
     <color name="on_accent">#FFFFFF</color>

@@ -4,6 +4,7 @@
     <color name="surface">#141820</color>
     <color name="surface_alt">#1E232D</color>
     <color name="text_primary">#EEF1F6</color>
+    <color name="seek_pending">#39404C</color>
     <color name="text_secondary">#98A1B1</color>
     <color name="accent">#4FD6F5</color>
     <color name="on_accent">#071014</color>

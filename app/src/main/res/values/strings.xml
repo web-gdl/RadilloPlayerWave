@@ -172,8 +172,8 @@
     <string name="diag_no">No</string>
 
     <string name="cd_more">Más opciones</string>
-    <string name="np_toggle_visualizer">Carátula o visualizador. Con el visualizador: doble toque o deslizar cambia de visualizador; un toque vuelve a la carátula</string>
-    <string name="np_visualizer_hint">Doble toque o desliza: otro visualizador\nUn toque: carátula</string>
+    <string name="np_toggle_visualizer">Carátula o visualizador: un toque alterna; con el visualizador, dos toques o deslizar cambian de visualizador; tres toques, pantalla completa</string>
+    <string name="np_visualizer_hint">1 toque: carátula · 2 toques: otro visualizador\n3 toques: pantalla completa</string>
     <plurals name="track_count">
         <item quantity="one">%d canción</item>
         <item quantity="other">%d canciones</item>
@@ -283,4 +283,7 @@
     <string name="backup_failed">No se pudo usar el archivo</string>
     <string name="nav_favorites">Favoritos</string>
     <string name="favorites_none_to_play">Aún no tienes favoritos: marca canciones con el corazón</string>
+    <string name="cd_seek">Progreso de la canción: arrastra para adelantar o atrasar</string>
+    <string name="np_next_short">Sigue: %s</string>
+    <string name="vis_fullscreen_hint">Un toque: volver al reproductor\nDesliza: otro visualizador</string>
 </resources>

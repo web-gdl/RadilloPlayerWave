@@ -10,11 +10,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.SeekBar
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ApplicationProvider
 import com.radillo.playerwave.R
+import com.radillo.playerwave.data.waveform.WaveformShape
+import com.radillo.playerwave.databinding.FragmentNowPlayingBinding
+import com.radillo.playerwave.ui.player.NowPlayingFragment
 import com.radillo.playerwave.ui.common.AccentColors
 import com.radillo.playerwave.ui.common.Row
 import com.radillo.playerwave.ui.common.RowAdapter
@@ -48,6 +50,11 @@ import java.io.FileOutputStream
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [34], application = android.app.Application::class)
 class ScreenshotTest {
+
+    private companion object {
+        /** Acento de ejemplo (el que saldría de la portada de muestra). */
+        const val SAMPLE_ACCENT = 0xFFFF7A3D.toInt()
+    }
 
     private val outDir = File("build/outputs/screenshots").apply { mkdirs() }
 
@@ -94,15 +101,15 @@ class ScreenshotTest {
     private fun shell(ctx: Context, content: View, selectedNav: String, mini: Boolean): View {
         val root = LayoutInflater.from(ctx).inflate(R.layout.activity_main, null, false)
         (root.find("content") as ViewGroup).addView(content, FrameLayout.LayoutParams(-1, -1))
-        listOf("navLibrary", "navNowPlaying", "navVisualizer").forEach { root.find(it)?.isSelected = it == selectedNav }
+        listOf("navLibrary", "navNowPlaying").forEach { root.find(it)?.isSelected = it == selectedNav }
         // Color dinámico como en la app: acento de una portada de ejemplo (naranja), en el mismo orden que MainActivity.
         AccentColors.styleNav(
             context = ctx,
-            sections = listOf("navLibrary", "navFavorites", "navNowPlaying", "navVisualizer").mapNotNull { root.find(it) as? ViewGroup },
+            sections = listOf("navLibrary", "navFavorites", "navNowPlaying").mapNotNull { root.find(it) as? ViewGroup },
             search = root.find("topSearch") as? ViewGroup,
             favoritesIcon = root.find("navFavoritesIcon") as ImageView,
             miniProgress = root.find("miniPlayer")!!.find("miniProgress") as android.widget.ProgressBar,
-            accent = 0xFFFF7A3D.toInt(),
+            accent = SAMPLE_ACCENT,
             wide = root.find("topSearch") != null,
         )
         val miniRoot = root.find("miniPlayer")
@@ -144,26 +151,63 @@ class ScreenshotTest {
         return v
     }
 
-    private fun nowPlaying(ctx: Context): View {
+    /** «Reproduciendo» como lo deja el fragmento: acento de ejemplo, onda de sonido y esquina del recuadro. */
+    private fun nowPlaying(ctx: Context, favorite: Boolean = false, visualizer: Bitmap? = null): View {
         val v = LayoutInflater.from(ctx).inflate(R.layout.fragment_now_playing, null, false)
         v.show("emptyText", false)
         v.text("trackTitle", "Luces de carretera")
         v.text("trackSubtitle", "Los Kilómetros · Ruta nocturna")
         v.text("position", "2:41")
         v.text("duration", "6:30")
-        v.text("queueInfo", "A continuación: Kilómetro cero")
-        (v.find("seek") as? SeekBar)?.progress = 420
-        (v.find("art") as? ImageView)?.setImageResource(R.drawable.tile_note)
-        v.find("artFrame")?.clipToOutline = true
-        (v.find("btnPlay") as? ImageView)?.setImageResource(R.drawable.ic_pause)
-        v.find("btnShuffle")?.isActivated = true
-        v.find("btnCrossfade")?.isActivated = true
-        (v.find("btnCrossfadeLabel") as? android.widget.TextView)?.text = "Crossfade 6 s"
-        (v.find("btnFavorite") as? ImageView)?.apply {
-            setImageResource(R.drawable.ic_favorite)
-            imageTintList = android.content.res.ColorStateList.valueOf(0xFFFF7A3D.toInt())
+        v.text("queueInfo", "Sigue: Kilómetro cero")
+        val b = FragmentNowPlayingBinding.bind(v)
+        b.seek.fraction = 0.42f
+        b.seek.peaks = sampleWaveform()
+        b.artFrame.clipToOutline = true
+        b.btnPlay.setImageResource(R.drawable.ic_pause)
+        b.btnShuffle.isActivated = true
+        b.btnCrossfade.isActivated = true
+        b.btnCrossfadeLabel.text = "Crossfade 6 s"
+        NowPlayingFragment.applyAccent(b, SAMPLE_ACCENT)
+        NowPlayingFragment.renderFavorite(b, favorite)
+        if (visualizer != null) {
+            // El SurfaceView no se puede capturar: la escena va como imagen en el mismo recuadro.
+            b.art.setImageBitmap(visualizer)
+            b.btnFavorite.visibility = View.GONE
+            b.btnVisualizerSettings.visibility = View.VISIBLE
+            b.artSceneLabel.text = "Espectro"
+            b.artSceneLabel.visibility = View.VISIBLE
+        } else {
+            b.art.setImageBitmap(sampleCover(b.artFrame.layoutParams.width))
         }
         return v
+    }
+
+    /** Portada de ejemplo (degradado), de la que saldría el acento naranja. */
+    private fun sampleCover(size: Int): Bitmap {
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val paint = android.graphics.Paint().apply {
+            shader = android.graphics.LinearGradient(
+                0f, 0f, size.toFloat(), size.toFloat(),
+                intArrayOf(0xFFFF7A3D.toInt(), 0xFFB3204F.toInt(), 0xFF3A1050.toInt()),
+                floatArrayOf(0f, 0.6f, 1f),
+                android.graphics.Shader.TileMode.CLAMP,
+            )
+        }
+        Canvas(bitmap).drawRect(0f, 0f, size.toFloat(), size.toFloat(), paint)
+        return bitmap
+    }
+
+    /** Onda inventada pero fija (misma captura en cada ejecución). */
+    private fun sampleWaveform(): ByteArray {
+        var seed = 7L
+        val levels = FloatArray(WaveformShape.BUCKETS) { i ->
+            seed = seed * 16807L % 2147483647L
+            val random = seed / 2147483647f
+            val envelope = 0.35f + 0.65f * kotlin.math.abs(kotlin.math.sin(i / 9f)) * (0.6f + 0.4f * kotlin.math.sin(i / 23f + 1f))
+            envelope * (0.45f + 0.55f * random)
+        }
+        return WaveformShape.normalize(levels.map { it * it }.toFloatArray())!!
     }
 
     private class FakeSource : AudioSource {
@@ -194,15 +238,14 @@ class ScreenshotTest {
         return bitmap
     }
 
+    /** Pantalla completa: solo la imagen (va de fondo en la captura) y el nombre del visualizador. */
     private fun visualizer(ctx: Context): View {
         val v = LayoutInflater.from(ctx).inflate(R.layout.fragment_visualizer, null, false)
         v.background = null
         v.find("surface")?.visibility = View.INVISIBLE
-        v.text("trackTitle", "Luces de carretera")
-        v.text("trackSubtitle", "Los Kilómetros")
         v.show("status", false)
-        v.text("sceneName", "Espectro")
-        (v.find("btnPlay") as? ImageView)?.setImageResource(R.drawable.ic_pause)
+        v.text("sceneLabel", "Espectro")
+        v.show("sceneLabel", true)
         return v
     }
 
@@ -240,13 +283,11 @@ class ScreenshotTest {
         val ctx = themed(night)
         capture(shell(ctx, library(ctx), "navLibrary", mini = true), w, h, "car_library_$suffix")
         capture(shell(ctx, nowPlaying(ctx), "navNowPlaying", mini = false), w, h, "car_now_playing_$suffix")
-        val barHeight = ctx.resources.getDimensionPixelSize(R.dimen.top_bar_height) + 1
-        val shellView = shell(ctx, visualizer(ctx), "navVisualizer", mini = false)
-        val scene = sceneBitmap(DefaultScenes.DEFAULT_ID, w, h - barHeight)
-        val underlay = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also { Canvas(it).drawBitmap(scene, 0f, barHeight.toFloat(), null) }
-        (shellView.find("root") ?: shellView).background = null
-        shellView.find("mainColumn")?.background = null
-        capture(shellView, w, h, "car_visualizer_$suffix", underlay)
+        capture(shell(ctx, nowPlaying(ctx, favorite = true), "navNowPlaying", mini = false), w, h, "car_now_playing_favorite_$suffix")
+        val artSize = ctx.resources.getDimensionPixelSize(R.dimen.np_art)
+        val inArt = sceneBitmap(DefaultScenes.DEFAULT_ID, artSize, artSize)
+        capture(shell(ctx, nowPlaying(ctx, visualizer = inArt), "navNowPlaying", mini = false), w, h, "car_now_playing_visualizer_$suffix")
+        capture(visualizer(ctx), w, h, "car_visualizer_$suffix", sceneBitmap(DefaultScenes.DEFAULT_ID, w, h))
         capture(shell(ctx, settings(ctx), "navLibrary", mini = true), w, h, "car_settings_$suffix")
         capture(shell(ctx, albumDetail(ctx), "navLibrary", mini = true), w, h, "car_folder_$suffix")
         capture(shell(ctx, tagEditor(ctx), "navLibrary", mini = false), w, h, "car_tag_editor_$suffix")
@@ -267,7 +308,7 @@ class ScreenshotTest {
         val h = 2340
         capture(shell(ctx, library(ctx), "navLibrary", mini = true), w, h, "phone_library_dark")
         capture(shell(ctx, nowPlaying(ctx), "navNowPlaying", mini = false), w, h, "phone_now_playing_dark")
-        capture(shell(ctx, visualizer(ctx), "navVisualizer", mini = false), w, h, "phone_visualizer_dark")
+        capture(visualizer(ctx), w, h, "phone_visualizer_dark", sceneBitmap(DefaultScenes.DEFAULT_ID, w, h))
         capture(shell(ctx, tagEditor(ctx), "navLibrary", mini = false), w, h, "phone_tag_editor_dark")
     }
 }

@@ -3,7 +3,7 @@ package com.radillo.playerwave.ui
 import androidx.fragment.app.Fragment
 
 /** Destinos de primer nivel (barra inferior o raíl lateral). */
-enum class Tab { LIBRARY, NOW_PLAYING, VISUALIZER }
+enum class Tab { LIBRARY, NOW_PLAYING }
 
 /**
  * Navegación mínima entre fragments, implementada por la actividad: sin biblioteca de navegación.

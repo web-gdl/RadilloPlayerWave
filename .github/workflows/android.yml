@@ -96,24 +96,32 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-      # Las mismas capturas en la rama «ci-capturas» (solo la última ejecución), legibles con git.
+      # Las mismas capturas en una rama (solo la última ejecución), legibles con git: «ci-capturas»
+      # para main y «ci-capturas-pr» para los pull requests del propio repositorio, de modo que el
+      # diseño se pueda revisar antes de fusionar.
       - name: Subir capturas a la rama ci-capturas
-        if: always() && github.event_name != 'pull_request'
+        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         shell: bash
         run: |
           shopt -s nullglob
           files=(app/build/outputs/screenshots/*.png)
           [ ${#files[@]} -gt 0 ] || exit 0
+          branch=ci-capturas
+          sha="${{ github.sha }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            branch=ci-capturas-pr
+            sha="${{ github.event.pull_request.head.sha }}"
+          fi
           tmp=$(mktemp -d)
           cp "${files[@]}" "$tmp/"
           cd "$tmp"
-          git init -q -b ci-capturas
+          git init -q -b "$branch"
           git config user.name "github-actions"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          echo "Capturas generadas por ScreenshotTest en el commit ${{ github.sha }}." > README.md
+          echo "Capturas generadas por ScreenshotTest en el commit $sha." > README.md
           git add -A
-          git commit -q -m "Capturas de ${{ github.sha }}"
-          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-capturas
+          git commit -q -m "Capturas de $sha"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "$branch"
 
       # Si la compilación falla, deja el extracto relevante del registro como comentario
       # del commit, para poder diagnosticarlo desde la API sin abrir la interfaz web.

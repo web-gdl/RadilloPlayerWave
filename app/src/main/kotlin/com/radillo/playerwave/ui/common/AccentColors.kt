@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
+import android.view.Gravity
 import android.graphics.drawable.StateListDrawable
 import android.view.View
 import android.view.ViewGroup
@@ -67,6 +69,36 @@ object AccentColors {
         addState(intArrayOf(android.R.attr.state_pressed), ColorDrawable(ColorUtils.setAlphaComponent(accent, 0x1F)))
         addState(intArrayOf(), ColorDrawable(0))
     }
+
+    /**
+     * Fondo de un botón de estado (aleatorio, repetir): activo lleva un disco tenue del acento y un
+     * punto debajo del icono, para que el estado no dependa solo del color (sol en la pantalla).
+     */
+    fun toggleBackground(accent: Int, density: Float): StateListDrawable = StateListDrawable().apply {
+        fun disc(alpha: Int) = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(ColorUtils.setAlphaComponent(accent, alpha))
+        }
+        val dot = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(accent)
+        }
+        val dotSize = (6 * density).toInt()
+        val active = LayerDrawable(arrayOf(disc(0x2E), dot)).apply {
+            setLayerSize(1, dotSize, dotSize)
+            setLayerGravity(1, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL)
+            setLayerInsetBottom(1, (8 * density).toInt())
+        }
+        addState(intArrayOf(android.R.attr.state_activated), active)
+        addState(intArrayOf(android.R.attr.state_pressed), disc(0x40))
+        addState(intArrayOf(), disc(0x00))
+    }
+
+    /** Estados «activado» / normal para tintes de iconos y texto. */
+    fun activatedStates(activated: Int, normal: Int): ColorStateList = ColorStateList(
+        arrayOf(intArrayOf(android.R.attr.state_activated), intArrayOf()),
+        intArrayOf(activated, normal),
+    )
 
     /** Pinta icono y texto de una sección (hijos del contenedor, que heredan su estado). */
     fun tintContent(item: ViewGroup, colors: ColorStateList) {

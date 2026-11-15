@@ -82,7 +82,7 @@
                 android:duplicateParentState="true"
                 android:importantForAccessibility="no"
                 android:scaleType="fitCenter"
-                android:src="@drawable/ic_favorite"
+                android:src="@drawable/ic_favorites_list"
                 android:tint="@color/nav_item" />
 
             <TextView
@@ -126,38 +126,6 @@
                 android:gravity="center"
                 android:maxLines="1"
                 android:text="@string/nav_now_playing"
-                android:textColor="@color/nav_item"
-                android:textSize="@dimen/nav_label" />
-        </LinearLayout>
-        <LinearLayout
-            android:id="@+id/navVisualizer"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@drawable/bg_nav_item"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <ImageView
-                android:layout_width="@dimen/nav_icon"
-                android:layout_height="@dimen/nav_icon"
-                android:duplicateParentState="true"
-                android:importantForAccessibility="no"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_graphic_eq"
-                android:tint="@color/nav_item" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:duplicateParentState="true"
-                android:ellipsize="end"
-                android:gravity="center"
-                android:maxLines="1"
-                android:text="@string/nav_visualizer"
                 android:textColor="@color/nav_item"
                 android:textSize="@dimen/nav_label" />
         </LinearLayout>

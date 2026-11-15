@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Botón redondo con fondo de tarjeta («⋮» de la canción): se ve como botón y es fácil de acertar. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="oval"><solid android:color="@color/selected_bg" /></shape>
+    </item>
+    <item android:state_focused="true">
+        <shape android:shape="oval">
+            <solid android:color="@color/surface" />
+            <stroke android:width="2dp" android:color="@color/accent" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="oval"><solid android:color="@color/surface" /></shape>
+    </item>
+</selector>

@@ -122,8 +122,10 @@ publicación en [docs/PLAY_STORE.md](docs/PLAY_STORE.md).
 [GitHub Releases](https://github.com/web-gdl/RadilloPlayerWave/releases) (última versión). Los
 materiales de preparación de Play (`docs/PLAY_STORE.md`, `docs/play/`) quedan como referencia.
 
-**0.18.1:** el corazón de favorito pasa a la esquina de la portada (se quita la ficha de abajo); la
-barra inferior del teléfono en vertical muestra completo «Reproduciendo».
+**0.19.0:** «Reproduciendo» rediseñada: corazón de favorito en la portada (silueta / rojo), un toque
+alterna portada y visualizador, dos cambian de visualizador y tres lo abren a pantalla completa;
+engrane de ajustes sobre el visualizador (ya no hay sección «Visualizador» en la barra), progreso
+dibujado como onda de sonido, un solo color activo y botones más grandes.
 
 **0.18.0:** barra superior con el color dinámico de la portada (igual que el botón de reproducir),
 botón «Favoritos» que reproduce tu lista, y el teclado de Buscar se esconde solo a los 1,5 s.

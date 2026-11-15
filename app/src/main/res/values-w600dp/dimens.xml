@@ -10,7 +10,7 @@
     <dimen name="np_title">34sp</dimen>
     <dimen name="np_subtitle">19sp</dimen>
     <dimen name="np_play">100dp</dimen>
-    <dimen name="np_transport">72dp</dimen>
+    <dimen name="np_transport">76dp</dimen>
     <dimen name="np_transport_secondary">56dp</dimen>
-    <dimen name="np_card_height">52dp</dimen>
+    <dimen name="np_card_height">60dp</dimen>
 </resources>

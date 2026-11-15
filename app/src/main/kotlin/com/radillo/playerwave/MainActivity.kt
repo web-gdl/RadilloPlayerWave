@@ -37,7 +37,6 @@ import com.radillo.playerwave.ui.library.LastCollection
 import com.radillo.playerwave.ui.library.LibraryFragment
 import com.radillo.playerwave.ui.player.NowPlayingFragment
 import com.radillo.playerwave.ui.player.PlayerViewModel
-import com.radillo.playerwave.ui.visualizer.VisualizerFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -97,7 +96,6 @@ class MainActivity : FragmentActivity(), Navigator {
         binding.navLibrary.setOnClickListener { openTab(Tab.LIBRARY) }
         binding.navFavorites.setOnClickListener { playFavorites() }
         binding.navNowPlaying.setOnClickListener { openTab(Tab.NOW_PLAYING) }
-        binding.navVisualizer.setOnClickListener { openTab(Tab.VISUALIZER) }
         // Barra superior de pantallas anchas: Buscar y Ajustes siempre a mano (en el móvil están en la biblioteca).
         binding.topSearch?.setOnClickListener { push(com.radillo.playerwave.ui.library.SearchFragment()) }
         binding.topSettings?.setOnClickListener { push(com.radillo.playerwave.ui.settings.SettingsFragment()) }
@@ -118,7 +116,9 @@ class MainActivity : FragmentActivity(), Navigator {
         if (savedInstanceState == null) {
             // Se vuelve a la última sección usada (en el coche, casi siempre «Reproduciendo») y, en la
             // biblioteca, a la carpeta, álbum o artista que estuviera abierto.
-            openTab(Tab.entries.firstOrNull { it.name == uiPrefs.getString(KEY_LAST_TAB, null) } ?: Tab.LIBRARY)
+            // («VISUALIZER» era una sección hasta la 0.18: ahora el visualizador vive en «Reproduciendo».)
+            val last = uiPrefs.getString(KEY_LAST_TAB, null)
+            openTab(Tab.entries.firstOrNull { it.name == last } ?: if (last == "VISUALIZER") Tab.NOW_PLAYING else Tab.LIBRARY)
             requestNotificationPermissionOnce()
             handleBootMemory(intent)
         } else {
@@ -197,7 +197,6 @@ class MainActivity : FragmentActivity(), Navigator {
         val fragment = when (tab) {
             Tab.LIBRARY -> LibraryFragment()
             Tab.NOW_PLAYING -> NowPlayingFragment()
-            Tab.VISUALIZER -> VisualizerFragment.newInstance()
         }
         fm.beginTransaction().setReorderingAllowed(true).replace(R.id.content, fragment).commit()
         currentTab = tab
@@ -252,7 +251,7 @@ class MainActivity : FragmentActivity(), Navigator {
     private fun applyAccent(accent: Int?) {
         AccentColors.styleNav(
             context = this,
-            sections = listOf(binding.navLibrary, binding.navFavorites, binding.navNowPlaying, binding.navVisualizer),
+            sections = listOf(binding.navLibrary, binding.navFavorites, binding.navNowPlaying),
             search = binding.topSearch,
             favoritesIcon = binding.navFavoritesIcon,
             miniProgress = binding.miniPlayer.miniProgress,
@@ -264,7 +263,6 @@ class MainActivity : FragmentActivity(), Navigator {
     private fun updateNavSelection() {
         binding.navLibrary.isSelected = currentTab == Tab.LIBRARY
         binding.navNowPlaying.isSelected = currentTab == Tab.NOW_PLAYING
-        binding.navVisualizer.isSelected = currentTab == Tab.VISUALIZER
     }
 
     private fun renderMiniPlayer(state: PlaybackState) {

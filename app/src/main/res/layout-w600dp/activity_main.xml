@@ -107,7 +107,7 @@
                 android:duplicateParentState="true"
                 android:importantForAccessibility="no"
                 android:scaleType="fitCenter"
-                android:src="@drawable/ic_favorite"
+                android:src="@drawable/ic_favorites_list"
                 android:tint="@color/nav_pill_content" />
 
             <TextView
@@ -150,39 +150,6 @@
                 android:duplicateParentState="true"
                 android:maxLines="1"
                 android:text="@string/nav_now_playing"
-                android:textColor="@color/nav_pill_content"
-                android:textSize="@dimen/nav_pill_text"
-                android:textStyle="bold" />
-        </LinearLayout>
-        <LinearLayout
-            android:id="@+id/navVisualizer"
-            android:layout_width="wrap_content"
-            android:layout_height="@dimen/nav_pill_height"
-            android:layout_marginEnd="8dp"
-            android:background="@drawable/bg_nav_pill"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="15dp"
-            android:paddingEnd="15dp">
-
-            <ImageView
-                android:layout_width="@dimen/nav_pill_icon"
-                android:layout_height="@dimen/nav_pill_icon"
-                android:duplicateParentState="true"
-                android:importantForAccessibility="no"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_graphic_eq"
-                android:tint="@color/nav_pill_content" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:duplicateParentState="true"
-                android:maxLines="1"
-                android:text="@string/nav_visualizer"
                 android:textColor="@color/nav_pill_content"
                 android:textSize="@dimen/nav_pill_text"
                 android:textStyle="bold" />
