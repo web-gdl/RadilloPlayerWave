@@ -60,13 +60,17 @@ Nombre provisional: comprobar disponibilidad de marca antes de cualquier uso com
 
 ## Capturas (autoestéreo, 1024×534 útiles bajo la barra del sistema)
 
-| Biblioteca | Reproduciendo |
+| Reproduciendo (portada) | Reproduciendo (visualizador) |
 |---|---|
-| ![Biblioteca](docs/screenshots/biblioteca.png) | ![Reproduciendo](docs/screenshots/reproduciendo.png) |
-| **Visualizador** | **Ajustes** |
-| ![Visualizador](docs/screenshots/visualizador.png) | ![Ajustes](docs/screenshots/ajustes.png)
+| ![Reproduciendo con portada](docs/screenshots/reproduciendo.png) | ![Reproduciendo con visualizador](docs/screenshots/reproduciendo-visualizador.png) |
+| **Visualizador a pantalla completa** | **Biblioteca** |
+| ![Visualizador a pantalla completa](docs/screenshots/visualizador.png) | ![Biblioteca](docs/screenshots/biblioteca.png) |
+| **Ajustes** | |
+| ![Ajustes](docs/screenshots/ajustes.png) | |
 
-El naranja de la barra superior es un ejemplo: toma el color de la portada de la canción que suena. |
+El naranja es un ejemplo: la barra superior, el botón de reproducir y el progreso toman el color de la
+portada de la canción que suena. En el recuadro de la portada: un toque alterna portada y
+visualizador, dos toques cambian de visualizador y tres lo abren a pantalla completa.
 
 ## Estado
 

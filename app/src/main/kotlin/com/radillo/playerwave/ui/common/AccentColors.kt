@@ -83,11 +83,11 @@ object AccentColors {
             shape = GradientDrawable.OVAL
             setColor(accent)
         }
-        val dotSize = (6 * density).toInt()
+        val dotSize = (5 * density).toInt()
         val active = LayerDrawable(arrayOf(disc(0x2E), dot)).apply {
             setLayerSize(1, dotSize, dotSize)
             setLayerGravity(1, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL)
-            setLayerInsetBottom(1, (8 * density).toInt())
+            setLayerInsetBottom(1, (5 * density).toInt())
         }
         addState(intArrayOf(android.R.attr.state_activated), active)
         addState(intArrayOf(android.R.attr.state_pressed), disc(0x40))
