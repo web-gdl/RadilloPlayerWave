@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Móvil en vertical: carátula arriba, información, progreso, controles y extras. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -60,6 +61,34 @@
                     android:textColor="#FFFFFFFF"
                     android:textSize="@dimen/text_body"
                     android:visibility="gone" />
+                <!-- Favorito: corazón en la esquina de la carátula (también sobre el visualizador). -->
+                <ImageView
+                    android:id="@+id/btnFavorite"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="top|end"
+                    android:layout_margin="@dimen/space_s"
+                    android:background="@drawable/bg_art_action"
+                    android:clickable="true"
+                    android:contentDescription="@string/action_add_favorite"
+                    android:focusable="true"
+                    android:padding="14dp"
+                    android:src="@drawable/ic_favorite_border"
+                    android:tint="#FFFFFFFF" />
+                <ImageView
+                    android:id="@+id/btnVisualizerSettings"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="top|end"
+                    android:layout_margin="@dimen/space_s"
+                    android:background="@drawable/bg_art_action"
+                    android:clickable="true"
+                    android:contentDescription="@string/vis_settings"
+                    android:focusable="true"
+                    android:padding="14dp"
+                    android:src="@drawable/ic_settings"
+                    android:tint="#FFFFFFFF"
+                    android:visibility="gone" />
             </FrameLayout>
 
             <Space
@@ -89,10 +118,12 @@
                 android:singleLine="true"
                 android:gravity="center" />
 
-            <SeekBar
+            <com.radillo.playerwave.ui.player.WaveformSeekView
                 android:id="@+id/seek"
-                style="@style/SeekBarThick"
-                android:layout_marginTop="@dimen/space_s" />
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="@dimen/space_l"
+                android:contentDescription="@string/cd_seek" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -144,22 +175,22 @@
                 <ImageButton
                     android:id="@+id/btnPrevious"
                     style="@style/TransportButton"
-                    android:layout_marginStart="@dimen/space_m"
+                    android:layout_marginStart="4dp"
                     android:contentDescription="@string/action_previous"
                     android:src="@drawable/ic_skip_previous" />
 
                 <ImageButton
                     android:id="@+id/btnPlay"
                     style="@style/PlayButton"
-                    android:layout_marginStart="@dimen/space_l"
-                    android:layout_marginEnd="@dimen/space_l"
+                    android:layout_marginStart="@dimen/space_s"
+                    android:layout_marginEnd="@dimen/space_s"
                     android:contentDescription="@string/action_play"
                     android:src="@drawable/ic_play" />
 
                 <ImageButton
                     android:id="@+id/btnNext"
                     style="@style/TransportButton"
-                    android:layout_marginEnd="@dimen/space_m"
+                    android:layout_marginEnd="4dp"
                     android:contentDescription="@string/action_next"
                     android:src="@drawable/ic_skip_next" />
 
@@ -177,13 +208,6 @@
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="@dimen/space_l"
                 android:orientation="horizontal">
-                <LinearLayout
-                    android:id="@+id/btnFavorite"
-                    style="@style/LabeledAction"
-                    android:contentDescription="@string/action_add_favorite">
-                    <ImageView android:id="@+id/btnFavoriteIcon" style="@style/LabeledAction.Icon" android:src="@drawable/ic_favorite_border" />
-                    <TextView android:id="@+id/btnFavoriteLabel" style="@style/LabeledAction.Label" android:text="@string/np_favorite" />
-                </LinearLayout>
                 <LinearLayout
                     android:id="@+id/btnCrossfade"
                     style="@style/LabeledAction"

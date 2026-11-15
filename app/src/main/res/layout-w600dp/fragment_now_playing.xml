@@ -3,6 +3,7 @@
      izquierda y carátula grande a la derecha. Controles de arriba abajo por orden de lectura:
      qué suena → progreso → controles → extras en tarjetas. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -16,103 +17,128 @@
         android:paddingEnd="36dp">
 
 
+        <!-- Columna izquierda con la misma altura que la carátula: el título arranca a su borde superior
+             y las tarjetas terminan en el inferior (dos columnas parejas). -->
         <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/np_art"
             android:layout_marginEnd="40dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <!-- «⋮» junto al título: las opciones son de esta canción (proximidad) y queda donde
-                 se espera un menú, al final de la fila (Jakob), sin taparle nada. -->
+            <!-- «⋮» junto al título: las opciones son de esta canción (proximidad). Botón redondo
+                 con fondo para que se vea como botón y sea fácil de acertar (Fitts). -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/trackTitle"
-                    style="@style/Text.Headline"
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:ellipsize="marquee"
-                android:marqueeRepeatLimit="marquee_forever"
-                android:scrollHorizontally="true"
-                android:singleLine="true"
-                    android:textSize="@dimen/np_title" />
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/trackTitle"
+                        style="@style/Text.Headline"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="marquee"
+                        android:includeFontPadding="false"
+                        android:marqueeRepeatLimit="marquee_forever"
+                        android:scrollHorizontally="true"
+                        android:singleLine="true"
+                        android:textSize="@dimen/np_title" />
+
+                    <TextView
+                        android:id="@+id/trackSubtitle"
+                        style="@style/Text.Secondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:ellipsize="marquee"
+                        android:marqueeRepeatLimit="marquee_forever"
+                        android:scrollHorizontally="true"
+                        android:singleLine="true"
+                        android:textSize="@dimen/np_subtitle" />
+
+                    <!-- Qué viene después: estado visible sin abrir la cola. -->
+                    <TextView
+                        android:id="@+id/queueInfo"
+                        style="@style/Text.Secondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textSize="@dimen/text_body" />
+                </LinearLayout>
 
                 <ImageButton
                     android:id="@+id/btnMore"
-                    style="@style/IconButton"
-                    android:layout_marginStart="@dimen/space_s"
-                    android:layout_marginEnd="-12dp"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_marginStart="@dimen/space_m"
+                    android:background="@drawable/bg_round_card"
                     android:contentDescription="@string/cd_more"
-                    android:src="@drawable/ic_more_vert" />
+                    android:padding="14dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_more_vert"
+                    android:tint="@color/icon" />
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/trackSubtitle"
-                style="@style/Text.Secondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:ellipsize="marquee"
-                android:marqueeRepeatLimit="marquee_forever"
-                android:scrollHorizontally="true"
-                android:singleLine="true"
-                android:textSize="@dimen/np_subtitle" />
+            <View android:layout_width="1dp" android:layout_height="0dp" android:layout_weight="1" />
 
-            <SeekBar
-                android:id="@+id/seek"
-                style="@style/SeekBarThick"
-                android:layout_marginTop="@dimen/space_l" />
-
+            <!-- Progreso como onda de sonido, con los tiempos a los lados en tamaño legible. -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/position"
-                    style="@style/Text.Secondary"
+                    style="@style/Text"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
-                <!-- Qué viene después: estado visible sin abrir la cola. -->
-                <TextView
-                    android:id="@+id/queueInfo"
-                    style="@style/Text.Secondary"
-                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:minWidth="44dp" />
+
+                <com.radillo.playerwave.ui.player.WaveformSeekView
+                    android:id="@+id/seek"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_marginStart="@dimen/space_m"
+                    android:layout_marginEnd="@dimen/space_m"
                     android:layout_weight="1"
-                    android:ellipsize="end"
-                    android:gravity="center"
-                    android:maxLines="1"
-                    android:paddingStart="@dimen/space_m"
-                    android:paddingEnd="@dimen/space_m" />
+                    android:contentDescription="@string/cd_seek" />
 
                 <TextView
                     android:id="@+id/duration"
-                    style="@style/Text.Secondary"
+                    style="@style/Text"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:minWidth="44dp" />
             </LinearLayout>
 
-            <!-- Transporte por importancia: reproducir > anterior/siguiente > aleatorio/repetir. -->
+            <View android:layout_width="1dp" android:layout_height="0dp" android:layout_weight="1" />
+
+            <!-- Transporte por importancia: reproducir > anterior/siguiente > aleatorio/repetir.
+                 Todos con zona táctil de 76dp; aleatorio y repetir muestran su estado con fondo y punto. -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_m"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <ImageButton
                     android:id="@+id/btnShuffle"
                     style="@style/TransportButton.Secondary"
-                    android:layout_width="@dimen/np_transport_secondary"
-                    android:layout_height="@dimen/np_transport_secondary"
+                    android:layout_width="@dimen/np_transport"
+                    android:layout_height="@dimen/np_transport"
                     android:contentDescription="@string/action_shuffle"
+                    android:padding="22dp"
                     android:src="@drawable/ic_shuffle" />
 
                 <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
@@ -150,25 +176,21 @@
                 <ImageButton
                     android:id="@+id/btnRepeat"
                     style="@style/TransportButton.Secondary"
-                    android:layout_width="@dimen/np_transport_secondary"
-                    android:layout_height="@dimen/np_transport_secondary"
+                    android:layout_width="@dimen/np_transport"
+                    android:layout_height="@dimen/np_transport"
                     android:contentDescription="@string/action_repeat"
+                    android:padding="22dp"
                     android:src="@drawable/ic_repeat" />
             </LinearLayout>
 
+            <View android:layout_width="1dp" android:layout_height="0dp" android:layout_weight="1" />
+
             <!-- Acciones secundarias con icono y texto: reconocer en vez de recordar qué hace cada icono. -->
             <LinearLayout
+                android:id="@+id/cardRow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_l"
                 android:orientation="horizontal">
-                <LinearLayout
-                    android:id="@+id/btnFavorite"
-                    style="@style/LabeledCard"
-                    android:contentDescription="@string/action_add_favorite">
-                    <ImageView android:id="@+id/btnFavoriteIcon" style="@style/LabeledCard.Icon" android:src="@drawable/ic_favorite_border" />
-                    <TextView android:id="@+id/btnFavoriteLabel" style="@style/LabeledCard.Label" android:text="@string/np_favorite" />
-                </LinearLayout>
                 <LinearLayout
                     android:id="@+id/btnCrossfade"
                     style="@style/LabeledCard"
@@ -186,6 +208,7 @@
                 <LinearLayout
                     android:id="@+id/btnQueue"
                     style="@style/LabeledCard"
+                    android:layout_marginEnd="0dp"
                     android:contentDescription="@string/queue_title">
                     <ImageView android:id="@+id/btnQueueIcon" style="@style/LabeledCard.Icon" android:src="@drawable/ic_queue_music" />
                     <TextView android:id="@+id/btnQueueLabel" style="@style/LabeledCard.Label" android:text="@string/np_queue" />
@@ -235,6 +258,36 @@
                     android:paddingBottom="@dimen/space_s"
                     android:textColor="#FFFFFFFF"
                     android:textSize="@dimen/text_body"
+                    android:visibility="gone" />
+                <!-- Esquina superior derecha: con la carátula, el corazón de favorito (silueta / relleno
+                     rojo); con el visualizador, el engrane de sus ajustes. Nunca los dos a la vez. -->
+                <ImageView
+                    android:id="@+id/btnFavorite"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="top|end"
+                    android:layout_margin="@dimen/space_s"
+                    android:background="@drawable/bg_art_action"
+                    android:clickable="true"
+                    android:contentDescription="@string/action_add_favorite"
+                    android:focusable="true"
+                    android:padding="13dp"
+                    android:src="@drawable/ic_favorite_border"
+                    android:tint="#FFFFFFFF" />
+
+                <ImageView
+                    android:id="@+id/btnVisualizerSettings"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="top|end"
+                    android:layout_margin="@dimen/space_s"
+                    android:background="@drawable/bg_art_action"
+                    android:clickable="true"
+                    android:contentDescription="@string/vis_settings"
+                    android:focusable="true"
+                    android:padding="14dp"
+                    android:src="@drawable/ic_settings"
+                    android:tint="#FFFFFFFF"
                     android:visibility="gone" />
             </FrameLayout>
     </LinearLayout>

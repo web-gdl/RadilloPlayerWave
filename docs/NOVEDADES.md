@@ -1,3 +1,37 @@
+### Novedades de la 0.19.0
+
+**«Reproduciendo» rediseñada**
+
+- **Favorito en la portada:** corazón en la esquina superior derecha. En silueta si la canción no es
+  favorita; un toque lo rellena en rojo y la agrega a favoritos, otro toque la quita. La ficha
+  «Favorito» de abajo se quitó.
+- **Portada y visualizador con toques:**
+  - 1 toque: cambia entre portada y visualizador;
+  - 2 toques (o deslizar a los lados): cambia de visualizador;
+  - 3 toques: visualizador a pantalla completa. Ahí, 1 toque regresa al reproductor y deslizar
+    cambia de visualizador.
+  Para distinguir uno, dos y tres toques, el efecto de un toque tarda unas tres décimas de segundo.
+- **Engrane en el visualizador:** con el visualizador a la vista, el engrane de la esquina superior
+  derecha abre sus ajustes. Por eso «Visualizador» ya no está en la barra superior.
+- **Progreso como onda de sonido:** la barra de progreso dibuja el volumen de la canción a lo largo
+  de toda su duración. Se calcula en segundo plano la primera vez que suena cada canción (se ve una
+  barra normal mientras tanto) y se guarda para las siguientes.
+- **Un solo color activo:** reproducir, progreso, aleatorio, repetir y crossfade usan el color de la
+  portada, igual que la barra superior. Aleatorio y repetir activos llevan además fondo y un punto,
+  para que se note con sol en la pantalla.
+- **Botones más grandes** (76 px de zona táctil), tiempos a los lados del progreso en letra más
+  grande, «Sigue: …» bajo el artista y «⋮» como botón redondo.
+- **Favoritos de la barra superior** con icono propio (lista con corazón).
+- En el teléfono en vertical, las secciones de la barra inferior caben completas.
+
+![Reproduciendo con portada](https://raw.githubusercontent.com/web-gdl/RadilloPlayerWave/main/docs/screenshots/reproduciendo.png)
+
+![Reproduciendo con visualizador](https://raw.githubusercontent.com/web-gdl/RadilloPlayerWave/main/docs/screenshots/reproduciendo-visualizador.png)
+
+![Visualizador a pantalla completa](https://raw.githubusercontent.com/web-gdl/RadilloPlayerWave/main/docs/screenshots/visualizador.png)
+
+(Capturas del autoestéreo, 1024×534. El naranja es un ejemplo: el color cambia con la portada de cada canción.)
+
 ### Novedades de la 0.18.0
 
 - **Barra superior con color dinámico:** la sección activa (Biblioteca, Reproduciendo, Visualizador…)
@@ -10,11 +44,6 @@
 - **Buscar:** el teclado se esconde solo 1,5 s después de la última letra para dejar ver los
   resultados (tocar el campo lo muestra de nuevo).
 
-![Barra superior con color dinámico y Favoritos: Reproduciendo](https://raw.githubusercontent.com/web-gdl/RadilloPlayerWave/main/docs/screenshots/reproduciendo.png)
-
-![Barra superior con color dinámico y Favoritos: Biblioteca](https://raw.githubusercontent.com/web-gdl/RadilloPlayerWave/main/docs/screenshots/biblioteca.png)
-
-(Capturas del autoestéreo, 1024×534. El naranja es un ejemplo: el color cambia con la portada de cada canción.)
 
 ### Novedades de la 0.17.0
 

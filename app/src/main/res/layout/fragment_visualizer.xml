@@ -1,170 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  Visualizador. Antes, siete botones de escena tapaban la imagen y obligaban a elegir entre siete
-  (ley de Hick). Ahora: el nombre de la escena con flechas grandes para pasar a la anterior o la
-  siguiente con un toque; tocar el nombre abre la lista completa. Los controles se ocultan solos.
--->
+<!-- Visualizador a pantalla completa: solo la imagen. Un toque vuelve al reproductor; deslizar a los
+     lados cambia de visualizador (el nombre aparece un momento abajo). -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FF000000">
+    android:background="#FF000000"
+    android:contentDescription="@string/vis_fullscreen_hint">
 
     <com.radillo.playerwave.visualizer.render.VisualizerSurfaceView
         android:id="@+id/surface"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clickable="true"
-        android:focusable="true" />
+        android:layout_height="match_parent" />
 
-    <LinearLayout
-        android:id="@+id/overlayTop"
-        android:layout_width="match_parent"
+    <!-- Sin canción o sin datos de audio: se dice por qué la imagen no reacciona. -->
+    <TextView
+        android:id="@+id/status"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:background="@drawable/bg_overlay"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="@dimen/space_s">
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="@dimen/space_l"
+        android:background="@drawable/bg_scene_label"
+        android:paddingStart="@dimen/space_m"
+        android:paddingTop="@dimen/space_s"
+        android:paddingEnd="@dimen/space_m"
+        android:paddingBottom="@dimen/space_s"
+        android:textColor="#FFFFFFFF"
+        android:textSize="@dimen/text_body"
+        android:visibility="gone" />
 
-        <ImageButton
-            android:id="@+id/btnScenePrevious"
-            style="@style/IconButton"
-            android:contentDescription="@string/vis_scene_previous"
-            android:src="@drawable/ic_chevron_left"
-            android:tint="#FFFFFFFF" />
-
-        <TextView
-            android:id="@+id/sceneName"
-            android:layout_width="0dp"
-            android:layout_height="@dimen/touch"
-            android:layout_weight="1"
-            android:background="?android:attr/selectableItemBackground"
-            android:contentDescription="@string/vis_choose_scene"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:maxLines="1"
-            android:textColor="#FFFFFFFF"
-            android:textSize="@dimen/text_title"
-            android:textStyle="bold" />
-
-        <ImageButton
-            android:id="@+id/btnSceneNext"
-            style="@style/IconButton"
-            android:contentDescription="@string/vis_scene_next"
-            android:src="@drawable/ic_chevron_right"
-            android:tint="#FFFFFFFF" />
-
-        <ImageButton
-            android:id="@+id/btnFullscreen"
-            style="@style/IconButton"
-            android:layout_marginStart="@dimen/space_l"
-            android:contentDescription="@string/vis_fullscreen"
-            android:src="@drawable/ic_fullscreen"
-            android:tint="#FFFFFFFF" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/overlayBottom"
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/sceneLabel"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="@drawable/bg_overlay"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="@dimen/space_xl"
+        android:background="@drawable/bg_scene_label"
+        android:gravity="center"
+        android:importantForAccessibility="no"
         android:paddingStart="@dimen/space_l"
         android:paddingTop="@dimen/space_s"
         android:paddingEnd="@dimen/space_l"
-        android:paddingBottom="@dimen/space_s">
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/status"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="#CCFFFFFF"
-                android:textSize="@dimen/text_secondary"
-                android:visibility="gone" />
-
-            <TextView
-                android:id="@+id/trackTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ellipsize="marquee"
-                android:marqueeRepeatLimit="marquee_forever"
-                android:scrollHorizontally="true"
-                android:singleLine="true"
-                android:textColor="#FFFFFFFF"
-                android:textSize="@dimen/text_title"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/trackSubtitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ellipsize="marquee"
-                android:marqueeRepeatLimit="marquee_forever"
-                android:scrollHorizontally="true"
-                android:singleLine="true"
-                android:textColor="#B3FFFFFF"
-                android:textSize="@dimen/text_secondary" />
-        </LinearLayout>
-
-        <!-- Mismos controles y tamaños que en «Reproduciendo» (consistencia). -->
-        <ImageButton
-            android:id="@+id/btnPrevious"
-            style="@style/TransportButton"
-            android:contentDescription="@string/action_previous"
-            android:src="@drawable/ic_skip_previous"
-            android:tint="#FFFFFFFF" />
-
-        <ImageButton
-            android:id="@+id/btnPlay"
-            style="@style/PlayButton"
-            android:layout_marginStart="@dimen/space_m"
-            android:layout_marginEnd="@dimen/space_m"
-            android:contentDescription="@string/action_play"
-            android:src="@drawable/ic_play" />
-
-        <ImageButton
-            android:id="@+id/btnNext"
-            style="@style/TransportButton"
-            android:contentDescription="@string/action_next"
-            android:src="@drawable/ic_skip_next"
-            android:tint="#FFFFFFFF" />
-
-        <!-- Ajustes de la escena abajo a la derecha, con texto y otro icono: antes era un segundo
-             engrane justo debajo del de Ajustes de la app y se confundían. Aquí queda junto a lo
-             que se ve, lejos del engrane general, y se reconoce sin adivinar. -->
-        <FrameLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
-
-            <LinearLayout
-                android:id="@+id/btnTune"
-                style="@style/LabeledCard"
-                android:layout_width="wrap_content"
-                android:layout_gravity="end|center_vertical"
-                android:layout_marginEnd="0dp"
-                android:layout_weight="0"
-                android:background="@drawable/bg_overlay_pill"
-                android:contentDescription="@string/vis_settings">
-
-                <ImageView
-                    style="@style/LabeledCard.Icon"
-                    android:src="@drawable/ic_tune"
-                    android:tint="#FFFFFFFF" />
-
-                <TextView
-                    style="@style/LabeledCard.Label"
-                    android:text="@string/vis_tune_short"
-                    android:textColor="#FFFFFFFF" />
-            </LinearLayout>
-        </FrameLayout>
-    </LinearLayout>
+        android:paddingBottom="@dimen/space_s"
+        android:textColor="#FFFFFFFF"
+        android:textSize="@dimen/text_body"
+        android:visibility="gone" />
 </FrameLayout>

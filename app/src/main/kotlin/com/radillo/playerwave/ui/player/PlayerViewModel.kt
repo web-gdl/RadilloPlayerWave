@@ -25,6 +25,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.radillo.playerwave.data.waveform.WaveformRepository
+import kotlinx.coroutines.flow.transformLatest
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -35,6 +37,7 @@ class PlayerViewModel @Inject constructor(
     private val playlists: PlaylistRepository,
     private val sleepTimer: SleepTimer,
     appSettings: AppSettingsRepository,
+    private val waveforms: WaveformRepository,
 ) : ViewModel() {
 
     private val sharing = SharingStarted.WhileSubscribed(5_000)
@@ -81,6 +84,19 @@ class PlayerViewModel @Inject constructor(
     ) { uri, enabled -> if (enabled) uri else null }
         .mapLatest { uri -> uri?.let { accentExtractor.accentFor(it) } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /**
+     * Onda de sonido de la canción actual para la barra de progreso (`null` mientras se calcula o
+     * si no se puede: entonces la barra se dibuja lisa). Solo se calcula con la pantalla a la vista.
+     */
+    val waveform: StateFlow<ByteArray?> = playback.state
+        .map { it.currentTrack }
+        .distinctUntilChanged { a, b -> a?.id == b?.id && a?.durationMs == b?.durationMs }
+        .transformLatest { track ->
+            emit(null)
+            if (track != null && track.durationMs > 0) emit(waveforms.load(track.id, track.uri, track.durationMs))
+        }
+        .stateIn(viewModelScope, sharing, null)
 
     /** Qué pasó al tocar «Favoritos» en la barra superior. */
     enum class FavoritesResult { NONE, ALREADY_PLAYING, STARTED }

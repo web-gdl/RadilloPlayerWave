@@ -60,13 +60,17 @@ Nombre provisional: comprobar disponibilidad de marca antes de cualquier uso com
 
 ## Capturas (autoestéreo, 1024×534 útiles bajo la barra del sistema)
 
-| Biblioteca | Reproduciendo |
+| Reproduciendo (portada) | Reproduciendo (visualizador) |
 |---|---|
-| ![Biblioteca](docs/screenshots/biblioteca.png) | ![Reproduciendo](docs/screenshots/reproduciendo.png) |
-| **Visualizador** | **Ajustes** |
-| ![Visualizador](docs/screenshots/visualizador.png) | ![Ajustes](docs/screenshots/ajustes.png)
+| ![Reproduciendo con portada](docs/screenshots/reproduciendo.png) | ![Reproduciendo con visualizador](docs/screenshots/reproduciendo-visualizador.png) |
+| **Visualizador a pantalla completa** | **Biblioteca** |
+| ![Visualizador a pantalla completa](docs/screenshots/visualizador.png) | ![Biblioteca](docs/screenshots/biblioteca.png) |
+| **Ajustes** | |
+| ![Ajustes](docs/screenshots/ajustes.png) | |
 
-El naranja de la barra superior es un ejemplo: toma el color de la portada de la canción que suena. |
+El naranja es un ejemplo: la barra superior, el botón de reproducir y el progreso toman el color de la
+portada de la canción que suena. En el recuadro de la portada: un toque alterna portada y
+visualizador, dos toques cambian de visualizador y tres lo abren a pantalla completa.
 
 ## Estado
 
@@ -121,6 +125,11 @@ publicación en [docs/PLAY_STORE.md](docs/PLAY_STORE.md).
 **Distribución:** se descartó publicar la app en Google Play; se distribuye solo por
 [GitHub Releases](https://github.com/web-gdl/RadilloPlayerWave/releases) (última versión). Los
 materiales de preparación de Play (`docs/PLAY_STORE.md`, `docs/play/`) quedan como referencia.
+
+**0.19.0:** «Reproduciendo» rediseñada: corazón de favorito en la portada (silueta / rojo), un toque
+alterna portada y visualizador, dos cambian de visualizador y tres lo abren a pantalla completa;
+engrane de ajustes sobre el visualizador (ya no hay sección «Visualizador» en la barra), progreso
+dibujado como onda de sonido, un solo color activo y botones más grandes.
 
 **0.18.0:** barra superior con el color dinámico de la portada (igual que el botón de reproducir),
 botón «Favoritos» que reproduce tu lista, y el teclado de Buscar se esconde solo a los 1,5 s.

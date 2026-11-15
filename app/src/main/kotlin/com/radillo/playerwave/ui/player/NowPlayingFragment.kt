@@ -8,7 +8,7 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.GestureDetector
+import android.view.ViewConfiguration
 import android.view.MotionEvent
 import android.view.View
 import androidx.fragment.app.Fragment
@@ -22,7 +22,7 @@ import com.radillo.playerwave.player.engine.PlaybackState
 import com.radillo.playerwave.player.engine.RepeatMode
 import com.radillo.playerwave.ui.ChromeMode
 import com.radillo.playerwave.ui.common.collectWhenStarted
-import com.radillo.playerwave.ui.common.onUserChange
+import com.radillo.playerwave.ui.common.MultiTapDetector
 import com.radillo.playerwave.ui.common.AccentColors
 import com.radillo.playerwave.ui.common.setMarqueeText
 import com.radillo.playerwave.ui.common.subtitle
@@ -31,22 +31,58 @@ import com.radillo.playerwave.ui.common.openSystemEqualizer
 import com.radillo.playerwave.ui.library.TrackActionsViewModel
 import com.radillo.playerwave.ui.library.showTrackActions
 import com.radillo.playerwave.ui.navigator
+import com.radillo.playerwave.ui.visualizer.VisualizerFragment
+import com.radillo.playerwave.ui.visualizer.VisualizerSettingsDialog
 import com.radillo.playerwave.ui.visualizer.VisualizerViewModel
 import com.radillo.playerwave.ui.visualizer.sceneLabelRes
 import kotlin.math.abs
 import dagger.hilt.android.AndroidEntryPoint
 
-/** Pantalla «Reproduciendo»: carátula, progreso, controles, favorito, temporizador, ecualizador y cola. */
+/**
+ * Pantalla «Reproduciendo»: carátula o visualizador (con favorito o ajustes en su esquina), progreso
+ * como onda de sonido, controles, crossfade, ecualizador y cola.
+ */
 @AndroidEntryPoint
 class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
 
-    private companion object {
-        const val KEY_ART_VISUALIZER = "now_playing_visualizer"
+    companion object {
+        private const val KEY_ART_VISUALIZER = "now_playing_visualizer"
         private const val KEY_ART_HINT_SHOWN = "now_playing_visualizer_hint"
         private const val SCENE_LABEL_MS = 1_500L
         private const val HINT_MS = 4_500L
         /** Deslizamiento mínimo (fracción del ancho del recuadro) para cambiar de visualizador. */
         private const val SWIPE_FRACTION = 0.15f
+        /** Margen para saber si a un toque le sigue otro (uno, dos o tres toques). */
+        private const val TAP_WINDOW_MS = 280L
+        /** Corazón de favorito: rojo fijo (no sigue al color de la portada). */
+        private const val FAVORITE_RED = 0xFFFF2D3D.toInt()
+
+        /**
+         * Un solo color «activo» en toda la pantalla (el de la portada): reproducir, progreso,
+         * aleatorio, repetir y crossfade encendido. El corazón de favorito es la excepción: siempre rojo.
+         */
+        fun applyAccent(b: FragmentNowPlayingBinding, color: Int) {
+            val ctx = b.root.context
+            val density = ctx.resources.displayMetrics.density
+            b.btnPlay.backgroundTintList = ColorStateList.valueOf(color)
+            b.btnPlay.imageTintList = ColorStateList.valueOf(AccentColors.onAccent(color))
+            b.seek.accentColor = color
+            val states = AccentColors.activatedStates(color, ctx.getColor(R.color.text_primary))
+            listOf(b.btnShuffle, b.btnRepeat).forEach {
+                it.background = AccentColors.toggleBackground(color, density)
+                it.imageTintList = states
+            }
+            b.btnCrossfadeIcon.imageTintList = states
+            b.btnCrossfadeLabel.setTextColor(states)
+        }
+
+        /** Corazón de la carátula: silueta blanca; relleno y rojo si la canción es favorita. */
+        fun renderFavorite(b: FragmentNowPlayingBinding, favorite: Boolean) {
+            b.btnFavorite.setImageResource(if (favorite) R.drawable.ic_favorite else R.drawable.ic_favorite_border)
+            b.btnFavorite.imageTintList = ColorStateList.valueOf(if (favorite) FAVORITE_RED else 0xFFFFFFFF.toInt())
+            b.btnFavorite.contentDescription =
+                b.root.context.getString(if (favorite) R.string.action_remove_favorite else R.string.action_add_favorite)
+        }
     }
 
     override val hidesMiniPlayer: Boolean get() = true
@@ -97,25 +133,24 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
         // Lectores de pantalla y teclado: «activar» alterna carátula y visualizador.
         b.artFrame.setOnClickListener { toggleArtVisualizer() }
         setUpArtGestures(b)
-        b.seek.onUserChange(
-            onChange = { progress ->
-                val duration = viewModel.state.value.durationMs
-                b.position.text = formatDuration(progress * duration / 1000L)
-            },
-            onStart = { dragging = true },
-            onStop = {
+        b.seek.listener = object : WaveformSeekView.Listener {
+            override fun onStart() {
+                dragging = true
+            }
+
+            override fun onChange(fraction: Float) {
+                b.position.text = formatDuration((fraction * viewModel.state.value.durationMs).toLong())
+            }
+
+            override fun onStop(fraction: Float, seek: Boolean) {
                 dragging = false
-                val duration = viewModel.state.value.durationMs
-                viewModel.seekTo(b.seek.progress * duration / 1000L)
-            },
-        )
+                if (seek) viewModel.seekTo((fraction * viewModel.state.value.durationMs).toLong())
+            }
+        }
+        b.btnVisualizerSettings.setOnClickListener { VisualizerSettingsDialog.show(this, visualizer) }
 
         collectWhenStarted(viewModel.state, ::render)
-        collectWhenStarted(viewModel.isFavorite) { fav ->
-            b.btnFavoriteIcon.setImageResource(if (fav) R.drawable.ic_favorite else R.drawable.ic_favorite_border)
-            b.btnFavorite.isActivated = fav
-            b.btnFavorite.contentDescription = getString(if (fav) R.string.action_remove_favorite else R.string.action_add_favorite)
-        }
+        collectWhenStarted(viewModel.isFavorite) { renderFavorite(b, it) }
         collectWhenStarted(viewModel.crossfadeSeconds) { seconds ->
             // Encendido: tarjeta en color de acento y la duración a la vista (el estado se ve donde se cambia).
             b.btnCrossfade.isActivated = seconds > 0
@@ -126,14 +161,15 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
                 accent ?: requireContext().getColor(R.color.accent),
                 requireContext().getColor(R.color.window_background),
             )
-            b.btnPlay.backgroundTintList = ColorStateList.valueOf(color)
-            b.seek.progressTintList = ColorStateList.valueOf(color)
-            b.seek.thumbTintList = ColorStateList.valueOf(color)
+            applyAccent(b, color)
         }
+        collectWhenStarted(viewModel.waveform) { b.seek.peaks = it }
     }
 
     override fun onDestroyView() {
         handler.removeCallbacks(hideSceneLabel)
+        artTaps?.reset()
+        artTaps = null
         binding = null
         lastArt = null
         lastPlaying = null
@@ -170,7 +206,7 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
             }
             val next = state.queue.getOrNull(state.queueIndex + 1)
                 ?: if (state.repeatMode == RepeatMode.ALL) state.queue.firstOrNull() else null
-            b.queueInfo.text = next?.let { getString(R.string.np_up_next, it.title) }.orEmpty()
+            b.queueInfo.text = next?.let { getString(R.string.np_next_short, it.title) }.orEmpty()
             b.btnShuffle.isActivated = state.shuffleEnabled
             b.btnRepeat.isActivated = state.repeatMode != RepeatMode.OFF
             b.btnRepeat.setImageResource(if (state.repeatMode == RepeatMode.ONE) R.drawable.ic_repeat_one else R.drawable.ic_repeat)
@@ -178,7 +214,7 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
         }
         if (!dragging) {
             val duration = state.durationMs.coerceAtLeast(1L)
-            b.seek.progress = (state.positionMs * 1000L / duration).toInt().coerceIn(0, 1000)
+            b.seek.fraction = state.positionMs.toFloat() / duration
             b.position.text = formatDuration(state.positionMs)
         }
     }
@@ -190,6 +226,9 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
         val b = binding ?: return
         b.artVisualizer.visibleIf(show)
         b.art.visibleIf(!show)
+        // Esquina del recuadro: corazón con la carátula, engrane de ajustes con el visualizador.
+        b.btnFavorite.visibleIf(!show)
+        b.btnVisualizerSettings.visibleIf(show)
         if (!show) {
             handler.removeCallbacks(hideSceneLabel)
             b.artSceneLabel.visibleIf(false)
@@ -212,51 +251,58 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
     }
 
     /**
-     * Gestos del recuadro:
-     * - con la carátula, un toque muestra el visualizador (al instante);
-     * - con el visualizador, **doble toque** o **deslizar** a los lados cambia de visualizador y
-     *   **un toque** vuelve a la carátula (se confirma tras el margen del doble toque).
+     * Gestos del recuadro (iguales con carátula o visualizador):
+     * - **un toque** alterna carátula y visualizador;
+     * - **dos toques** (o **deslizar** a los lados) cambian de visualizador;
+     * - **tres toques** abren el visualizador a pantalla completa.
+     * Para distinguirlos, el efecto de uno o dos toques espera [TAP_WINDOW_MS] por si llega otro.
      */
     @SuppressLint("ClickableViewAccessibility") // la activación accesible va por el OnClickListener
     private fun setUpArtGestures(b: FragmentNowPlayingBinding) {
-        val listener = object : GestureDetector.SimpleOnGestureListener() {
-            /** El toque ya hizo su efecto al levantar el dedo (mostrar el visualizador). */
-            private var handledOnUp = false
-
-            override fun onDown(e: MotionEvent): Boolean {
-                handledOnUp = false
-                return true
-            }
-
-            override fun onSingleTapUp(e: MotionEvent): Boolean {
-                if (b.artVisualizer.visibility != View.VISIBLE) {
-                    handledOnUp = true
-                    toggleArtVisualizer()
+        val taps = MultiTapDetector(
+            windowMs = TAP_WINDOW_MS,
+            maxTaps = 3,
+            schedule = { r, ms -> handler.postDelayed(r, ms) },
+            cancel = handler::removeCallbacks,
+            onTaps = ::onArtTaps,
+        )
+        artTaps = taps
+        val slop = ViewConfiguration.get(requireContext()).scaledTouchSlop
+        var downX = 0f
+        var downY = 0f
+        b.artFrame.setOnTouchListener { view, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    downX = event.x
+                    downY = event.y
                 }
-                return true
+                MotionEvent.ACTION_UP -> {
+                    val dx = event.x - downX
+                    val dy = event.y - downY
+                    when {
+                        abs(dx) <= slop && abs(dy) <= slop -> taps.tap()
+                        abs(dx) >= view.width * SWIPE_FRACTION && abs(dx) >= abs(dy) * 1.5f &&
+                            b.artVisualizer.visibility == View.VISIBLE -> {
+                            taps.reset()
+                            stepArtScene(if (dx < 0) 1 else -1)
+                        }
+                    }
+                }
             }
-
-            override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-                if (!handledOnUp && b.artVisualizer.visibility == View.VISIBLE) toggleArtVisualizer()
-                return true
-            }
-
-            override fun onDoubleTap(e: MotionEvent): Boolean {
-                if (b.artVisualizer.visibility == View.VISIBLE) stepArtScene(1)
-                return true
-            }
-
-            override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
-                if (e1 == null || b.artVisualizer.visibility != View.VISIBLE) return false
-                val dx = e2.x - e1.x
-                val dy = e2.y - e1.y
-                if (abs(dx) < b.artFrame.width * SWIPE_FRACTION || abs(dx) < abs(dy) * 1.5f) return false
-                stepArtScene(if (dx < 0) 1 else -1)
-                return true
-            }
+            true
         }
-        val detector = GestureDetector(requireContext(), listener)
-        b.artFrame.setOnTouchListener { _, event -> detector.onTouchEvent(event) }
+    }
+
+    private var artTaps: MultiTapDetector? = null
+
+    private fun onArtTaps(count: Int) {
+        val b = binding ?: return
+        val showingVisualizer = b.artVisualizer.visibility == View.VISIBLE
+        when {
+            count >= 3 -> navigator.push(VisualizerFragment.newInstance())
+            count == 2 && showingVisualizer -> stepArtScene(1)
+            else -> toggleArtVisualizer()
+        }
     }
 
     /** Visualizador siguiente o anterior, en bucle, sin salir de «Reproduciendo». */
