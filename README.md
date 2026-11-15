@@ -1,0 +1,1 @@
+Capturas generadas por ScreenshotTest en el commit 745ad497908858194b9e148b5189a87313f551f5.
