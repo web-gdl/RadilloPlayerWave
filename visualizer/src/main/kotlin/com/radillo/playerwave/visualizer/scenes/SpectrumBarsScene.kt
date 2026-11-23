@@ -93,7 +93,8 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Barras LED") {
         val radius = min(cellW, cellH) * 0.18f
 
         // Columna con todos los segmentos encendidos.
-        val lit = Bitmap.createBitmap(stripW, stripH, Bitmap.Config.ARGB_8888)
+        // En las pruebas de JVM (stubs del SDK) createBitmap devuelve null: no hay nada que pintar.
+        val lit: Bitmap = newBitmap(stripW, stripH) ?: return
         val cellPaint = fillPaint()
         val shine = fillPaint().apply { color = Argb.withAlpha(0xFFFFFFFF.toInt(), 0.22f) }
         Canvas(lit).also { c ->
@@ -107,7 +108,7 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Barras LED") {
         litStrip = lit
 
         // Resplandor: la misma columna, difuminada, con margen alrededor.
-        val glow = Bitmap.createBitmap(stripW + glowPad * 2, stripH + glowPad * 2, Bitmap.Config.ARGB_8888)
+        val glow: Bitmap = newBitmap(stripW + glowPad * 2, stripH + glowPad * 2) ?: return
         val blur = fillPaint().apply { maskFilter = BlurMaskFilter(glowPad * 0.9f, BlurMaskFilter.Blur.NORMAL) }
         Canvas(glow).also { c ->
             for (r in 0 until ROWS) {
@@ -120,7 +121,7 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Barras LED") {
         glowBlitPaint.alpha = alpha255(0.55f)
 
         // Panel: fondo, bisel, segmentos apagados y escalas.
-        val back = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val back: Bitmap = newBitmap(width, height) ?: return
         Canvas(back).also { c ->
             c.drawColor(PANEL_OUTSIDE)
             val face = fillPaint().apply {
@@ -145,9 +146,10 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Barras LED") {
 
     private fun drawScales(c: Canvas, w: Float, h: Float, outer: Float) {
         val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
             textSize = (h * 0.028f).coerceIn(9f, 18f)
         }
+        val face: Typeface? = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+        text.typeface = face
         val tick = fillPaint().apply { color = TICK }
         text.textAlign = Paint.Align.RIGHT
         for ((row, label) in DB_MARKS) {
@@ -168,6 +170,11 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Barras LED") {
             val x = (columnX(i) + cellW * 0.5f).coerceIn(gridLeft + text.textSize, w - outer * 2f - text.textSize * 1.6f)
             c.drawText(label, x, h - h * 0.035f, text)
         }
+    }
+
+    private fun newBitmap(w: Int, h: Int): Bitmap? {
+        val bitmap: Bitmap? = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        return bitmap
     }
 
     /** Parte superior del segmento [row] (0 = el de abajo) dentro de la columna. */

@@ -117,7 +117,8 @@ class OscilloscopeScene : CanvasScene(id = ID, displayName = "Onda y osciloscopi
         rightFill.fillShader = fadeToAxis(rightColor, top, bottom)
 
         drawLabels = width >= 300 && height >= 180
-        labelPaint.typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+        val face: Typeface? = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+        labelPaint.typeface = face
         labelPaint.textSize = (h * 0.032f).coerceIn(10f, 18f)
     }
 

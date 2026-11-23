@@ -97,7 +97,9 @@ class TerrainScene : CanvasScene(id = ID, displayName = "Terreno synthwave") {
 
     /** Cielo, estrellas, sol con franjas y suelo: se pinta una vez por tamaño o paleta. */
     private fun paintBackground(w: Float, h: Float, ground: Int): Bitmap? {
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888) ?: return null
+        // En las pruebas de JVM (stubs del SDK) createBitmap devuelve null.
+        val created: Bitmap? = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val bitmap = created ?: return null
         val c = Canvas(bitmap)
         val pal = palette.colors
         val skyTop = palette.background
