@@ -47,6 +47,7 @@ class RadialSpectrumScene : CanvasScene(id = ID, displayName = "Radial") {
     private var maxLength = 0f
     private var minLength = 0f
     private var dotRadius = 2f
+    private var haloRadius = 0f
     private var drawGlow = true
     private var drawHalo = true
 
@@ -111,8 +112,9 @@ class RadialSpectrumScene : CanvasScene(id = ID, displayName = "Radial") {
             floatArrayOf(0f, 0.28f, 0.72f, 1f),
             Shader.TileMode.CLAMP,
         )
+        haloRadius = side * 0.62f
         haloPaint.fillShader = RadialGradient(
-            centerX, centerY, side * 0.62f,
+            centerX, centerY, haloRadius,
             intArrayOf(Argb.withAlpha(pal[pal.size / 2], 0.42f), Argb.TRANSPARENT),
             null, Shader.TileMode.CLAMP,
         )
@@ -159,8 +161,9 @@ class RadialSpectrumScene : CanvasScene(id = ID, displayName = "Radial") {
         val intensity = params.intensity.coerceIn(0.1f, 2f)
 
         if (drawHalo) {
+            // El círculo mide lo mismo que el degradado: así el halo se desvanece sin borde.
             haloPaint.alpha = alpha255(0.35f + 0.65f * bass)
-            canvas.drawCircle(centerX, centerY, innerRadius * (2.3f + 0.9f * bass), haloPaint)
+            canvas.drawCircle(centerX, centerY, haloRadius, haloPaint)
         }
         canvas.drawCircle(centerX, centerY, innerRadius * 0.78f, dashPaint)
 
