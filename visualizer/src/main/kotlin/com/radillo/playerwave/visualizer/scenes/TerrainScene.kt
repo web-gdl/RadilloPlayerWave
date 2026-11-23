@@ -22,7 +22,9 @@ import kotlin.random.Random
  * Cielo, estrellas y sol se pintan una sola vez en un mapa de bits ([rebuild]); cada frame solo
  * proyecta la malla. Las franjas entre filas se rellenan de lejos a cerca con el color del suelo
  * para que las montañas cercanas tapen las líneas de detrás. Con calidad baja hay menos filas y
- * columnas, y se apagan el resplandor de las filas cercanas y el brillo del horizonte.
+ * columnas, y se apagan el resplandor de las filas cercanas y el brillo del horizonte. En gama baja
+ * (8227L) la malla es fija de 14 × 24, con líneas finas y suelo sin antialias. Toda la malla late
+ * con los graves del momento, para que el ritmo se note al instante.
  */
 class TerrainScene : CanvasScene(id = ID, displayName = "Terreno synthwave") {
 
@@ -39,10 +41,16 @@ class TerrainScene : CanvasScene(id = ID, displayName = "Terreno synthwave") {
     private var phase = 0f
 
     private var background: Bitmap? = null
+    private var backgroundKey = ""
+
+    /** Veces que se ha pintado el fondo (pruebas: no debe repetirse al cambiar la calidad). */
+    internal var backgroundBuilds = 0
+        private set
     private var horizonY = 0f
     private var groundHeight = 0f
     private var lineBase = 1f
     private var bass = 0f
+    private var punch = 0f
 
     private val strip = Path()
     private val rowLine = Path()
@@ -57,8 +65,10 @@ class TerrainScene : CanvasScene(id = ID, displayName = "Terreno synthwave") {
     private var drawHorizonGlow = true
 
     override fun rebuild() {
-        val newRows = (30f * params.effectiveDensity + 8f).roundToInt().coerceIn(10, 30)
-        val newCols = ((56f * params.effectiveDensity + 10f).roundToInt().coerceIn(14, 52) / 2) * 2
+        // Gama baja: malla fija de 14 × 24; si no, según densidad en pasos que no cambian con cada
+        // pequeño ajuste del gobernador.
+        val newRows = if (lowEnd) LOW_END_ROWS else quantize((30f * params.effectiveDensity + 8f).roundToInt(), 2).coerceIn(10, 30)
+        val newCols = if (lowEnd) LOW_END_COLS else quantize((56f * params.effectiveDensity + 10f).roundToInt(), 4).coerceIn(16, 52)
         if (newRows != rows || newCols != cols || xs.size != newRows * (newCols + 1)) {
             rows = newRows
             cols = newCols
@@ -71,8 +81,11 @@ class TerrainScene : CanvasScene(id = ID, displayName = "Terreno synthwave") {
             segments = FloatArray((cols + 1) * 4)
             head = 0
         }
-        drawGlow = params.quality >= GLOW_MIN_QUALITY
+        drawGlow = !lowEnd && params.quality >= GLOW_MIN_QUALITY
         drawHorizonGlow = params.quality >= HORIZON_MIN_QUALITY
+        // El suelo entre filas no necesita bordes suavizados (los tapan las líneas): rellenar sin
+        // antialias es bastante más barato dibujando con la CPU.
+        groundPaint.isAntiAlias = !lowEnd
         val pal = palette.colors
         rowColorA = pal.first()
         rowColorB = pal.last()
@@ -92,8 +105,17 @@ class TerrainScene : CanvasScene(id = ID, displayName = "Terreno synthwave") {
             floatArrayOf(0f, 0.62f, 1f),
             Shader.TileMode.CLAMP,
         )
-        background = paintBackground(w, h, ground)
+        // El fondo (cielo, estrellas, sol) solo depende del tamaño y la paleta: no se vuelve a pintar
+        // cuando el gobernador cambia la calidad (antes eso daba un tirón en cada ajuste).
+        val key = "${width}x$height/${palette.id}"
+        if (key != backgroundKey) {
+            background = paintBackground(w, h, ground)
+            backgroundKey = key
+            backgroundBuilds++
+        }
     }
+
+    override val coversBackground: Boolean get() = background != null
 
     /** Cielo, estrellas, sol con franjas y suelo: se pinta una vez por tamaño o paleta. */
     private fun paintBackground(w: Float, h: Float, ground: Int): Bitmap? {
@@ -174,7 +196,11 @@ class TerrainScene : CanvasScene(id = ID, displayName = "Terreno synthwave") {
                 live.copyInto(history[head])
             }
         }
-        bass += ((frame.bass * sensitivity).coerceIn(0f, 1f) - bass) * smoothing(deltaSeconds, 10f)
+        val bassNow = (frame.bass * sensitivity).coerceIn(0f, 1f)
+        bass += (bassNow - bass) * smoothing(deltaSeconds, 10f)
+        // «Golpe»: sube al instante con los graves y baja despacio. Hace latir toda la malla con el
+        // ritmo **ahora**, aunque las montañas tarden unos segundos en llegar del horizonte.
+        punch = follow(punch, bassNow, smoothing(deltaSeconds, 40f), smoothing(deltaSeconds, 5f * params.speed))
     }
 
     override fun draw(canvas: Canvas) {
@@ -208,15 +234,31 @@ class TerrainScene : CanvasScene(id = ID, displayName = "Terreno synthwave") {
                     segments[s++] = xs[cur + c]
                     segments[s++] = ys[cur + c]
                 }
-                columnPaint.strokeWidth = lineBase * (0.6f + 0.9f * fade)
+                // Gama baja: líneas de 1 px (el trazo más rápido con la CPU).
+                columnPaint.strokeWidth = if (lowEnd) 0f else lineBase * (0.6f + 0.9f * fade)
                 columnPaint.alpha = alpha255(0.12f + 0.5f * fade)
                 canvas.drawLines(segments, 0, s, columnPaint)
             }
-            rowLine.rewind()
             val base = j * stride
+            val color = if ((head - j) and 1 == 0) rowColorA else rowColorB
+            if (lowEnd) {
+                // Segmentos sueltos en vez de una ruta con uniones redondeadas: mucho más barato.
+                var s = 0
+                for (c in 0 until cols) {
+                    segments[s++] = xs[base + c]
+                    segments[s++] = ys[base + c]
+                    segments[s++] = xs[base + c + 1]
+                    segments[s++] = ys[base + c + 1]
+                }
+                rowPaint.color = color
+                rowPaint.alpha = alpha255(0.25f + 0.75f * fade)
+                rowPaint.strokeWidth = if (fade > 0.55f) lineBase * 1.6f else 0f
+                canvas.drawLines(segments, 0, s, rowPaint)
+                continue
+            }
+            rowLine.rewind()
             rowLine.moveTo(xs[base], ys[base])
             for (c in 1..cols) rowLine.lineTo(xs[base + c], ys[base + c])
-            val color = if ((head - j) and 1 == 0) rowColorA else rowColorB
             if (drawGlow && fade > 0.45f) {
                 rowGlowPaint.color = Argb.withAlpha(color, 0.22f * fade)
                 canvas.drawPath(rowLine, rowGlowPaint)
@@ -234,7 +276,7 @@ class TerrainScene : CanvasScene(id = ID, displayName = "Terreno synthwave") {
         val centerX = w * 0.5f
         val zFar = 1f / (1f + rows * DEPTH)
         val zRef = 1f / (1f + DEPTH)
-        val hill = groundHeight * HILL * params.intensity.coerceIn(0.1f, 2f)
+        val hill = groundHeight * HILL * params.intensity.coerceIn(0.1f, 2f) * (0.7f + 0.6f * punch)
         val stride = cols + 1
         for (j in 0 until rows) {
             val distance = (rows - 1 - j) + (1f - phase)
@@ -255,6 +297,7 @@ class TerrainScene : CanvasScene(id = ID, displayName = "Terreno synthwave") {
 
     override fun onDetach() {
         background = null
+        backgroundKey = ""
     }
 
     companion object {
@@ -270,5 +313,7 @@ class TerrainScene : CanvasScene(id = ID, displayName = "Terreno synthwave") {
         private const val WIDTH = 0.62f
         private const val HILL = 0.55f
         private const val SCROLL_ROWS_PER_SECOND = 2.4f
+        const val LOW_END_ROWS = 14
+        const val LOW_END_COLS = 24
     }
 }

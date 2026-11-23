@@ -44,6 +44,12 @@ interface Scene {
     fun update(frame: AudioFrame, deltaSeconds: Float)
     fun onDetach()
 
+    /**
+     * `true` si [draw] pinta todo el lienzo con un fondo opaco: el motor se ahorra entonces su
+     * `drawColor` de fondo (un relleno de pantalla completa menos por frame dibujando con la CPU).
+     */
+    val coversBackground: Boolean get() = false
+
     /** Render para escenas [RenderBackend.CANVAS] sobre un lienzo de Android (hardware o software). */
     fun draw(canvas: Canvas)
 }

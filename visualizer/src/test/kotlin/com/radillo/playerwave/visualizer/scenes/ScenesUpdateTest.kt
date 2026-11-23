@@ -115,6 +115,20 @@ class ScenesUpdateTest {
     }
 
     @Test
+    fun `terrain paints its background once per size and palette, not per quality change`() {
+        val scene = TerrainScene()
+        scene.onAttach(SceneParams(deviceScale = 0.6f))
+        scene.onResize(758, 395)
+        val built = scene.backgroundBuilds
+        for (q in floatArrayOf(0.75f, 0.56f, 0.9f, 1f, 0.42f)) scene.onParamsChanged(SceneParams(quality = q, deviceScale = 0.6f))
+        assertThat(scene.backgroundBuilds).isEqualTo(built)
+        scene.onParamsChanged(SceneParams(paletteId = "neon", deviceScale = 0.6f))
+        assertThat(scene.backgroundBuilds).isEqualTo(built + 1)
+        scene.onResize(1024, 534)
+        assertThat(scene.backgroundBuilds).isEqualTo(built + 2)
+    }
+
+    @Test
     fun `scenes tolerate tiny band counts`() {
         val tinyConfig = AnalyzerConfig(bandCount = 2)
         val tiny = SyntheticFrameSource(tinyConfig)
