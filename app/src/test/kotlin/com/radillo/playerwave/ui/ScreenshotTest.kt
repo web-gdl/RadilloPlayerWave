@@ -25,7 +25,12 @@ import com.radillo.playerwave.visualizer.analysis.AudioSource
 import com.radillo.playerwave.visualizer.analysis.AudioSourceStatus
 import com.radillo.playerwave.visualizer.analysis.PcmBlock
 import com.radillo.playerwave.visualizer.analysis.PlaybackClock
+import com.radillo.playerwave.ui.visualizer.sceneLabelRes
+import com.radillo.playerwave.visualizer.analysis.AnalyzerConfig
+import com.radillo.playerwave.visualizer.analysis.AudioFrame
 import com.radillo.playerwave.visualizer.engine.DefaultScenes
+import com.radillo.playerwave.visualizer.engine.Palettes
+import com.radillo.playerwave.visualizer.engine.SceneParams
 import com.radillo.playerwave.visualizer.engine.VisualizerEngine
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -175,7 +180,7 @@ class ScreenshotTest {
             b.art.setImageBitmap(visualizer)
             b.btnFavorite.visibility = View.GONE
             b.btnVisualizerSettings.visibility = View.VISIBLE
-            b.artSceneLabel.text = "Espectro"
+            b.artSceneLabel.text = "Barras LED"
             b.artSceneLabel.visibility = View.VISIBLE
         } else {
             b.art.setImageBitmap(sampleCover(b.artFrame.layoutParams.width))
@@ -238,13 +243,58 @@ class ScreenshotTest {
         return bitmap
     }
 
+    /**
+     * La escena [sceneId] tras unos segundos de «música» de prueba (graves fuertes que bajan hacia
+     * los agudos, golpes periódicos y una onda estéreo), como en el autoestéreo (densidad 0,6).
+     */
+    private fun musicBitmap(sceneId: String, width: Int, height: Int): Bitmap {
+        val config = AnalyzerConfig()
+        val random = kotlin.random.Random(21)
+        val scene = DefaultScenes.registry().create(sceneId)!!
+        scene.onAttach(SceneParams(deviceScale = 0.6f))
+        scene.onResize(width, height)
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val dt = 1f / 30f
+        repeat(360) { f -> // 12 s: el terreno tarda ~11 s en llenarse del horizonte al frente
+            val t = f * dt
+            val beat = if (f % 15 == 0) 1f else 0f
+            val bands = FloatArray(config.bandCount) { i ->
+                val x = i.toFloat() / (config.bandCount - 1)
+                val shape = 0.95f * kotlin.math.exp(-x * 1.9f) + 0.12f
+                val wobble = 0.75f + 0.35f * kotlin.math.sin(i * 0.7f + t * 3.1f)
+                (shape * wobble + 0.15f * random.nextFloat() + 0.15f * beat * (1f - x)).coerceIn(0f, 1f)
+            }
+            val wave = { phase: Float, gain: Float ->
+                FloatArray(config.waveformSize) { k ->
+                    val u = k.toFloat() / config.waveformSize
+                    gain * (0.55f * kotlin.math.sin(u * 37.7f + phase) + 0.28f * kotlin.math.sin(u * 106.8f + phase * 1.7f) +
+                        0.12f * kotlin.math.sin(u * 257.6f + phase * 0.6f))
+                }
+            }
+            val frame = AudioFrame(
+                spectrum = FloatArray(config.spectrumSize) { random.nextFloat() * 0.4f },
+                bands = bands,
+                bass = 0.75f + 0.2f * beat, mid = 0.5f, treble = 0.35f, rms = 0.6f, peak = 0.9f, onset = 0.9f * beat,
+                waveformLeft = wave(t * 2f, 1f),
+                waveformRight = wave(t * 2f + 1.4f, 0.8f),
+                timestampUs = (t * 1_000_000).toLong(), synthetic = false,
+            )
+            scene.update(frame, dt)
+        }
+        canvas.drawColor(Palettes.AURORA.background)
+        scene.draw(canvas)
+        scene.onDetach()
+        return bitmap
+    }
+
     /** Pantalla completa: solo la imagen (va de fondo en la captura) y el nombre del visualizador. */
-    private fun visualizer(ctx: Context): View {
+    private fun visualizer(ctx: Context, label: String = "Barras LED"): View {
         val v = LayoutInflater.from(ctx).inflate(R.layout.fragment_visualizer, null, false)
         v.background = null
         v.find("surface")?.visibility = View.INVISIBLE
         v.show("status", false)
-        v.text("sceneLabel", "Espectro")
+        v.text("sceneLabel", label)
         v.show("sceneLabel", true)
         return v
     }
@@ -285,9 +335,9 @@ class ScreenshotTest {
         capture(shell(ctx, nowPlaying(ctx), "navNowPlaying", mini = false), w, h, "car_now_playing_$suffix")
         capture(shell(ctx, nowPlaying(ctx, favorite = true), "navNowPlaying", mini = false), w, h, "car_now_playing_favorite_$suffix")
         val artSize = ctx.resources.getDimensionPixelSize(R.dimen.np_art)
-        val inArt = sceneBitmap(DefaultScenes.DEFAULT_ID, artSize, artSize)
+        val inArt = musicBitmap(DefaultScenes.DEFAULT_ID, artSize, artSize)
         capture(shell(ctx, nowPlaying(ctx, visualizer = inArt), "navNowPlaying", mini = false), w, h, "car_now_playing_visualizer_$suffix")
-        capture(visualizer(ctx), w, h, "car_visualizer_$suffix", sceneBitmap(DefaultScenes.DEFAULT_ID, w, h))
+        capture(visualizer(ctx), w, h, "car_visualizer_$suffix", musicBitmap(DefaultScenes.DEFAULT_ID, w, h))
         capture(shell(ctx, settings(ctx), "navLibrary", mini = true), w, h, "car_settings_$suffix")
         capture(shell(ctx, albumDetail(ctx), "navLibrary", mini = true), w, h, "car_folder_$suffix")
         capture(shell(ctx, tagEditor(ctx), "navLibrary", mini = false), w, h, "car_tag_editor_$suffix")
@@ -298,6 +348,19 @@ class ScreenshotTest {
     fun carHeadUnit() {
         carScreens(night = true, suffix = "dark")
         carScreens(night = false, suffix = "light")
+    }
+
+    /** Las cuatro escenas a pantalla completa en el área útil del estéreo (car_scene_<id>.png). */
+    @Test
+    @Config(qualifiers = "es-w1024dp-h534dp-land-mdpi")
+    fun carScenes() {
+        val ctx = themed(night = true)
+        val w = 1024
+        val h = 534
+        for (id in DefaultScenes.registry().ids) {
+            val label = ctx.getString(sceneLabelRes(id))
+            capture(visualizer(ctx, label), w, h, "car_scene_$id", musicBitmap(id, w, h))
+        }
     }
 
     @Test

@@ -23,8 +23,8 @@ tiene temporizador de apagado y abre el ecualizador del propio equipo (en el est
 sistema, con balance izquierda/derecha y adelante/atrás).
 
 Lo que lo distingue es el **visualizador**: analiza el audio que reproduce (FFT en tiempo real
-sobre el PCM, sin micrófono) y lo convierte en siete escenas originales — Espectro, Osciloscopio,
-Anillos, Partículas, Túnel, Campo de líneas y Ambiente — con paletas, modo inmersivo y ajustes de
+sobre el PCM, sin micrófono) y lo convierte en cuatro escenas originales — Barras LED (ecualizador
+Hi-Fi retro), Radial, Onda y osciloscopio, y Terreno synthwave — con paletas, modo inmersivo y ajustes de
 sensibilidad, intensidad, velocidad, densidad y sincronía imagen/sonido.
 
 Y lo que lo hace distinto de la mayoría de reproductores modernos es **para quién está
@@ -67,6 +67,14 @@ Nombre provisional: comprobar disponibilidad de marca antes de cualquier uso com
 | ![Visualizador a pantalla completa](docs/screenshots/visualizador.png) | ![Biblioteca](docs/screenshots/biblioteca.png) |
 | **Ajustes** | |
 | ![Ajustes](docs/screenshots/ajustes.png) | |
+
+**Visualizadores (0.20.0)**
+
+| Barras LED | Radial |
+|---|---|
+| ![Barras LED](docs/screenshots/escena-barras-led.png) | ![Radial](docs/screenshots/escena-radial.png) |
+| **Onda y osciloscopio** | **Terreno synthwave** |
+| ![Onda y osciloscopio](docs/screenshots/escena-onda.png) | ![Terreno synthwave](docs/screenshots/escena-terreno.png) |
 
 El naranja es un ejemplo: la barra superior, el botón de reproducir y el progreso toman el color de la
 portada de la canción que suena. En el recuadro de la portada: un toque alterna portada y
@@ -126,6 +134,10 @@ publicación en [docs/PLAY_STORE.md](docs/PLAY_STORE.md).
 [GitHub Releases](https://github.com/web-gdl/RadilloPlayerWave/releases) (última versión). Los
 materiales de preparación de Play (`docs/PLAY_STORE.md`, `docs/play/`) quedan como referencia.
 
+**0.20.0:** visualizadores reducidos a cuatro y rehechos: Barras LED (ecualizador Hi-Fi retro
+verde/ámbar/rojo con pico y escala en dB), Radial, Onda y osciloscopio, y Terreno synthwave (malla
+3D con sol retro).
+
 **0.19.0:** «Reproduciendo» rediseñada: corazón de favorito en la portada (silueta / rojo), un toque
 alterna portada y visualizador, dos cambian de visualizador y tres lo abren a pantalla completa;
 engrane de ajustes sobre el visualizador (ya no hay sección «Visualizador» en la barra), progreso
@@ -150,7 +162,7 @@ deslizar cambia de visualizador y un toque vuelve a la carátula.
 álbumes, artistas, carpetas y listas), favoritos, búsqueda, reproducción en segundo plano con
 notificación y pantalla bloqueada, cola y mini reproductor, temporizador de apagado, acceso al
 ecualizador del sistema (balance y fader en el estéreo), tema claro/oscuro con acento de
-la carátula, disposición adaptada a pantallas anchas, y el visualizador con siete escenas, modo
+la carátula, disposición adaptada a pantallas anchas, y el visualizador con cuatro escenas, modo
 inmersivo, paletas, ajustes y gobernador de calidad. Pendiente de prueba en el equipo real por
 parte de sus usuarios (ver la pantalla Diagnóstico).
 

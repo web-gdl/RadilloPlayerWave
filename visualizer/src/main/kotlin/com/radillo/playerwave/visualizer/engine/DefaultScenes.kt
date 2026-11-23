@@ -1,27 +1,25 @@
 package com.radillo.playerwave.visualizer.engine
 
-import com.radillo.playerwave.visualizer.scenes.AmbientScene
-import com.radillo.playerwave.visualizer.scenes.LineFieldScene
 import com.radillo.playerwave.visualizer.scenes.OscilloscopeScene
-import com.radillo.playerwave.visualizer.scenes.ParticlesScene
-import com.radillo.playerwave.visualizer.scenes.RingsScene
+import com.radillo.playerwave.visualizer.scenes.RadialSpectrumScene
 import com.radillo.playerwave.visualizer.scenes.SpectrumBarsScene
-import com.radillo.playerwave.visualizer.scenes.TunnelScene
+import com.radillo.playerwave.visualizer.scenes.TerrainScene
 
-/** Escenas incluidas en la app. Añadir una escena nueva es añadir una línea aquí. */
+/**
+ * Escenas incluidas en la app, en el orden en que se recorren (dos toques en la portada pasan a la
+ * siguiente). Añadir una escena es añadir una línea aquí. Si la escena guardada ya no existe (las
+ * de versiones anteriores: anillos, partículas, túnel, campo de líneas, ambiente), se usa
+ * [DEFAULT_ID].
+ */
 object DefaultScenes {
     const val DEFAULT_ID = SpectrumBarsScene.ID
 
     fun registry(): SceneRegistry = SceneRegistry(
         listOf(
-            SpectrumBarsScene.ID to SceneFactory { SpectrumBarsScene() },   // A
-            OscilloscopeScene.ID to SceneFactory { OscilloscopeScene() },   // B
-            RingsScene.ID to SceneFactory { RingsScene() },                 // C
-            ParticlesScene.ID to SceneFactory { ParticlesScene() },         // D
-            TunnelScene.ID to SceneFactory { TunnelScene() },               // E
-            LineFieldScene.ID to SceneFactory { LineFieldScene() },         // G
-            AmbientScene.ID to SceneFactory { AmbientScene() },             // H
-            // F (terreno 3D, OpenGL ES) llega en la Fase 5.
+            SpectrumBarsScene.ID to SceneFactory { SpectrumBarsScene() },     // 1 Barras LED
+            RadialSpectrumScene.ID to SceneFactory { RadialSpectrumScene() }, // 2 Radial
+            OscilloscopeScene.ID to SceneFactory { OscilloscopeScene() },     // 3 Onda y osciloscopio
+            TerrainScene.ID to SceneFactory { TerrainScene() },               // 4 Terreno synthwave
         ),
     )
 }

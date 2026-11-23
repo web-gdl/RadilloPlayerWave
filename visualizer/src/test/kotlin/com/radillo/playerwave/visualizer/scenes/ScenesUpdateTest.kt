@@ -43,11 +43,10 @@ class ScenesUpdateTest {
     }
 
     @Test
-    fun `registry exposes the seven phase-4 scenes with unique ids and canvas backend`() {
+    fun `registry exposes the four scenes in order with unique ids and canvas backend`() {
         val registry = DefaultScenes.registry()
         assertThat(registry.ids).containsExactly(
-            SpectrumBarsScene.ID, OscilloscopeScene.ID, RingsScene.ID,
-            ParticlesScene.ID, TunnelScene.ID, LineFieldScene.ID, AmbientScene.ID,
+            SpectrumBarsScene.ID, RadialSpectrumScene.ID, OscilloscopeScene.ID, TerrainScene.ID,
         ).inOrder()
         assertThat(registry.ids.toSet()).hasSize(registry.ids.size)
         for (id in registry.ids) {
@@ -95,6 +94,24 @@ class ScenesUpdateTest {
             repeat(30) { scene.update(synthetic.ambient(1f / 60f, 0L), 1f / 60f); scene.draw(canvas) }
             scene.onDetach()
         }
+    }
+
+    @Test
+    fun `scenes removed in 0_20 are no longer registered`() {
+        val ids = DefaultScenes.registry().ids
+        for (old in listOf("rings", "particles", "tunnel", "lines", "ambient")) assertThat(ids).doesNotContain(old)
+    }
+
+    @Test
+    fun `led bars light green, amber and red segments and round levels to segments`() {
+        assertThat(SpectrumBarsScene.segments(0f)).isEqualTo(0)
+        assertThat(SpectrumBarsScene.segments(1f)).isEqualTo(SpectrumBarsScene.ROWS)
+        assertThat(SpectrumBarsScene.segments(2f)).isEqualTo(SpectrumBarsScene.ROWS)
+        assertThat(SpectrumBarsScene.segments(0.5f)).isEqualTo(10)
+        val colors = (0 until SpectrumBarsScene.ROWS).map { SpectrumBarsScene.ledColor(it) }
+        assertThat(colors.distinct()).hasSize(3)
+        assertThat(colors.first()).isNotEqualTo(colors.last())
+        assertThat(colors.takeLast(3).distinct()).hasSize(1)
     }
 
     @Test
