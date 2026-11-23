@@ -103,3 +103,12 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
 }
+
+// En CI solo se ve el registro: traza completa de las pruebas que fallan y la tabla de costes.
+tasks.withType<Test>().configureEach {
+    testLogging {
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        events("failed")
+        showStandardStreams = false
+    }
+}
