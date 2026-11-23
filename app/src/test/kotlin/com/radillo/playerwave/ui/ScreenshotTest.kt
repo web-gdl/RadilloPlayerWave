@@ -180,7 +180,7 @@ class ScreenshotTest {
             b.art.setImageBitmap(visualizer)
             b.btnFavorite.visibility = View.GONE
             b.btnVisualizerSettings.visibility = View.VISIBLE
-            b.artSceneLabel.text = "Espectro"
+            b.artSceneLabel.text = "Barras LED"
             b.artSceneLabel.visibility = View.VISIBLE
         } else {
             b.art.setImageBitmap(sampleCover(b.artFrame.layoutParams.width))
@@ -335,9 +335,9 @@ class ScreenshotTest {
         capture(shell(ctx, nowPlaying(ctx), "navNowPlaying", mini = false), w, h, "car_now_playing_$suffix")
         capture(shell(ctx, nowPlaying(ctx, favorite = true), "navNowPlaying", mini = false), w, h, "car_now_playing_favorite_$suffix")
         val artSize = ctx.resources.getDimensionPixelSize(R.dimen.np_art)
-        val inArt = sceneBitmap(DefaultScenes.DEFAULT_ID, artSize, artSize)
+        val inArt = musicBitmap(DefaultScenes.DEFAULT_ID, artSize, artSize)
         capture(shell(ctx, nowPlaying(ctx, visualizer = inArt), "navNowPlaying", mini = false), w, h, "car_now_playing_visualizer_$suffix")
-        capture(visualizer(ctx), w, h, "car_visualizer_$suffix", sceneBitmap(DefaultScenes.DEFAULT_ID, w, h))
+        capture(visualizer(ctx), w, h, "car_visualizer_$suffix", musicBitmap(DefaultScenes.DEFAULT_ID, w, h))
         capture(shell(ctx, settings(ctx), "navLibrary", mini = true), w, h, "car_settings_$suffix")
         capture(shell(ctx, albumDetail(ctx), "navLibrary", mini = true), w, h, "car_folder_$suffix")
         capture(shell(ctx, tagEditor(ctx), "navLibrary", mini = false), w, h, "car_tag_editor_$suffix")
