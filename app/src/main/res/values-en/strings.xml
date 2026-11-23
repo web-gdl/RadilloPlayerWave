@@ -4,13 +4,10 @@
     <string name="nav_now_playing">Now playing</string>
     <string name="nav_visualizer">Visualizer</string>
 
-    <string name="scene_spectrum">Spectrum</string>
-    <string name="scene_oscilloscope">Oscilloscope</string>
-    <string name="scene_rings">Rings</string>
-    <string name="scene_particles">Particles</string>
-    <string name="scene_tunnel">Tunnel</string>
-    <string name="scene_lines">Line field</string>
-    <string name="scene_ambient">Ambient</string>
+    <string name="scene_spectrum">LED bars</string>
+    <string name="scene_radial">Radial</string>
+    <string name="scene_oscilloscope">Wave &amp; scope</string>
+    <string name="scene_terrain">Synthwave terrain</string>
     <string name="scene_unknown">Scene</string>
 
     <string name="palette_aurora">Aurora</string>

@@ -2,23 +2,17 @@ package com.radillo.playerwave.ui.visualizer
 
 import androidx.annotation.StringRes
 import com.radillo.playerwave.R
-import com.radillo.playerwave.visualizer.scenes.AmbientScene
-import com.radillo.playerwave.visualizer.scenes.LineFieldScene
 import com.radillo.playerwave.visualizer.scenes.OscilloscopeScene
-import com.radillo.playerwave.visualizer.scenes.ParticlesScene
-import com.radillo.playerwave.visualizer.scenes.RingsScene
+import com.radillo.playerwave.visualizer.scenes.RadialSpectrumScene
 import com.radillo.playerwave.visualizer.scenes.SpectrumBarsScene
-import com.radillo.playerwave.visualizer.scenes.TunnelScene
+import com.radillo.playerwave.visualizer.scenes.TerrainScene
 
 @StringRes
 fun sceneLabelRes(id: String): Int = when (id) {
     SpectrumBarsScene.ID -> R.string.scene_spectrum
+    RadialSpectrumScene.ID -> R.string.scene_radial
     OscilloscopeScene.ID -> R.string.scene_oscilloscope
-    RingsScene.ID -> R.string.scene_rings
-    ParticlesScene.ID -> R.string.scene_particles
-    TunnelScene.ID -> R.string.scene_tunnel
-    LineFieldScene.ID -> R.string.scene_lines
-    AmbientScene.ID -> R.string.scene_ambient
+    TerrainScene.ID -> R.string.scene_terrain
     else -> R.string.scene_unknown
 }
 

@@ -1,3 +1,33 @@
+### Novedades de la 0.20.0
+
+**Visualizadores: ahora son cuatro, rehechos**
+
+1. **Barras LED** — ecualizador Hi-Fi retro: segmentos verde, ámbar y rojo (3 dB cada uno), el pico
+   se queda encendido un momento y cae; escala real en dB y en Hz (30 Hz – 16 kHz). Usa siempre los
+   colores clásicos de LED.
+2. **Radial** — espectro circular: barras hacia afuera en espejo (graves arriba, agudos abajo), punto
+   de pico en cada barra, núcleo que late con el volumen y halo de graves.
+3. **Onda y osciloscopio** — retícula de osciloscopio con los canales L y R sobre el mismo eje,
+   resplandor y relleno que se desvanece hacia el centro.
+4. **Terreno synthwave** — malla 3D en perspectiva que avanza hacia ti; a los lados del camino se
+   levantan montañas con la música; cielo con estrellas y sol retro.
+
+Se quitaron Anillos, Partículas, Túnel, Campo de líneas y Ambiente. Si tenías elegida una de ellas,
+la app pasa sola a Barras LED. Las paletas (Aurora, Brasa, Océano, Neón, Mono) aplican a Radial,
+Onda y Terreno. Dos toques en la portada siguen cambiando de visualizador.
+
+Pensadas para el estéreo: las barras LED copian una columna ya pintada en lugar de dibujar cada
+segmento, y el terreno se dibuja con líneas (sin OpenGL). Si el equipo va justo, el gobernador quita
+primero resplandores y detalle.
+
+![Barras LED](https://raw.githubusercontent.com/web-gdl/RadilloPlayerWave/main/docs/screenshots/escena-barras-led.png)
+
+![Radial](https://raw.githubusercontent.com/web-gdl/RadilloPlayerWave/main/docs/screenshots/escena-radial.png)
+
+![Onda y osciloscopio](https://raw.githubusercontent.com/web-gdl/RadilloPlayerWave/main/docs/screenshots/escena-onda.png)
+
+![Terreno synthwave](https://raw.githubusercontent.com/web-gdl/RadilloPlayerWave/main/docs/screenshots/escena-terreno.png)
+
 ### Novedades de la 0.19.0
 
 **«Reproduciendo» rediseñada**

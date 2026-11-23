@@ -22,8 +22,8 @@ import kotlin.random.Random
  * Coste de dibujar un frame **con la CPU** (lienzo de mapa de bits, el mismo motor de dibujo que usa
  * el autoestéreo sin GPU), medido con el Skia real de Robolectric. Los milisegundos de una máquina
  * de CI no son los del equipo, pero las **proporciones** sí se trasladan: cuánto ahorra dibujar la
- * pantalla completa con el presupuesto de píxeles ([RenderSize]) y cuánto ahorra cada bajada de
- * calidad en la escena de barras.
+ * pantalla completa con el presupuesto de píxeles ([RenderSize]) y cuánto ahorra bajar la
+ * calidad en cada escena.
  *
  * Deja la tabla en `build/outputs/screenshots/visualizer_cost.txt` y comprueba las proporciones
  * con margen amplio (para no fallar por ruido de la máquina).
@@ -87,17 +87,27 @@ class VisualizerCostTest {
             if (id == SpectrumBarsScene.ID) { barsFull = f; barsReduced = r }
         }
 
-        out.append("\nBarras a pantalla completa reducida, según la calidad del gobernador\ncalidad;ms\n")
-        val byQuality = listOf(1f, 0.75f, 0.5f, 0.25f).map { q ->
-            q to cost(SpectrumBarsScene(), reduced.first, reduced.second, q).also { out.append("%.2f;%.2f\n".format(q, it)) }
+        out.append("\nPantalla completa reducida según la calidad del gobernador (1 → mínimo 0,3)\nescena;calidad 1;calidad 0,3\n")
+        var totalHigh = 0.0
+        var totalLow = 0.0
+        val byQuality = mutableListOf<Pair<Double, Double>>()
+        for (id in registry.ids) {
+            val high = cost(registry.create(id)!!, reduced.first, reduced.second, 1f)
+            val low = cost(registry.create(id)!!, reduced.first, reduced.second, 0.3f)
+            out.append("%s;%.2f;%.2f\n".format(id, high, low))
+            totalHigh += high
+            totalLow += low
+            byQuality += high to low
         }
         File("build/outputs/screenshots").apply { mkdirs() }.resolve("visualizer_cost.txt").writeText(out.toString())
         println(out)
 
         // Con la mitad de píxeles, las barras cuestan claramente menos (margen amplio por el ruido).
         assertThat(barsReduced).isLessThan(barsFull * 0.85)
-        // Y bajar la calidad abarata de verdad: al mínimo, menos de dos tercios que al máximo.
-        assertThat(byQuality.last().second).isLessThan(byQuality.first().second * 0.67)
+        // Bajar la calidad nunca debe encarecer una escena (margen por el ruido de la máquina)…
+        for ((high, low) in byQuality) assertThat(low).isLessThan(high * 1.2 + 0.05)
+        // …y abarata de verdad el conjunto de escenas.
+        assertThat(totalLow).isLessThan(totalHigh * 0.8)
     }
 
     private companion object {

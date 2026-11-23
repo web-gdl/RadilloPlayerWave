@@ -25,6 +25,7 @@ import com.radillo.playerwave.visualizer.analysis.AudioSource
 import com.radillo.playerwave.visualizer.analysis.AudioSourceStatus
 import com.radillo.playerwave.visualizer.analysis.PcmBlock
 import com.radillo.playerwave.visualizer.analysis.PlaybackClock
+import com.radillo.playerwave.ui.visualizer.sceneLabelRes
 import com.radillo.playerwave.visualizer.engine.DefaultScenes
 import com.radillo.playerwave.visualizer.engine.VisualizerEngine
 import kotlinx.coroutines.flow.Flow
@@ -239,12 +240,12 @@ class ScreenshotTest {
     }
 
     /** Pantalla completa: solo la imagen (va de fondo en la captura) y el nombre del visualizador. */
-    private fun visualizer(ctx: Context): View {
+    private fun visualizer(ctx: Context, label: String = "Barras LED"): View {
         val v = LayoutInflater.from(ctx).inflate(R.layout.fragment_visualizer, null, false)
         v.background = null
         v.find("surface")?.visibility = View.INVISIBLE
         v.show("status", false)
-        v.text("sceneLabel", "Espectro")
+        v.text("sceneLabel", label)
         v.show("sceneLabel", true)
         return v
     }
@@ -298,6 +299,19 @@ class ScreenshotTest {
     fun carHeadUnit() {
         carScreens(night = true, suffix = "dark")
         carScreens(night = false, suffix = "light")
+    }
+
+    /** Las cuatro escenas a pantalla completa en el área útil del estéreo (car_scene_<id>.png). */
+    @Test
+    @Config(qualifiers = "es-w1024dp-h534dp-land-mdpi")
+    fun carScenes() {
+        val ctx = themed(night = true)
+        val w = 1024
+        val h = 534
+        for (id in DefaultScenes.registry().ids) {
+            val label = ctx.getString(sceneLabelRes(id))
+            capture(visualizer(ctx, label), w, h, "car_scene_$id", sceneBitmap(id, w, h))
+        }
     }
 
     @Test

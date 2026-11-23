@@ -63,10 +63,11 @@ el coste de mantenimiento.
   pantallas de al menos 60 Hz; en una pantalla forzada a 30 Hz bajará la calidad al mínimo sin
   necesidad (se puede desactivar en los ajustes del visualizador). El detalle se recupera despacio
   a propósito (varios segundos sin tirones) para no oscilar.
-- Las escenas **Partículas** y **Campo de líneas** son las más costosas en pantallas grandes con
-  densidad alta (hasta 800 partículas o ~3 000 segmentos por frame); el gobernador las reduce
-  primero. **Ambiente** usa mezcla aditiva (`BlendMode.Plus`); en Android 7–8 (API 24–27) se
-  traduce a `PorterDuff.ADD`, con un resultado equivalente.
+- Desde la 0.20.0 hay cuatro escenas: **Barras LED**, **Radial**, **Onda y osciloscopio** y
+  **Terreno synthwave** (se quitaron Anillos, Partículas, Túnel, Campo de líneas y Ambiente; quien
+  tuviera guardada una de ellas pasa a Barras LED). El terreno es «3D» dibujado con líneas en el
+  lienzo, sin OpenGL; es la escena más cara y el gobernador le quita filas, columnas y resplandor
+  primero. Las barras LED usan siempre verde/ámbar/rojo: la paleta no las tiñe.
 
 ## Reproducción (Fase 1)
 
