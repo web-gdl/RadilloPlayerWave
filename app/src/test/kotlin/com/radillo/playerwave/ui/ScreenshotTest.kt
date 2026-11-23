@@ -256,7 +256,7 @@ class ScreenshotTest {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         val dt = 1f / 30f
-        repeat(150) { f ->
+        repeat(360) { f -> // 12 s: el terreno tarda ~11 s en llenarse del horizonte al frente
             val t = f * dt
             val beat = if (f % 15 == 0) 1f else 0f
             val bands = FloatArray(config.bandCount) { i ->
