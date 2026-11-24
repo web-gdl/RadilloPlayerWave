@@ -114,6 +114,11 @@ jobs:
           fi
           tmp=$(mktemp -d)
           cp "${files[@]}" "$tmp/"
+          # En los PR, también el APK de prueba (sin publicar release) y la tabla de costes.
+          if [ "$branch" = "ci-capturas-pr" ]; then
+            for apk in app/build/outputs/apk/release/*.apk; do cp "$apk" "$tmp/RadilloPlayerWave-prueba.apk"; done
+          fi
+          [ -f app/build/outputs/screenshots/visualizer_cost.txt ] && cp app/build/outputs/screenshots/visualizer_cost.txt "$tmp/"
           cd "$tmp"
           git init -q -b "$branch"
           git config user.name "github-actions"
