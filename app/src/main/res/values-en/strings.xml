@@ -5,6 +5,7 @@
     <string name="nav_visualizer">Visualizer</string>
 
     <string name="scene_spectrum">LED bars</string>
+    <string name="scene_modern_bars">Modern bars</string>
     <string name="scene_radial">Radial</string>
     <string name="scene_oscilloscope">Wave &amp; scope</string>
     <string name="scene_terrain">Synthwave terrain</string>

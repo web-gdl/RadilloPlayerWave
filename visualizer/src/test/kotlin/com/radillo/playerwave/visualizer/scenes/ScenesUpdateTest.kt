@@ -43,10 +43,10 @@ class ScenesUpdateTest {
     }
 
     @Test
-    fun `registry exposes the four scenes in order with unique ids and canvas backend`() {
+    fun `registry exposes the five scenes in order with unique ids and canvas backend`() {
         val registry = DefaultScenes.registry()
         assertThat(registry.ids).containsExactly(
-            SpectrumBarsScene.ID, RadialSpectrumScene.ID, OscilloscopeScene.ID, TerrainScene.ID,
+            SpectrumBarsScene.ID, ModernBarsScene.ID, RadialSpectrumScene.ID, OscilloscopeScene.ID, TerrainScene.ID,
         ).inOrder()
         assertThat(registry.ids.toSet()).hasSize(registry.ids.size)
         for (id in registry.ids) {
@@ -176,6 +176,27 @@ class ScenesUpdateTest {
         }
         assertThat(trace[8]).isGreaterThan(0.5f) // a los 0,3 s aún queda más de media columna
         assertThat(trace.last()).isLessThan(0.01f) // a los 1,5 s, vacía
+        scene.draw(canvas)
+    }
+
+    @Test
+    fun `modern bars keep 32 fixed bars on low end and paint caches once per size and palette`() {
+        val scene = ModernBarsScene()
+        scene.onAttach(SceneParams(deviceScale = 0.6f))
+        scene.onResize(758, 395)
+        assertThat(scene.barCount).isEqualTo(ModernBarsScene.LOW_END_BARS)
+        assertThat(scene.cacheBuilds).isEqualTo(1)
+        for (q in floatArrayOf(0.75f, 0.56f, 0.9f, 1f, 0.42f)) scene.onParamsChanged(SceneParams(quality = q, deviceScale = 0.6f))
+        assertThat(scene.barCount).isEqualTo(ModernBarsScene.LOW_END_BARS)
+        assertThat(scene.cacheBuilds).isEqualTo(1)
+        scene.onParamsChanged(SceneParams(paletteId = "neon", deviceScale = 0.6f))
+        assertThat(scene.cacheBuilds).isEqualTo(2)
+        // Sube con el sonido y baja a ritmo constante.
+        repeat(20) { scene.update(loudFrame(), 1f / 30f) }
+        val up = scene.level(0)
+        assertThat(up).isGreaterThan(0.2f)
+        scene.update(synthetic.silent(), 1f / 30f)
+        assertThat(up - scene.level(0)).isAtMost(ModernBarsScene.RELEASE_PER_SECOND / 30f + 1e-4f)
         scene.draw(canvas)
     }
 

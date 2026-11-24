@@ -1,4 +1,15 @@
-### Novedades de la 0.20.2
+### Novedades de la 0.21.0
+
+**Nueva escena: Barras modernas**
+
+- Es el segundo visualizador, justo después de las Barras LED. Dos toques en la portada pasan de
+  una a otra.
+- Cada barra se forma con líneas horizontales delgadas, con el color de la paleta de graves a
+  agudos, más brillante arriba. Detrás se ve la pista apagada y una línea de pico flota sobre cada
+  barra.
+- Se mueve igual de natural que las Barras LED y es igual de ligera en el 8227L: 32 barras.
+
+![Barras modernas](https://raw.githubusercontent.com/web-gdl/RadilloPlayerWave/main/docs/screenshots/escena-barras-modernas.png)
 
 **Barras LED con movimiento natural**
 

@@ -1,5 +1,6 @@
 package com.radillo.playerwave.visualizer.engine
 
+import com.radillo.playerwave.visualizer.scenes.ModernBarsScene
 import com.radillo.playerwave.visualizer.scenes.OscilloscopeScene
 import com.radillo.playerwave.visualizer.scenes.RadialSpectrumScene
 import com.radillo.playerwave.visualizer.scenes.SpectrumBarsScene
@@ -17,9 +18,10 @@ object DefaultScenes {
     fun registry(): SceneRegistry = SceneRegistry(
         listOf(
             SpectrumBarsScene.ID to SceneFactory { SpectrumBarsScene() },     // 1 Barras LED
-            RadialSpectrumScene.ID to SceneFactory { RadialSpectrumScene() }, // 2 Radial
-            OscilloscopeScene.ID to SceneFactory { OscilloscopeScene() },     // 3 Onda y osciloscopio
-            TerrainScene.ID to SceneFactory { TerrainScene() },               // 4 Terreno synthwave
+            ModernBarsScene.ID to SceneFactory { ModernBarsScene() },         // 2 Barras modernas
+            RadialSpectrumScene.ID to SceneFactory { RadialSpectrumScene() }, // 3 Radial
+            OscilloscopeScene.ID to SceneFactory { OscilloscopeScene() },     // 4 Onda y osciloscopio
+            TerrainScene.ID to SceneFactory { TerrainScene() },               // 5 Terreno synthwave
         ),
     )
 }
