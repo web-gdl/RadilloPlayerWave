@@ -19,6 +19,8 @@
 - **Un solo ajuste de color:** «Color de la portada» controla botones, barra y visualizadores.
 - **Textos de Ajustes más cortos.**
 - **Biblioteca sin el botón de recargar** (repetía «Buscar música nueva» de Ajustes).
+- **Corrección:** la app se cerraba en algunos teléfonos (visto en Xiaomi) al girar la pantalla
+  a horizontal y volver a vertical estando en «Reproduciendo».
 - **Teléfono:**
   - Los botones de la Biblioteca ya no se cortan.
   - Las Barras LED en vertical ya no enciman sus textos.
