@@ -53,6 +53,7 @@ object AccentPainter {
     const val ICON = "accent_icon"
     const val ROW = "accent_row"
     const val ROW_TITLE = "accent_row_title"
+    const val MORE = "accent_more"
 
     fun paint(root: View, accent: Int) {
         val context = root.context
@@ -96,6 +97,7 @@ object AccentPainter {
                     addState(intArrayOf(), ColorDrawable(0))
                 }
                 ROW_TITLE -> (view as? TextView)?.setTextColor(AccentColors.activatedStates(accent, primary))
+                MORE -> (view as? ImageView)?.imageTintList = AccentColors.activatedStates(accent, primary)
             }
             when (view) {
                 is Switch -> {

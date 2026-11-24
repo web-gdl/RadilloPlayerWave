@@ -181,7 +181,7 @@ class ScreenshotTest {
         b.btnPlay.setImageResource(R.drawable.ic_pause)
         b.btnShuffle.isActivated = true
         b.btnCrossfade.isActivated = true
-        b.btnCrossfadeLabel.text = "Crossfade 6 s"
+        b.btnCrossfadeLabel.text = ctx.getString(R.string.np_crossfade_on, 6)
         NowPlayingFragment.applyAccent(b, SAMPLE_ACCENT)
         NowPlayingFragment.renderFavorite(b, favorite)
         if (visualizer != null) {
@@ -374,7 +374,7 @@ class ScreenshotTest {
             }
         }
         chips("sceneChips", DefaultScenes.registry().ids.map { ctx.getString(sceneLabelRes(it)) }, 0)
-        chips("paletteChips", listOf("cover") + Palettes.all.map { it.id }.map { ctx.getString(com.radillo.playerwave.ui.visualizer.paletteLabelRes(it)) }, 0)
+        chips("paletteChips", (listOf("cover") + Palettes.all.map { it.id }).map { ctx.getString(com.radillo.playerwave.ui.visualizer.paletteLabelRes(it)) }, 0)
         (v.find("seekSensitivity") as android.widget.SeekBar).progress = 300
         v.text("valSensitivity", "1.00×")
         (v.find("switchKeepScreenOn") as android.widget.Switch).isChecked = true

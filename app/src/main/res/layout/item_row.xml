@@ -57,6 +57,7 @@
     <ImageButton
         android:id="@+id/rowMore"
         style="@style/IconButton"
+        android:tag="accent_more"
         android:contentDescription="@string/cd_more"
         android:src="@drawable/ic_more_vert" />
 </LinearLayout>
