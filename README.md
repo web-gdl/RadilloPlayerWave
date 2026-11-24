@@ -134,6 +134,9 @@ publicación en [docs/PLAY_STORE.md](docs/PLAY_STORE.md).
 [GitHub Releases](https://github.com/web-gdl/RadilloPlayerWave/releases) (última versión). Los
 materiales de preparación de Play (`docs/PLAY_STORE.md`, `docs/play/`) quedan como referencia.
 
+**0.20.2:** Barras LED con movimiento natural: suben con el golpe, bajan a ritmo constante y el
+LED de arriba se enciende poco a poco.
+
 **0.20.1:** visualizador más fluido en el 8227L, sin tirones al ajustar la calidad y con versión
 ligera fija. Las Barras LED ahora son clásicas: «SPECTRUM DISPLAY» con 10 bandas y LED redondos
 verde/ámbar/rojo.

@@ -21,7 +21,11 @@ import kotlin.random.Random
  * Escena 1: **barras LED** como el «SPECTRUM DISPLAY» de un ecualizador Hi-Fi clásico. Son
  * [COLUMNS] bandas por octava (31 Hz – 16 kHz) y [ROWS] LED redondos por banda: 3 verdes, 3 ámbar
  * y 3 rojos. Hay escala 2–18 dB a ambos lados y frecuencias abajo. El último LED de pico se queda
- * encendido un momento. Usa siempre los colores clásicos: la paleta no la tiñe.
+ * encendido un momento y cae con peso. Usa siempre los colores clásicos: la paleta no la tiñe.
+ *
+ * Movimiento (0.20.2): entrada suavizada (~60 ms), subida casi inmediata y bajada a velocidad
+ * constante, como un medidor; y el LED de arriba se enciende con brillo parcial según la fracción
+ * del nivel, así la columna sube y baja fluida aunque solo tenga 9 LED.
  *
  * Pensada para dibujar con la CPU del autoestéreo:
  * - el panel (marco, título, cristal, escalas y los LED apagados) se pinta **una vez por tamaño**
@@ -35,6 +39,9 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Barras LED") {
     private val levels = FloatArray(COLUMNS)
     private val peaks = FloatArray(COLUMNS)
     private val peakHold = FloatArray(COLUMNS)
+    private val peakVelocity = FloatArray(COLUMNS)
+    private val smoothed = FloatArray(COLUMNS)
+    private val spritePaint = Paint()
 
     /** Rango de bandas del analizador (posiciones fraccionarias) que cubre cada octava. */
     private val bandFrom = FloatArray(COLUMNS)
@@ -212,9 +219,10 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Barras LED") {
         if (n == 0) return
         if (n != mappedBandCount) mapBands(n)
         val sensitivity = params.sensitivity
-        val rise = smoothing(deltaSeconds, 30f * params.speed)
-        val fall = smoothing(deltaSeconds, 8f * params.speed)
-        val drop = PEAK_FALL * params.speed * deltaSeconds
+        val speed = params.speed
+        val inputK = smoothing(deltaSeconds, INPUT_RATE * speed)
+        val attackK = smoothing(deltaSeconds, ATTACK_RATE * speed)
+        val release = RELEASE_PER_SECOND * speed * deltaSeconds
         for (i in 0 until COLUMNS) {
             // Energía de la octava: sobre todo su banda más fuerte, algo del promedio.
             val from = bandFrom[i].toInt()
@@ -226,16 +234,28 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Barras LED") {
                 if (v > peak) peak = v
                 sum += v
             }
-            val target = ((0.65f * peak + 0.35f * sum / (to - from + 1)) * sensitivity).coerceIn(0f, 1f)
-            val v = follow(levels[i], target, rise, fall)
-            levels[i] = v
+            val raw = (0.65f * peak + 0.35f * sum / (to - from + 1)) * sensitivity
+            // Los 9 LED cubren la parte útil de la escala (unos 48 dB), no los 60 dB completos:
+            // así la música se mueve por toda la columna en vez de bailar solo arriba.
+            val target = ((raw - FLOOR) / (1f - FLOOR)).coerceIn(0f, 1f)
+            // 1) Suavizar la entrada: quita el temblor de frame a frame del análisis.
+            smoothed[i] += (target - smoothed[i]) * inputK
+            // 2) Balística de medidor: sube rápido con el golpe y baja a velocidad constante, como
+            //    un ecualizador de verdad (la bajada exponencial de antes «saltaba» de LED en LED).
+            val current = levels[i]
+            val goal = smoothed[i]
+            levels[i] = if (goal > current) current + (goal - current) * attackK else max(goal, current - release)
+            // 3) Pico: se queda un momento y cae acelerando, como si tuviera peso.
+            val v = levels[i]
             if (v >= peaks[i]) {
                 peaks[i] = v
                 peakHold[i] = PEAK_HOLD_SECONDS
+                peakVelocity[i] = 0f
             } else if (peakHold[i] > 0f) {
                 peakHold[i] -= deltaSeconds
             } else {
-                peaks[i] = max(v, peaks[i] - drop)
+                peakVelocity[i] += PEAK_GRAVITY * speed * deltaSeconds
+                peaks[i] = max(v, peaks[i] - peakVelocity[i] * deltaSeconds)
             }
         }
     }
@@ -245,16 +265,23 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Barras LED") {
         canvas.drawBitmap(back, 0f, 0f, null)
         val intensity = params.intensity.coerceIn(0.1f, 2f)
         for (i in 0 until COLUMNS) {
-            val on = segments(levels[i] * intensity)
-            val peak = segments(peaks[i] * intensity)
             val x = (dotX[i] - spriteHalf).toFloat()
-            for (r in 0 until ROWS) {
-                if (r < on || (r == peak - 1 && peak > on)) {
-                    val sprite = sprites[colorIndex(r)] ?: continue
-                    canvas.drawBitmap(sprite, x, (dotY[r] - spriteHalf).toFloat(), null)
-                }
-            }
+            // Nivel continuo en LED: los enteros se encienden del todo y el siguiente LED se va
+            // encendiendo poco a poco con la fracción, para que la columna suba y baje suave.
+            val exact = (levels[i] * intensity).coerceIn(0f, 1f) * ROWS
+            val full = exact.toInt().coerceAtMost(ROWS)
+            val fraction = exact - full
+            for (r in 0 until full) blit(canvas, r, x, 255)
+            if (full < ROWS && fraction > MIN_FRACTION) blit(canvas, full, x, alpha255(fraction))
+            val peakRow = ceil((peaks[i] * intensity).coerceIn(0f, 1f) * ROWS).toInt() - 1
+            if (peakRow > full) blit(canvas, peakRow.coerceAtMost(ROWS - 1), x, 255)
         }
+    }
+
+    private fun blit(canvas: Canvas, row: Int, x: Float, alpha: Int) {
+        val sprite = sprites[colorIndex(row)] ?: return
+        spritePaint.alpha = alpha
+        canvas.drawBitmap(sprite, x, (dotY[row] - spriteHalf).toFloat(), spritePaint)
     }
 
     override fun onDetach() {
@@ -274,8 +301,19 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Barras LED") {
         const val ROWS = 9
 
         private const val TITLE = "SPECTRUM DISPLAY"
-        private const val PEAK_HOLD_SECONDS = 0.5f
-        private const val PEAK_FALL = 1.2f
+        private const val PEAK_HOLD_SECONDS = 0.45f
+        /** Aceleración de caída del pico (escala completa por segundo²). */
+        private const val PEAK_GRAVITY = 3.2f
+        /** Suavizado de la entrada (1/s): ~60 ms, quita el temblor sin retrasar el golpe. */
+        private const val INPUT_RATE = 16f
+        /** Subida (1/s): casi inmediata con el golpe. */
+        const val ATTACK_RATE = 40f
+        /** Bajada constante: la columna entera tarda ~0,9 s en vaciarse. */
+        const val RELEASE_PER_SECOND = 1.1f
+        /** Parte baja de la escala (−60..−48 dB) que no enciende ningún LED. */
+        private const val FLOOR = 0.2f
+        /** Por debajo de esta fracción el LED parcial no se dibuja (evita un parpadeo tenue). */
+        private const val MIN_FRACTION = 0.08f
         private const val MIN_HZ = 30f
         private const val MAX_HZ = 16_000f
         private val SQRT2 = sqrt(2f)

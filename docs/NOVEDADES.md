@@ -1,3 +1,16 @@
+### Novedades de la 0.20.2
+
+**Barras LED con movimiento natural**
+
+- Suben casi al instante con cada golpe y bajan a velocidad constante, como el medidor de un
+  ecualizador de verdad. Antes bajaban de golpe, saltando de LED en LED.
+- El LED de arriba se va encendiendo poco a poco, así la columna sube y baja fluida aunque solo
+  tenga 9 LED.
+- La entrada se suaviza unos 60 ms, para quitar el temblor sin retrasar el ritmo.
+- Los 9 LED cubren la parte útil de la escala, así la música recorre toda la columna en vez de
+  moverse solo arriba.
+- El pico se queda un momento y cae acelerando, como si tuviera peso.
+
 ### Novedades de la 0.20.1
 
 **Visualizador más fluido en el autoestéreo (8227L) y Barras LED clásicas**

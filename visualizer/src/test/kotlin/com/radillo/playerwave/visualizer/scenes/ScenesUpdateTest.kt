@@ -147,6 +147,39 @@ class ScenesUpdateTest {
     }
 
     @Test
+    fun `led bars rise fast and fall smoothly at a steady pace`() {
+        val scene = SpectrumBarsScene()
+        scene.onAttach(SceneParams())
+        scene.onResize(1024, 534)
+        val n = config.bandCount
+        val loud = loudFrame()
+        fun frameWith(value: Float) = AudioFrame(
+            spectrum = loud.spectrum, bands = FloatArray(n) { value },
+            bass = value, mid = value, treble = value, rms = value, peak = value, onset = 0f,
+            waveformLeft = loud.waveformLeft, waveformRight = loud.waveformRight, timestampUs = 0L, synthetic = false,
+        )
+        val dt = 1f / 30f
+        // Subida: en ~0,2 s la columna ya está casi llena.
+        repeat(6) { scene.update(frameWith(1f), dt) }
+        assertThat(scene.level(3)).isGreaterThan(0.8f)
+        repeat(30) { scene.update(frameWith(1f), dt) }
+        // Bajada: monótona, sin desplomarse de golpe, y vacía en algo más de un segundo.
+        var previous = scene.level(3)
+        val trace = mutableListOf<Float>()
+        repeat(45) {
+            scene.update(frameWith(0f), dt)
+            val now = scene.level(3)
+            assertThat(now).isAtMost(previous)
+            assertThat(previous - now).isAtMost(SpectrumBarsScene.RELEASE_PER_SECOND * dt + 1e-4f)
+            trace += now
+            previous = now
+        }
+        assertThat(trace[8]).isGreaterThan(0.5f) // a los 0,3 s aún queda más de media columna
+        assertThat(trace.last()).isEqualTo(0f)  // a los 1,5 s, vacía
+        scene.draw(canvas)
+    }
+
+    @Test
     fun `terrain paints its background once per size and palette, not per quality change`() {
         val scene = TerrainScene()
         scene.onAttach(SceneParams(deviceScale = 0.6f))
