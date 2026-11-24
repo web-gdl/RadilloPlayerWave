@@ -25,6 +25,17 @@ class PrefsVisualizerSettingsRepository @Inject constructor(
     private val prefs: SharedPreferences = context.getSharedPreferences("visualizer_settings", Context.MODE_PRIVATE)
     private val lock = Any()
 
+    init {
+        // 0.22.0: los visualizadores siguen el color de la portada. Quien tenía la paleta de
+        // siempre (Aurora, la anterior por defecto) pasa una sola vez a «Portada»; quien eligió
+        // otra la conserva.
+        if (!prefs.getBoolean(KEY_COVER_MIGRATED, false)) {
+            val editor = prefs.edit().putBoolean(KEY_COVER_MIGRATED, true)
+            if (prefs.getString(KEY_PALETTE, null) == "aurora") editor.putString(KEY_PALETTE, VisualizerSettings().paletteId)
+            editor.apply()
+        }
+    }
+
     override val settings: Flow<VisualizerSettings> = prefs.observe { it.toSettings() }
 
     override fun snapshot(): VisualizerSettings = prefs.toSettings()
@@ -74,5 +85,6 @@ class PrefsVisualizerSettingsRepository @Inject constructor(
         const val KEY_KEEP_SCREEN_ON = "keep_screen_on"
         const val KEY_AUTO_QUALITY = "auto_quality"
         const val KEY_MAX_FPS = "max_fps"
+        const val KEY_COVER_MIGRATED = "palette_cover_migrated"
     }
 }

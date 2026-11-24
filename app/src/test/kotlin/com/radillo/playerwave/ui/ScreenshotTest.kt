@@ -247,11 +247,11 @@ class ScreenshotTest {
      * La escena [sceneId] tras unos segundos de «música» de prueba (graves fuertes que bajan hacia
      * los agudos, golpes periódicos y una onda estéreo), como en el autoestéreo (densidad 0,6).
      */
-    private fun musicBitmap(sceneId: String, width: Int, height: Int): Bitmap {
+    private fun musicBitmap(sceneId: String, width: Int, height: Int, paletteId: String = Palettes.AURORA.id): Bitmap {
         val config = AnalyzerConfig()
         val random = kotlin.random.Random(21)
         val scene = DefaultScenes.registry().create(sceneId)!!
-        scene.onAttach(SceneParams(deviceScale = 0.6f))
+        scene.onAttach(SceneParams(deviceScale = 0.6f, paletteId = paletteId))
         scene.onResize(width, height)
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
@@ -282,7 +282,7 @@ class ScreenshotTest {
             )
             scene.update(frame, dt)
         }
-        canvas.drawColor(Palettes.AURORA.background)
+        canvas.drawColor(Palettes.byId(paletteId).background)
         scene.draw(canvas)
         scene.onDetach()
         return bitmap
@@ -360,6 +360,14 @@ class ScreenshotTest {
         for (id in DefaultScenes.registry().ids) {
             val label = ctx.getString(sceneLabelRes(id))
             capture(visualizer(ctx, label), w, h, "car_scene_$id", musicBitmap(id, w, h))
+        }
+        // Paleta «Portada» con tres carátulas distintas (naranja, azul, verde): car_cover_<escena>_<color>.png
+        for (color in intArrayOf(0xFFFF8A3D.toInt(), 0xFF2B7BFF.toInt(), 0xFF3DDC84.toInt())) {
+            val paletteId = Palettes.coverId(color)
+            for (id in listOf("modern_bars", "radial", "oscilloscope", "terrain")) {
+                val label = ctx.getString(sceneLabelRes(id))
+                capture(visualizer(ctx, label), w, h, "car_cover_${id}_${paletteId.removePrefix("cover-")}", musicBitmap(id, w, h, paletteId))
+            }
         }
     }
 

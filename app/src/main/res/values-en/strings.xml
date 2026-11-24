@@ -11,6 +11,7 @@
     <string name="scene_terrain">Synthwave terrain</string>
     <string name="scene_unknown">Scene</string>
 
+    <string name="palette_cover">Cover</string>
     <string name="palette_aurora">Aurora</string>
     <string name="palette_ember">Ember</string>
     <string name="palette_ocean">Ocean</string>

@@ -1,3 +1,20 @@
+### Novedades de la 0.22.0
+
+**Los visualizadores toman el color de la portada**
+
+- Nueva paleta **«Portada»**, ahora la paleta por defecto. Los visualizadores usan el mismo
+  color de la carátula que pinta los botones del reproductor, y cambian con cada canción.
+- Con ese color se arma una gama: tono más profundo en los graves, el color tal cual, un vecino
+  más claro y casi blanco en los agudos. El fondo es un negro teñido del mismo tono.
+- Si la portada es muy apagada u oscura, el color se aviva para que se vea bien.
+- Aplica a Barras modernas, Radial, Onda y osciloscopio y Terreno synthwave. Las Barras LED
+  conservan sus colores clásicos verde/ámbar/rojo.
+- Si tenías la paleta Aurora (la que venía por defecto), pasa sola a «Portada». Si habías elegido
+  otra, se respeta. Las paletas fijas siguen disponibles en los ajustes del visualizador (el
+  engrane).
+
+![Barras modernas con el color de la portada](https://raw.githubusercontent.com/web-gdl/RadilloPlayerWave/main/docs/screenshots/portada-barras-modernas.png)
+
 ### Novedades de la 0.21.0
 
 **Nueva escena: Barras modernas**

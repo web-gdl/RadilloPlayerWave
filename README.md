@@ -136,6 +136,9 @@ publicación en [docs/PLAY_STORE.md](docs/PLAY_STORE.md).
 [GitHub Releases](https://github.com/web-gdl/RadilloPlayerWave/releases) (última versión). Los
 materiales de preparación de Play (`docs/PLAY_STORE.md`, `docs/play/`) quedan como referencia.
 
+**0.22.0:** los visualizadores toman el color de la portada, el mismo de los botones (nueva
+paleta «Portada», por defecto).
+
 **0.21.0:** nueva escena Barras modernas (líneas horizontales delgadas). Además, las Barras LED tienen movimiento natural: suben con el golpe, bajan a ritmo constante y el
 LED de arriba se enciende poco a poco.
 
