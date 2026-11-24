@@ -5,10 +5,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- saveEnabled="false": en horizontal este mismo id es un LinearLayout; si la ScrollView
+         restauraba el estado guardado por él, la app se cerraba al volver a vertical (0.23.0). -->
     <ScrollView
         android:id="@+id/contentGroup"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:saveEnabled="false"
         android:fillViewport="true">
 
         <LinearLayout
