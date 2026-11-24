@@ -66,7 +66,8 @@ class SpectrumBarsScene : CanvasScene(id = ID, displayName = "Barras LED") {
 
     override fun rebuild() {
         if (!hasSize) return
-        val labels = width >= 480 && height >= 260
+        // Escalas y título solo en horizontal: en vertical (móvil) se encimaban (0.23.0).
+        val labels = width >= 480 && height >= 260 && width >= height
         val key = "${width}x$height/$labels"
         if (key == panelKey) return
         panelKey = key

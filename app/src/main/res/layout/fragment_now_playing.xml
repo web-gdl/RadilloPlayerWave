@@ -98,25 +98,25 @@
             <TextView
                 android:id="@+id/trackTitle"
                 style="@style/Text.Headline"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
+                android:layout_gravity="center_horizontal"
                 android:layout_height="wrap_content"
                 android:ellipsize="marquee"
                 android:marqueeRepeatLimit="marquee_forever"
                 android:scrollHorizontally="true"
-                android:singleLine="true"
-                android:gravity="center" />
+                android:singleLine="true" />
 
             <TextView
                 android:id="@+id/trackSubtitle"
                 style="@style/Text.Secondary"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
+                android:layout_gravity="center_horizontal"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:ellipsize="marquee"
                 android:marqueeRepeatLimit="marquee_forever"
                 android:scrollHorizontally="true"
-                android:singleLine="true"
-                android:gravity="center" />
+                android:singleLine="true" />
 
             <com.radillo.playerwave.ui.player.WaveformSeekView
                 android:id="@+id/seek"

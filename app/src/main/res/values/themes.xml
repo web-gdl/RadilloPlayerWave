@@ -41,6 +41,7 @@
         <item name="android:textSize">@dimen/text_secondary</item>
     </style>
     <style name="Text.Section">
+        <item name="android:tag">accent_text</item>
         <item name="android:textColor">@color/accent</item>
         <item name="android:textSize">@dimen/text_secondary</item>
         <item name="android:textStyle">bold</item>
@@ -67,6 +68,7 @@
     </style>
 
     <style name="FlatButton" parent="">
+        <item name="android:tag">accent_button</item>
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">@dimen/button_height</item>
         <item name="android:minWidth">@dimen/touch</item>
@@ -79,11 +81,13 @@
         <item name="android:textStyle">bold</item>
     </style>
     <style name="FlatButton.Secondary">
+        <item name="android:tag">plain</item>
         <item name="android:background">@drawable/bg_button_secondary</item>
         <item name="android:textColor">@color/text_primary</item>
     </style>
 
     <style name="Chip" parent="">
+        <item name="android:tag">accent_chip</item>
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">@dimen/chip_height</item>
         <item name="android:paddingStart">@dimen/space_l</item>
@@ -97,6 +101,7 @@
 
     <!-- Pestaña de texto con subrayado (biblioteca). -->
     <style name="Tab" parent="">
+        <item name="android:tag">accent_tab</item>
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">@dimen/tab_height</item>
         <item name="android:minWidth">@dimen/touch</item>

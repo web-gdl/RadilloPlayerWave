@@ -119,11 +119,13 @@ object AccentColors {
         context: Context,
         sections: List<ViewGroup>,
         search: ViewGroup?,
+        favorites: ViewGroup,
         favoritesIcon: ImageView,
+        settings: ImageView?,
         miniProgress: ProgressBar,
         accent: Int?,
         wide: Boolean,
-    ) {
+    ): Int {
         val visible = visible(
             accent ?: context.getColor(com.radillo.playerwave.R.color.accent),
             context.getColor(if (wide) com.radillo.playerwave.R.color.window_background else com.radillo.playerwave.R.color.surface),
@@ -136,6 +138,16 @@ object AccentColors {
                 it.background = pillBackground(visible, 24 * d, (2 * d).toInt())
                 tintContent(it, colors)
             }
+            // «Favoritos ▶» es una acción (reproduce), no una sección: botón con fondo propio a la
+            // derecha, junto al engrane, que nunca queda «seleccionado».
+            val primary = context.getColor(com.radillo.playerwave.R.color.text_primary)
+            favorites.background = actionBackground(context.getColor(com.radillo.playerwave.R.color.surface_alt), visible, 24 * d)
+            tintContent(favorites, ColorStateList.valueOf(primary))
+            // Engrane: se resalta mientras se está en Ajustes.
+            settings?.let {
+                it.background = pillBackground(visible, 24 * d, (2 * d).toInt())
+                it.imageTintList = selectedStates(onAccent(visible), primary)
+            }
         } else {
             val colors = selectedStates(visible, secondary)
             sections.forEach {
@@ -146,5 +158,17 @@ object AccentColors {
         // El corazón de Favoritos va siempre en acento: es una acción, no una sección que se «selecciona».
         favoritesIcon.imageTintList = ColorStateList.valueOf(visible)
         miniProgress.progressTintList = ColorStateList.valueOf(visible)
+        return visible
+    }
+
+    /** Fondo de un botón de acción de la barra superior: tarjeta tenue, acento al pulsar o con foco. */
+    fun actionBackground(fill: Int, accent: Int, radiusPx: Float): StateListDrawable = StateListDrawable().apply {
+        fun shape(color: Int) = GradientDrawable().apply {
+            cornerRadius = radiusPx
+            setColor(color)
+        }
+        addState(intArrayOf(android.R.attr.state_pressed), shape(ColorUtils.blendARGB(fill, accent, 0.35f)))
+        addState(intArrayOf(android.R.attr.state_focused), shape(ColorUtils.blendARGB(fill, accent, 0.25f)))
+        addState(intArrayOf(), shape(fill))
     }
 }

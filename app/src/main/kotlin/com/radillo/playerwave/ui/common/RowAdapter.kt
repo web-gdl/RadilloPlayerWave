@@ -56,9 +56,9 @@ class RowAdapter(
         b.rowSubtitle.text = row.subtitle
         b.rowSubtitle.visibleIf(row.subtitle.isNotEmpty())
         b.root.isActivated = row.highlighted
-        b.rowTitle.setTextColor(
-            b.root.context.getColor(if (row.highlighted) R.color.accent else R.color.text_primary),
-        )
+        b.rowTitle.isActivated = row.highlighted
+        // La fila que suena va en el color de la portada, como el resto de la app.
+        AccentPainter.paintOnce(b.root, AppAccent.current(b.root.context))
         b.rowPlaying.visibleIf(row.highlighted)
         b.rowMore.visibleIf(row.showMore && onMore != null)
         val size = b.rowArt.layoutParams.width

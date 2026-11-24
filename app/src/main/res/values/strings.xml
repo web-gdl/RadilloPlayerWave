@@ -25,7 +25,10 @@
     <string name="vis_intensity">Intensidad</string>
     <string name="vis_speed">Velocidad</string>
     <string name="vis_density">Densidad</string>
-    <string name="vis_palette">Paleta</string>
+    <string name="vis_palette">Color</string>
+    <string name="vis_scene">Escena</string>
+    <string name="vis_advanced">Ajustes avanzados</string>
+    <string name="vis_advanced_hint">Intensidad, velocidad, densidad, sincronía, fps y calidad automática</string>
     <string name="vis_sync">Sincronía imagen/sonido</string>
     <string name="vis_sync_value">%d ms</string>
     <string name="vis_keep_screen_on">Mantener la pantalla encendida</string>
@@ -111,8 +114,8 @@
     <string name="theme_system">Según el sistema</string>
     <string name="theme_light">Claro</string>
     <string name="theme_dark">Oscuro</string>
-    <string name="settings_artwork_colors">Colores de la carátula</string>
-    <string name="settings_artwork_colors_hint">Tiñe la interfaz con el color dominante de la carátula en reproducción</string>
+    <string name="settings_artwork_colors">Color de la portada</string>
+    <string name="settings_artwork_colors_hint">Botones, barra superior y visualizadores toman el color de la carátula. Apagado: color fijo.</string>
     <string name="settings_about">Acerca de</string>
     <string name="settings_version">Versión %s</string>
     <string name="settings_privacy">Todo funciona en el dispositivo: sin cuentas, sin anuncios y sin telemetría.</string>
@@ -195,9 +198,9 @@
     </plurals>
     <string name="np_up_next">A continuación: %s</string>
     <string name="np_favorite">Favorito</string>
-    <string name="np_crossfade">Crossfade</string>
-    <string name="np_crossfade_on">Crossfade %d s</string>
-    <string name="np_crossfade_toggle">Activar o desactivar el crossfade</string>
+    <string name="np_crossfade">Mezcla</string>
+    <string name="np_crossfade_on">Mezcla %d s</string>
+    <string name="np_crossfade_toggle">Activar o desactivar la mezcla entre canciones</string>
     <string name="toast_crossfade_on">Crossfade activado (%d s)</string>
     <string name="toast_crossfade_off">Crossfade desactivado</string>
     <string name="equalizer_system_missing">Este equipo no tiene ecualizador del sistema.</string>
@@ -212,14 +215,14 @@
     <string name="vis_choose_scene">Elegir escena</string>
     <string name="settings_playback">Reproducción</string>
     <string name="settings_keep_playing">Seguir sonando aunque otra app pida el audio</string>
-    <string name="settings_keep_playing_hint">Recomendado en el coche: volver al escritorio o abrir otra app no pausa la música. La navegación y las llamadas la pausan un momento y vuelve sola.</string>
-    <string name="settings_crossfade">Mezcla entre canciones (crossfade)</string>
-    <string name="settings_crossfade_hint">La canción siguiente entra mientras termina la actual, sin silencio entre ellas.</string>
+    <string name="settings_keep_playing_hint">Recomendado en el coche. La navegación y las llamadas la pausan un momento y vuelve sola.</string>
+    <string name="settings_crossfade">Mezcla entre canciones</string>
+    <string name="settings_crossfade_hint">La siguiente canción entra mientras termina la actual.</string>
     <string name="settings_crossfade_skip">Mezclar también al cambiar de canción (siguiente, anterior, cola)</string>
     <string name="settings_crossfade_off">Apagado</string>
     <string name="settings_crossfade_seconds">%d s</string>
     <string name="settings_library">Biblioteca</string>
-    <string name="settings_rescan_hint">Busca canciones nuevas en la memoria interna y en las USB. Al abrir la app solo se busca si algo cambió.</string>
+    <string name="settings_rescan_hint">Busca canciones nuevas en la memoria y en las USB. Al abrir la app ya se busca sola si algo cambió.</string>
     <string name="playlist_delete_confirm">¿Eliminar la lista «%s»? Las canciones no se borran del dispositivo.</string>
     <string name="action_delete">Eliminar</string>
     <string name="toast_added_to_queue">Añadida a la cola</string>

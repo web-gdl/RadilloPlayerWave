@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Ajustes del visualizador (0.23.0): arriba lo que se usa (escena, color, sensibilidad, pantalla
+     encendida); lo técnico queda plegado en «Ajustes avanzados» (Hick, Tesler). -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
@@ -11,6 +13,42 @@
         android:paddingTop="@dimen/space_s"
         android:paddingEnd="@dimen/space_xl"
         android:paddingBottom="@dimen/space_s">
+
+        <TextView
+            style="@style/Text.Section"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/vis_scene" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/sceneChips"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <TextView
+            style="@style/Text.Section"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/vis_palette" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/paletteChips"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -37,6 +75,59 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/touch"
             android:max="1000" />
+
+        <Switch
+            android:id="@+id/switchKeepScreenOn"
+            style="@style/SettingRow"
+            android:layout_marginTop="@dimen/space_s"
+            android:text="@string/vis_keep_screen_on" />
+
+        <!-- Fila que despliega lo técnico. -->
+        <LinearLayout
+            android:id="@+id/advancedToggle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:minHeight="@dimen/touch"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    style="@style/Text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/vis_advanced" />
+
+                <TextView
+                    style="@style/Text.Secondary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/vis_advanced_hint" />
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/advancedArrow"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_chevron_right"
+                android:tint="@color/text_secondary" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/advancedGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -146,47 +237,25 @@
             style="@style/Text.Section"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/vis_palette" />
-
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:scrollbars="none">
+            android:text="@string/vis_max_fps" />
 
             <LinearLayout
-                android:id="@+id/paletteChips"
+                android:id="@+id/fpsChips"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal" />
-        </HorizontalScrollView>
 
-        <TextView
-            style="@style/Text.Section"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/vis_max_fps" />
+            <Switch
+                android:id="@+id/switchAutoQuality"
+                style="@style/SettingRow"
+                android:layout_marginTop="@dimen/space_s"
+                android:text="@string/vis_auto_quality" />
 
-        <LinearLayout
-            android:id="@+id/fpsChips"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" />
-
-        <Switch
-            android:id="@+id/switchKeepScreenOn"
-            style="@style/SettingRow"
-            android:layout_marginTop="@dimen/space_m"
-            android:text="@string/vis_keep_screen_on" />
-
-        <Switch
-            android:id="@+id/switchAutoQuality"
-            style="@style/SettingRow"
-            android:text="@string/vis_auto_quality" />
-
-        <TextView
-            android:id="@+id/autoQualityHint"
-            style="@style/Text.Secondary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            <TextView
+                android:id="@+id/autoQualityHint"
+                style="@style/Text.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

@@ -18,6 +18,8 @@ import com.radillo.playerwave.data.waveform.WaveformShape
 import com.radillo.playerwave.databinding.FragmentNowPlayingBinding
 import com.radillo.playerwave.ui.player.NowPlayingFragment
 import com.radillo.playerwave.ui.common.AccentColors
+import com.radillo.playerwave.ui.common.AccentPainter
+import com.radillo.playerwave.ui.common.AppAccent
 import com.radillo.playerwave.ui.common.Row
 import com.radillo.playerwave.ui.common.RowAdapter
 import com.radillo.playerwave.ui.common.setupList
@@ -106,17 +108,24 @@ class ScreenshotTest {
     private fun shell(ctx: Context, content: View, selectedNav: String, mini: Boolean): View {
         val root = LayoutInflater.from(ctx).inflate(R.layout.activity_main, null, false)
         (root.find("content") as ViewGroup).addView(content, FrameLayout.LayoutParams(-1, -1))
-        listOf("navLibrary", "navNowPlaying").forEach { root.find(it)?.isSelected = it == selectedNav }
+        listOf("navLibrary", "navNowPlaying", "topSearch", "topSettings").forEach { root.find(it)?.isSelected = it == selectedNav }
         // Color dinámico como en la app: acento de una portada de ejemplo (naranja), en el mismo orden que MainActivity.
+        val wide = root.find("topSearch") != null
         AccentColors.styleNav(
             context = ctx,
-            sections = listOf("navLibrary", "navFavorites", "navNowPlaying").mapNotNull { root.find(it) as? ViewGroup },
+            sections = (if (wide) listOf("navLibrary", "navNowPlaying") else listOf("navLibrary", "navFavorites", "navNowPlaying"))
+                .mapNotNull { root.find(it) as? ViewGroup },
             search = root.find("topSearch") as? ViewGroup,
+            favorites = root.find("navFavorites") as ViewGroup,
             favoritesIcon = root.find("navFavoritesIcon") as ImageView,
+            settings = root.find("topSettings") as? ImageView,
             miniProgress = root.find("miniPlayer")!!.find("miniProgress") as android.widget.ProgressBar,
             accent = SAMPLE_ACCENT,
-            wide = root.find("topSearch") != null,
+            wide = wide,
         )
+        // Un solo color en toda la app (0.23.0), como hace MainActivity.
+        AppAccent.set(AccentColors.visible(SAMPLE_ACCENT, ctx.getColor(R.color.window_background)))
+        AccentPainter.paint(root, AppAccent.current(ctx))
         val miniRoot = root.find("miniPlayer")
         miniRoot?.visibility = if (mini) View.VISIBLE else View.GONE
         miniRoot?.text("miniTitle", "Luces de carretera")
@@ -338,7 +347,8 @@ class ScreenshotTest {
         val inArt = musicBitmap(DefaultScenes.DEFAULT_ID, artSize, artSize)
         capture(shell(ctx, nowPlaying(ctx, visualizer = inArt), "navNowPlaying", mini = false), w, h, "car_now_playing_visualizer_$suffix")
         capture(visualizer(ctx), w, h, "car_visualizer_$suffix", musicBitmap(DefaultScenes.DEFAULT_ID, w, h))
-        capture(shell(ctx, settings(ctx), "navLibrary", mini = true), w, h, "car_settings_$suffix")
+        capture(shell(ctx, settings(ctx), "topSettings", mini = true), w, h, "car_settings_$suffix")
+        capture(visualizerSettings(ctx), 640, h, "car_visualizer_settings_$suffix")
         capture(shell(ctx, albumDetail(ctx), "navLibrary", mini = true), w, h, "car_folder_$suffix")
         capture(shell(ctx, tagEditor(ctx), "navLibrary", mini = false), w, h, "car_tag_editor_$suffix")
     }
@@ -348,6 +358,30 @@ class ScreenshotTest {
     fun carHeadUnit() {
         carScreens(night = true, suffix = "dark")
         carScreens(night = false, suffix = "light")
+    }
+
+    /** Diálogo de ajustes del visualizador (0.23.0): escena, color, sensibilidad y avanzados plegados. */
+    private fun visualizerSettings(ctx: Context): View {
+        val v = LayoutInflater.from(ctx).inflate(R.layout.dialog_visualizer_settings, null, false)
+        fun chips(container: String, labels: List<String>, selected: Int) {
+            val parent = v.find(container) as ViewGroup
+            labels.forEachIndexed { i, label ->
+                (LayoutInflater.from(ctx).inflate(R.layout.view_chip, parent, false) as TextView).apply {
+                    text = label
+                    isSelected = i == selected
+                    parent.addView(this)
+                }
+            }
+        }
+        chips("sceneChips", DefaultScenes.registry().ids.map { ctx.getString(sceneLabelRes(it)) }, 0)
+        chips("paletteChips", listOf("cover") + Palettes.all.map { it.id }.map { ctx.getString(com.radillo.playerwave.ui.visualizer.paletteLabelRes(it)) }, 0)
+        (v.find("seekSensitivity") as android.widget.SeekBar).progress = 300
+        v.text("valSensitivity", "1.00×")
+        (v.find("switchKeepScreenOn") as android.widget.Switch).isChecked = true
+        val frame = FrameLayout(ctx).apply { setBackgroundColor(ctx.getColor(R.color.surface)) }
+        frame.addView(v, FrameLayout.LayoutParams(-1, -2))
+        AccentPainter.paint(frame, AppAccent.current(ctx))
+        return frame
     }
 
     /** Las cuatro escenas a pantalla completa en el área útil del estéreo (car_scene_<id>.png). */

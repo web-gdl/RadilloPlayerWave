@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Crossfade: dos curvas de volumen que se cruzan (una baja, otra sube). -->
+<!-- Mezcla (crossfade): una canción baja de volumen mientras la otra sube. Dos rampas que se
+     solapan, distintas de las flechas cruzadas de «aleatorio» (0.23.0: antes se confundían). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
+    <!-- La que termina: baja de izquierda a derecha (más tenue). -->
     <path
-        android:pathData="M3,6C10,6 14,18 21,18"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="2.2"
-        android:strokeLineCap="round" />
+        android:fillAlpha="0.55"
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M2,5 L15,19 L2,19 Z" />
+    <!-- La que entra: sube de izquierda a derecha. -->
     <path
-        android:pathData="M3,18C10,18 14,6 21,6"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="2.2"
-        android:strokeLineCap="round" />
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M22,5 L9,19 L22,19 Z" />
 </vector>

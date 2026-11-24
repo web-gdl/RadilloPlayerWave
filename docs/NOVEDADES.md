@@ -1,3 +1,33 @@
+### Novedades de la 0.23.0
+
+**Interfaz más clara y coherente** (revisión con leyes de UX/UI)
+
+- **Un solo color en toda la app:** el de la portada que suena. Pestañas, botón «Reproducir», la
+  canción que suena en las listas, títulos de Ajustes, interruptores, deslizadores, «Guardar» y los
+  ajustes del visualizador ya no usan el celeste fijo.
+- **«Favoritos ▶» pasa a la derecha**, junto al engrane, como botón de acción. Reproduce tus
+  favoritos igual que antes, pero ya no parece una sección.
+- **La barra marca dónde estás:** en Ajustes se resalta el engrane y en Buscar, Buscar. Antes
+  seguía marcada «Biblioteca».
+- **«Mezcla» tiene icono propio** (una canción baja y la otra sube). Antes era casi igual al de
+  Aleatorio.
+- **Ajustes del visualizador más simples:**
+  - Arriba eliges la **Escena** por su nombre, el **Color** (Portada primero), la Sensibilidad y la
+    pantalla encendida.
+  - Lo técnico (intensidad, velocidad, densidad, sincronía, fps, calidad automática) queda plegado
+    en «Ajustes avanzados».
+- **Un solo ajuste de color:** «Color de la portada» controla botones, barra y visualizadores.
+- **Textos de Ajustes más cortos.**
+- **Biblioteca sin el botón de recargar** (repetía «Buscar música nueva» de Ajustes).
+- **Teléfono:**
+  - Los botones de la Biblioteca ya no se cortan.
+  - Las Barras LED en vertical ya no enciman sus textos.
+  - El título de la canción en «Reproduciendo» vuelve a verse.
+
+![Biblioteca con un solo color](https://raw.githubusercontent.com/web-gdl/RadilloPlayerWave/main/docs/screenshots/biblioteca.png)
+
+![Ajustes del visualizador](https://raw.githubusercontent.com/web-gdl/RadilloPlayerWave/main/docs/screenshots/ajustes-visualizador.png)
+
 ### Novedades de la 0.22.0
 
 **Los visualizadores toman el color de la portada**
