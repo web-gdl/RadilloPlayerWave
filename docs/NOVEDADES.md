@@ -8,7 +8,7 @@
   agudos, más brillante arriba. Detrás se ve la pista apagada y una línea de pico flota sobre cada
   barra.
 - Se mueve igual de natural que las Barras LED y es igual de ligera en el 8227L: 20 barras anchas
-  con espacio entre ellas.
+  con espacio entre ellas. En la portada salen unas 10, con la misma proporción.
 
 ![Barras modernas](https://raw.githubusercontent.com/web-gdl/RadilloPlayerWave/main/docs/screenshots/escena-barras-modernas.png)
 

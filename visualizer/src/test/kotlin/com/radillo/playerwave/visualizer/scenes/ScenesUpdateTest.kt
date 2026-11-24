@@ -184,10 +184,10 @@ class ScenesUpdateTest {
         val scene = ModernBarsScene()
         scene.onAttach(SceneParams(deviceScale = 0.6f))
         scene.onResize(758, 395)
-        assertThat(scene.barCount).isEqualTo(ModernBarsScene.LOW_END_BARS)
+        assertThat(scene.barCount).isEqualTo(ModernBarsScene.barsFor(ModernBarsScene.LOW_END_BARS, 758, 395))
         assertThat(scene.cacheBuilds).isEqualTo(1)
         for (q in floatArrayOf(0.75f, 0.56f, 0.9f, 1f, 0.42f)) scene.onParamsChanged(SceneParams(quality = q, deviceScale = 0.6f))
-        assertThat(scene.barCount).isEqualTo(ModernBarsScene.LOW_END_BARS)
+        assertThat(scene.barCount).isEqualTo(ModernBarsScene.barsFor(ModernBarsScene.LOW_END_BARS, 758, 395))
         assertThat(scene.cacheBuilds).isEqualTo(1)
         scene.onParamsChanged(SceneParams(paletteId = "neon", deviceScale = 0.6f))
         assertThat(scene.cacheBuilds).isEqualTo(2)
@@ -198,6 +198,11 @@ class ScenesUpdateTest {
         scene.update(synthetic.silent(), 1f / 30f)
         assertThat(up - scene.level(0)).isAtMost(ModernBarsScene.RELEASE_PER_SECOND / 30f + 1e-4f)
         scene.draw(canvas)
+        // En la portada (cuadrada) hay menos barras, con la misma proporción.
+        assertThat(ModernBarsScene.barsFor(20, 1024, 534)).isEqualTo(20)
+        assertThat(ModernBarsScene.barsFor(20, 360, 360)).isEqualTo(10)
+        scene.onResize(360, 360)
+        assertThat(scene.barCount).isEqualTo(10)
     }
 
     @Test

@@ -59,7 +59,10 @@ class ModernBarsScene : CanvasScene(id = ID, displayName = "Barras modernas") {
     override val coversBackground: Boolean get() = background != null
 
     override fun rebuild() {
-        val newCount = if (lowEnd) LOW_END_BARS else quantize((32f * params.effectiveDensity).roundToInt(), 4).coerceIn(16, 40)
+        val base = if (lowEnd) LOW_END_BARS else quantize((32f * params.effectiveDensity).roundToInt(), 4).coerceIn(16, 40)
+        // Mismas proporciones en cualquier tamaño: el número de barras sigue la forma de la
+        // pantalla (20 en la pantalla completa del estéreo, unas 10 en la portada cuadrada).
+        val newCount = if (hasSize) barsFor(base, width, height) else base
         if (newCount != count) {
             count = newCount
             levels = FloatArray(count)
@@ -198,6 +201,15 @@ class ModernBarsScene : CanvasScene(id = ID, displayName = "Barras modernas") {
     companion object {
         const val ID = "modern_bars"
         const val LOW_END_BARS = 20
+
+        /** Forma de referencia: la pantalla útil del estéreo (1024 × 534). */
+        private const val REFERENCE_ASPECT = 1024f / 534f
+
+        /** Barras para un lienzo de [w]×[h] partiendo de [base] barras en la forma de referencia. */
+        fun barsFor(base: Int, w: Int, h: Int): Int {
+            val factor = ((w.toFloat() / h) / REFERENCE_ASPECT).coerceIn(0.35f, 1.6f)
+            return (base * factor).roundToInt().coerceAtLeast(6)
+        }
         private const val BAR_FILL = 0.68f
         private const val PEAK_HOLD_SECONDS = 0.45f
         private const val PEAK_GRAVITY = 3.2f
