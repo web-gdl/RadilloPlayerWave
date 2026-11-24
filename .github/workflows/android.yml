@@ -31,6 +31,15 @@ jobs:
       - name: Gradle (con caché)
         uses: gradle/actions/setup-gradle@v4
 
+      # Robolectric descarga en tiempo de prueba su Android completo (android-all) desde Maven, y esa
+      # descarga a veces falla en CI («MavenArtifactFetcher»). Guardarlo en caché lo evita.
+      - name: Caché de Robolectric
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/robolectric
+          key: robolectric-${{ hashFiles('gradle/libs.versions.toml') }}
+          restore-keys: robolectric-
+
       # La clave de firma viaja cifrada en el repositorio (keystore/radillo-release.jks.enc) y se
       # descifra con el secreto RADILLO_KEYSTORE_PASSWORD. Sin el secreto, el release se firma con
       # la clave de depuración (instalable, pero no actualizable sobre una firma real).
