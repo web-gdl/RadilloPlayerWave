@@ -180,7 +180,7 @@ class ScenesUpdateTest {
     }
 
     @Test
-    fun `modern bars keep 32 fixed bars on low end and paint caches once per size and palette`() {
+    fun `modern bars keep 20 fixed bars on low end and paint caches once per size and palette`() {
         val scene = ModernBarsScene()
         scene.onAttach(SceneParams(deviceScale = 0.6f))
         scene.onResize(758, 395)

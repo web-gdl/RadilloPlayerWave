@@ -23,7 +23,7 @@ import kotlin.math.roundToInt
  * Ligera para la CPU del autoestéreo, igual que las Barras LED: el fondo (con las pistas
  * apagadas) y una copia de todas las barras encendidas se pintan **una vez** por tamaño, número
  * de barras y paleta. Cada frame solo copia, para cada barra, el trozo encendido (sin escalar) y
- * dibuja su línea de pico. En gama baja hay 32 barras fijas, así que los ajustes de calidad del
+ * dibuja su línea de pico. En gama baja hay 20 barras anchas fijas, así que los ajustes de calidad del
  * gobernador no reconstruyen nada.
  */
 class ModernBarsScene : CanvasScene(id = ID, displayName = "Barras modernas") {
@@ -59,7 +59,7 @@ class ModernBarsScene : CanvasScene(id = ID, displayName = "Barras modernas") {
     override val coversBackground: Boolean get() = background != null
 
     override fun rebuild() {
-        val newCount = if (lowEnd) LOW_END_BARS else quantize((64f * params.effectiveDensity).roundToInt(), 8).coerceIn(24, 96)
+        val newCount = if (lowEnd) LOW_END_BARS else quantize((32f * params.effectiveDensity).roundToInt(), 4).coerceIn(16, 40)
         if (newCount != count) {
             count = newCount
             levels = FloatArray(count)
@@ -81,14 +81,16 @@ class ModernBarsScene : CanvasScene(id = ID, displayName = "Barras modernas") {
         val w = width.toFloat()
         val h = height.toFloat()
         val margin = w * 0.05f
-        val gap = max(1f, w * 0.008f)
-        val bw = (w - 2f * margin - gap * (count - 1)) / count
+        // Barras anchas con aire entre ellas: cada barra ocupa el 68 % de su hueco.
+        val slot = (w - 2f * margin) / count
+        val bw = slot * BAR_FILL
+        val gap = slot - bw
         barWidth = max(1, bw.toInt())
         floorY = (h * 0.88f).roundToInt()
         maxHeight = (floorY - h * 0.10f).roundToInt().coerceAtLeast(1)
         lineHeight = max(2, (h * 0.006f).roundToInt())
         val pitch = lineHeight + max(1, (lineHeight * 0.75f).roundToInt())
-        for (i in 0 until count) barLeft[i] = (margin + i * (bw + gap)).roundToInt()
+        for (i in 0 until count) barLeft[i] = (margin + gap * 0.5f + i * slot).roundToInt()
 
         // En las pruebas de JVM (stubs del SDK) createBitmap devuelve null: no hay nada que pintar.
         val backCreated: Bitmap? = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
@@ -195,7 +197,8 @@ class ModernBarsScene : CanvasScene(id = ID, displayName = "Barras modernas") {
 
     companion object {
         const val ID = "modern_bars"
-        const val LOW_END_BARS = 32
+        const val LOW_END_BARS = 20
+        private const val BAR_FILL = 0.68f
         private const val PEAK_HOLD_SECONDS = 0.45f
         private const val PEAK_GRAVITY = 3.2f
         private const val INPUT_RATE = 16f
