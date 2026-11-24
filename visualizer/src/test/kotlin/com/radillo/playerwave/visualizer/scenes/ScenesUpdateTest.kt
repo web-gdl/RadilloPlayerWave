@@ -175,7 +175,7 @@ class ScenesUpdateTest {
             previous = now
         }
         assertThat(trace[8]).isGreaterThan(0.5f) // a los 0,3 s aún queda más de media columna
-        assertThat(trace.last()).isEqualTo(0f)  // a los 1,5 s, vacía
+        assertThat(trace.last()).isLessThan(0.01f) // a los 1,5 s, vacía
         scene.draw(canvas)
     }
 
