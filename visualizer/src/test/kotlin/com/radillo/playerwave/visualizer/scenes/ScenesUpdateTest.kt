@@ -107,11 +107,57 @@ class ScenesUpdateTest {
         assertThat(SpectrumBarsScene.segments(0f)).isEqualTo(0)
         assertThat(SpectrumBarsScene.segments(1f)).isEqualTo(SpectrumBarsScene.ROWS)
         assertThat(SpectrumBarsScene.segments(2f)).isEqualTo(SpectrumBarsScene.ROWS)
-        assertThat(SpectrumBarsScene.segments(0.5f)).isEqualTo(10)
+        assertThat(SpectrumBarsScene.segments(0.5f)).isEqualTo(4)
         val colors = (0 until SpectrumBarsScene.ROWS).map { SpectrumBarsScene.ledColor(it) }
         assertThat(colors.distinct()).hasSize(3)
         assertThat(colors.first()).isNotEqualTo(colors.last())
         assertThat(colors.takeLast(3).distinct()).hasSize(1)
+    }
+
+    @Test
+    fun `led panel is painted once per size, not per quality or palette change`() {
+        val scene = SpectrumBarsScene()
+        scene.onAttach(SceneParams(deviceScale = 0.6f))
+        scene.onResize(758, 395)
+        assertThat(scene.panelBuilds).isEqualTo(1)
+        for (q in floatArrayOf(0.75f, 0.56f, 0.9f, 1f, 0.42f)) scene.onParamsChanged(SceneParams(quality = q, deviceScale = 0.6f))
+        scene.onParamsChanged(SceneParams(paletteId = "neon", deviceScale = 0.6f))
+        assertThat(scene.panelBuilds).isEqualTo(1)
+        scene.onResize(360, 360)
+        assertThat(scene.panelBuilds).isEqualTo(2)
+    }
+
+    @Test
+    fun `led bars follow the ten octave bands`() {
+        val scene = SpectrumBarsScene()
+        scene.onAttach(SceneParams())
+        scene.onResize(1024, 534)
+        val n = config.bandCount
+        // Solo graves: la primera columna se llena y la última (16 kHz) queda apagada.
+        val loud = loudFrame()
+        val bassOnly = AudioFrame(
+            spectrum = loud.spectrum, bands = FloatArray(n) { if (it < n / 8) 1f else 0f },
+            bass = 1f, mid = 0f, treble = 0f, rms = 0.5f, peak = 1f, onset = 0f,
+            waveformLeft = loud.waveformLeft, waveformRight = loud.waveformRight, timestampUs = 0L, synthetic = false,
+        )
+        repeat(60) { scene.update(bassOnly, 1f / 30f) }
+        scene.draw(canvas)
+        assertThat(SpectrumBarsScene.segments(scene.level(0))).isEqualTo(SpectrumBarsScene.ROWS)
+        assertThat(SpectrumBarsScene.segments(scene.level(SpectrumBarsScene.COLUMNS - 1))).isEqualTo(0)
+    }
+
+    @Test
+    fun `terrain paints its background once per size and palette, not per quality change`() {
+        val scene = TerrainScene()
+        scene.onAttach(SceneParams(deviceScale = 0.6f))
+        scene.onResize(758, 395)
+        val built = scene.backgroundBuilds
+        for (q in floatArrayOf(0.75f, 0.56f, 0.9f, 1f, 0.42f)) scene.onParamsChanged(SceneParams(quality = q, deviceScale = 0.6f))
+        assertThat(scene.backgroundBuilds).isEqualTo(built)
+        scene.onParamsChanged(SceneParams(paletteId = "neon", deviceScale = 0.6f))
+        assertThat(scene.backgroundBuilds).isEqualTo(built + 1)
+        scene.onResize(1024, 534)
+        assertThat(scene.backgroundBuilds).isEqualTo(built + 2)
     }
 
     @Test

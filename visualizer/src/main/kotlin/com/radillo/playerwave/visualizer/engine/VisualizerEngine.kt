@@ -424,13 +424,18 @@ class VisualizerEngine(
      * en vez de capas fuera de pantalla.
      */
     private fun draw(canvas: Canvas) {
-        canvas.drawColor(palette.background)
-        val current = scene ?: return
+        val current = scene
+        if (current == null) {
+            canvas.drawColor(palette.background)
+            return
+        }
         val out = outgoing
         if (out == null || transition >= 1f) {
+            if (!current.coversBackground) canvas.drawColor(palette.background)
             current.draw(canvas)
             return
         }
+        canvas.drawColor(palette.background)
         if (transition < 0.5f) {
             out.draw(canvas)
             canvas.drawColor(Argb.withAlpha(palette.background, transition * 2f))

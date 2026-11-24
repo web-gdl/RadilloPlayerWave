@@ -61,6 +61,13 @@ abstract class CanvasScene(
 
     protected val hasSize: Boolean get() = width > 0 && height > 0
 
+    /**
+     * Equipo de gama baja (perfil del dispositivo < 1, p. ej. el autoestéreo 8227L que dibuja con
+     * la CPU): las escenas usan su versión ligera, sin resplandores ni degradados grandes, y con
+     * recuentos fijos que no cambian con cada ajuste del gobernador.
+     */
+    protected val lowEnd: Boolean get() = params.deviceScale < 1f
+
     companion object {
         /** Coeficiente de aproximación exponencial para `dt` y una tasa (1/s). */
         fun smoothing(dt: Float, rate: Float): Float = (1f - exp(-dt * rate)).coerceIn(0f, 1f)
@@ -113,6 +120,12 @@ abstract class CanvasScene(
                 strokeJoin = Paint.Join.ROUND
             }
         }
+
+        /**
+         * Redondea un recuento hacia abajo a un múltiplo de [step]: así los pequeños cambios de
+         * calidad del gobernador no cambian el recuento ni obligan a reconstruir nada.
+         */
+        fun quantize(count: Int, step: Int): Int = (count / step) * step
 
         /** Alfa en [0, 1] → 0..255 para `Paint.alpha`. */
         fun alpha255(alpha: Float): Int = (alpha.coerceIn(0f, 1f) * 255f + 0.5f).toInt()

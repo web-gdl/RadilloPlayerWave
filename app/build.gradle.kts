@@ -12,8 +12,8 @@ android {
         applicationId = "com.radillo.playerwave"
         minSdk = 24
         targetSdk = 37
-        versionCode = 34
-        versionName = "0.20.0"
+        versionCode = 35
+        versionName = "0.20.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -102,4 +102,13 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
+}
+
+// En CI solo se ve el registro: traza completa de las pruebas que fallan y la tabla de costes.
+tasks.withType<Test>().configureEach {
+    testLogging {
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        events("failed")
+        showStandardStreams = false
+    }
 }

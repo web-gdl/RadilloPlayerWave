@@ -20,6 +20,7 @@ import kotlin.math.roundToInt
  * y R el último.
  *
  * Con calidad baja se quita primero el relleno y después el resplandor; también bajan los puntos.
+ * En gama baja (8227L) va sin relleno ni resplandor y con 128 puntos por traza.
  */
 class OscilloscopeScene : CanvasScene(id = ID, displayName = "Onda y osciloscopio") {
 
@@ -55,7 +56,7 @@ class OscilloscopeScene : CanvasScene(id = ID, displayName = "Onda y osciloscopi
     private var drawLabels = true
 
     override fun rebuild() {
-        val newCount = (300f * params.effectiveDensity).roundToInt().coerceIn(64, 512)
+        val newCount = if (lowEnd) LOW_END_POINTS else quantize((300f * params.effectiveDensity).roundToInt(), 32).coerceIn(64, 512)
         if (newCount != pointCount || leftPoints.size != newCount) {
             pointCount = newCount
             leftPoints = FloatArray(pointCount)
@@ -63,8 +64,8 @@ class OscilloscopeScene : CanvasScene(id = ID, displayName = "Onda y osciloscopi
         }
         leftColor = palette.colors.first()
         rightColor = palette.colors.last()
-        drawFill = params.quality >= FILL_MIN_QUALITY
-        drawGlow = params.quality >= GLOW_MIN_QUALITY
+        drawFill = !lowEnd && params.quality >= FILL_MIN_QUALITY
+        drawGlow = !lowEnd && params.quality >= GLOW_MIN_QUALITY
         if (!hasSize) return
         val w = width.toFloat()
         val h = height.toFloat()
@@ -73,13 +74,14 @@ class OscilloscopeScene : CanvasScene(id = ID, displayName = "Onda y osciloscopi
         span = w - margin * 2f
         halfHeight = (h - margin * 2f) * 0.5f
         val base = max(1.5f, min(w, h) * 0.004f)
-        mainPaint.strokeWidth = base * 1.5f
+        mainPaint.strokeWidth = if (lowEnd) max(1.5f, base) else base * 1.5f
         glowPaint.strokeWidth = base * 6f
 
         val grid = Argb.lerp(leftColor, 0xFF50C8C8.toInt(), 0.5f)
-        gridPaint.strokeWidth = 1f
+        gridPaint.strokeWidth = 0f // línea fina de 1 px: el trazo más barato
+
         gridPaint.color = Argb.withAlpha(grid, 0.11f)
-        axisPaint.strokeWidth = max(1f, base * 0.5f)
+        axisPaint.strokeWidth = if (lowEnd) 0f else max(1f, base * 0.5f)
         axisPaint.color = Argb.withAlpha(grid, 0.32f)
         gridPath.rewind()
         val top = margin
@@ -219,6 +221,7 @@ class OscilloscopeScene : CanvasScene(id = ID, displayName = "Onda y osciloscopi
         const val ID = "oscilloscope"
         const val FILL_MIN_QUALITY = 0.6f
         const val GLOW_MIN_QUALITY = 0.4f
+        const val LOW_END_POINTS = 128
         private const val GRID_X = 10
         private const val GRID_Y = 6
     }

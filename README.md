@@ -23,8 +23,8 @@ tiene temporizador de apagado y abre el ecualizador del propio equipo (en el est
 sistema, con balance izquierda/derecha y adelante/atrás).
 
 Lo que lo distingue es el **visualizador**: analiza el audio que reproduce (FFT en tiempo real
-sobre el PCM, sin micrófono) y lo convierte en cuatro escenas originales — Barras LED (ecualizador
-Hi-Fi retro), Radial, Onda y osciloscopio, y Terreno synthwave — con paletas, modo inmersivo y ajustes de
+sobre el PCM, sin micrófono) y lo convierte en cuatro escenas originales — Barras LED (el «SPECTRUM
+DISPLAY» clásico de un ecualizador Hi-Fi), Radial, Onda y osciloscopio, y Terreno synthwave — con paletas, modo inmersivo y ajustes de
 sensibilidad, intensidad, velocidad, densidad y sincronía imagen/sonido.
 
 Y lo que lo hace distinto de la mayoría de reproductores modernos es **para quién está
@@ -133,6 +133,10 @@ publicación en [docs/PLAY_STORE.md](docs/PLAY_STORE.md).
 **Distribución:** se descartó publicar la app en Google Play; se distribuye solo por
 [GitHub Releases](https://github.com/web-gdl/RadilloPlayerWave/releases) (última versión). Los
 materiales de preparación de Play (`docs/PLAY_STORE.md`, `docs/play/`) quedan como referencia.
+
+**0.20.1:** visualizador más fluido en el 8227L, sin tirones al ajustar la calidad y con versión
+ligera fija. Las Barras LED ahora son clásicas: «SPECTRUM DISPLAY» con 10 bandas y LED redondos
+verde/ámbar/rojo.
 
 **0.20.0:** visualizadores reducidos a cuatro y rehechos: Barras LED (ecualizador Hi-Fi retro
 verde/ámbar/rojo con pico y escala en dB), Radial, Onda y osciloscopio, y Terreno synthwave (malla

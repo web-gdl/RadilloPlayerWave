@@ -19,7 +19,9 @@ import kotlin.math.sin
  * núcleo que late con el nivel y un halo de graves detrás. Los golpes fuertes lanzan una onda
  * expansiva. Los colores recorren la paleta de graves a agudos.
  *
- * Con calidad baja el gobernador quita barras, después el halo y por último los resplandores.
+ * Con calidad baja el gobernador quita barras, después el halo y por último los resplandores. En
+ * gama baja (8227L) va siempre en su versión ligera: 40 barras sin halo, sin resplandor ni anillo
+ * punteado.
  */
 class RadialSpectrumScene : CanvasScene(id = ID, displayName = "Radial") {
 
@@ -50,13 +52,15 @@ class RadialSpectrumScene : CanvasScene(id = ID, displayName = "Radial") {
     private var haloRadius = 0f
     private var drawGlow = true
     private var drawHalo = true
+    private var drawDashes = true
 
     private var bass = 0f
     private var level = 0f
     private val pulses = FloatArray(MAX_PULSES) { -1f }
 
     override fun rebuild() {
-        val newHalf = (40f * params.effectiveDensity).roundToInt().coerceIn(16, 64)
+        // Gama baja: 20 barras por lado, fijas; si no, según densidad en pasos de 4 barras.
+        val newHalf = if (lowEnd) LOW_END_HALF else quantize((40f * params.effectiveDensity).roundToInt(), 4).coerceIn(16, 64)
         if (newHalf != half || levels.size != newHalf) {
             half = newHalf
             levels = FloatArray(half)
@@ -67,8 +71,9 @@ class RadialSpectrumScene : CanvasScene(id = ID, displayName = "Radial") {
             dirX = FloatArray(half * 2)
             dirY = FloatArray(half * 2)
         }
-        drawGlow = params.quality >= GLOW_MIN_QUALITY
-        drawHalo = params.quality >= HALO_MIN_QUALITY
+        drawGlow = !lowEnd && params.quality >= GLOW_MIN_QUALITY
+        drawHalo = !lowEnd && params.quality >= HALO_MIN_QUALITY
+        drawDashes = !lowEnd
         val total = half * 2
         for (k in 0 until total) {
             val angle = -PI / 2 + 2.0 * PI * k / total
@@ -165,7 +170,7 @@ class RadialSpectrumScene : CanvasScene(id = ID, displayName = "Radial") {
             haloPaint.alpha = alpha255(0.35f + 0.65f * bass)
             canvas.drawCircle(centerX, centerY, haloRadius, haloPaint)
         }
-        canvas.drawCircle(centerX, centerY, innerRadius * 0.78f, dashPaint)
+        if (drawDashes) canvas.drawCircle(centerX, centerY, innerRadius * 0.78f, dashPaint)
 
         val total = half * 2
         for (k in 0 until total) {
@@ -203,6 +208,7 @@ class RadialSpectrumScene : CanvasScene(id = ID, displayName = "Radial") {
     companion object {
         const val ID = "radial"
         const val HALO_MIN_QUALITY = 0.7f
+        const val LOW_END_HALF = 20
         const val GLOW_MIN_QUALITY = 0.45f
         private const val MAX_PULSES = 3
         private const val PULSE_LIFE = 1.0f

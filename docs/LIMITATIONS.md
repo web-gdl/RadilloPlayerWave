@@ -68,6 +68,10 @@ el coste de mantenimiento.
   tuviera guardada una de ellas pasa a Barras LED). El terreno es «3D» dibujado con líneas en el
   lienzo, sin OpenGL; es la escena más cara y el gobernador le quita filas, columnas y resplandor
   primero. Las barras LED usan siempre verde/ámbar/rojo: la paleta no las tiñe.
+- Desde la 0.20.1, en gama baja (perfil 0,6, p. ej. 8227L) las escenas van en versión ligera fija
+  y los cambios de calidad del gobernador ya no reconstruyen imágenes. La escala 2–18 dB de las
+  Barras LED es la del panel clásico: cada LED representa un nivel relativo, no 2 dB exactos de
+  la señal.
 
 ## Reproducción (Fase 1)
 
