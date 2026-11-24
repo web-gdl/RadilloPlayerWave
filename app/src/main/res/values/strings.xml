@@ -13,6 +13,7 @@
     <string name="scene_terrain">Terreno synthwave</string>
     <string name="scene_unknown">Escena</string>
 
+    <string name="palette_cover">Portada</string>
     <string name="palette_aurora">Aurora</string>
     <string name="palette_ember">Brasa</string>
     <string name="palette_ocean">Océano</string>

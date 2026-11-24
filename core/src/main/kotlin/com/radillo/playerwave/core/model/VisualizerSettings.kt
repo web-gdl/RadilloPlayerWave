@@ -7,7 +7,8 @@ data class VisualizerSettings(
     val intensity: Float = 1f,
     val speed: Float = 1f,
     val density: Float = 1f,
-    val paletteId: String = "aurora",
+    /** "cover" = color de la portada (por defecto desde la 0.22.0); si no, una paleta fija. */
+    val paletteId: String = "cover",
     /** Desplazamiento manual imagen/sonido en ms (positivo = la imagen va más tarde). */
     val syncOffsetMs: Int = 0,
     val keepScreenOn: Boolean = true,

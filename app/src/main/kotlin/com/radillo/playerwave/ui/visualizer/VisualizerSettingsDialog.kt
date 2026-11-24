@@ -64,11 +64,11 @@ object VisualizerSettingsDialog {
         )
 
         val inflater = LayoutInflater.from(context)
-        val paletteChips = viewModel.palettes.map { palette ->
+        val paletteChips = viewModel.paletteIds.map { paletteId ->
             (inflater.inflate(R.layout.view_chip, b.paletteChips, false) as TextView).apply {
-                setText(paletteLabelRes(palette.id))
-                isSelected = palette.id == draft.paletteId
-                tag = palette.id
+                setText(paletteLabelRes(paletteId))
+                isSelected = paletteId == draft.paletteId
+                tag = paletteId
                 b.paletteChips.addView(this)
             }
         }

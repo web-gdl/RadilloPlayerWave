@@ -162,6 +162,8 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing), ChromeMode {
                 requireContext().getColor(R.color.window_background),
             )
             applyAccent(b, color)
+            // Los visualizadores con la paleta «Portada» usan el mismo color que los botones.
+            visualizer.setCoverAccent(color)
         }
         collectWhenStarted(viewModel.waveform) { b.seek.peaks = it }
     }

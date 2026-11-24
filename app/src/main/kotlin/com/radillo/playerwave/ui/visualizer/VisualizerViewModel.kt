@@ -35,7 +35,8 @@ class VisualizerViewModel @Inject constructor(
     /** Factor de calidad vigente (1 = completo) decidido por el gobernador. */
     val quality: StateFlow<Float> = engine.quality
     val sceneIds: List<String> = engine.sceneIds
-    val palettes: List<VisualPalette> = Palettes.all
+    /** Paletas a elegir: primero «Portada» (color de la carátula), luego las fijas. */
+    val paletteIds: List<String> = listOf(Palettes.COVER_ID) + Palettes.all.map(VisualPalette::id)
 
     init {
         // Perfil del dispositivo: menos densidad y calidad mínima más baja en gama baja.
@@ -49,6 +50,17 @@ class VisualizerViewModel @Inject constructor(
 
     /** Aplica los ajustes al motor sin persistirlos (vista previa mientras se arrastra un control). */
     fun preview(settings: VisualizerSettings) = applyToEngine(settings)
+
+    /**
+     * Color de la portada actual, el mismo de los botones del reproductor. Con la paleta
+     * «Portada» los visualizadores lo siguen. Se guarda a nivel de proceso para que la pantalla
+     * completa lo tenga desde el primer frame.
+     */
+    fun setCoverAccent(color: Int) {
+        if (coverAccent == color) return
+        coverAccent = color
+        applyToEngine(settings.value)
+    }
 
     fun selectScene(id: String) = commit { it.copy(sceneId = id) }
     fun selectPalette(id: String) = commit { it.copy(paletteId = id) }
@@ -77,11 +89,20 @@ class VisualizerViewModel @Inject constructor(
                 intensity = s.intensity,
                 speed = s.speed,
                 density = s.density,
-                paletteId = s.paletteId,
+                paletteId = resolvePalette(s.paletteId),
             ),
         )
         engine.setSyncOffsetMs(s.syncOffsetMs)
         engine.setAutoQuality(s.autoQuality)
         engine.setMaxFps(effectiveMaxFps(s))
+    }
+
+    companion object {
+        @Volatile
+        private var coverAccent: Int? = null
+
+        /** «cover» → id de motor con el color actual (Aurora mientras no hay color). */
+        fun resolvePalette(paletteId: String): String =
+            if (paletteId == Palettes.COVER_ID) coverAccent?.let(Palettes::coverId) ?: Palettes.AURORA.id else paletteId
     }
 }

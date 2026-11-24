@@ -20,6 +20,7 @@ fun sceneLabelRes(id: String): Int = when (id) {
 
 @StringRes
 fun paletteLabelRes(id: String): Int = when (id) {
+    "cover" -> R.string.palette_cover
     "aurora" -> R.string.palette_aurora
     "ember" -> R.string.palette_ember
     "ocean" -> R.string.palette_ocean

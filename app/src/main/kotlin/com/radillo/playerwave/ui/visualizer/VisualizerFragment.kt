@@ -11,13 +11,16 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import com.radillo.playerwave.R
 import com.radillo.playerwave.databinding.FragmentVisualizerBinding
 import com.radillo.playerwave.ui.ChromeMode
+import com.radillo.playerwave.ui.common.AccentColors
 import com.radillo.playerwave.ui.common.collectWhenStarted
 import com.radillo.playerwave.ui.common.visibleIf
 import com.radillo.playerwave.ui.navigator
+import com.radillo.playerwave.ui.player.PlayerViewModel
 import com.radillo.playerwave.visualizer.engine.DataState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.combine
@@ -34,6 +37,7 @@ import kotlin.math.abs
 class VisualizerFragment : Fragment(R.layout.fragment_visualizer), ChromeMode {
 
     private val viewModel: VisualizerViewModel by viewModels()
+    private val player: PlayerViewModel by activityViewModels()
     private var binding: FragmentVisualizerBinding? = null
     private val handler = Handler(Looper.getMainLooper())
     private val hideLabel = Runnable { binding?.sceneLabel?.visibleIf(false) }
@@ -50,6 +54,15 @@ class VisualizerFragment : Fragment(R.layout.fragment_visualizer), ChromeMode {
         setUpGestures(b)
 
         collectWhenStarted(viewModel.settings.map { it.keepScreenOn }.distinctUntilChanged()) { b.root.keepScreenOn = it }
+        // Paleta «Portada»: el mismo color que los botones del reproductor, también al cambiar de canción.
+        collectWhenStarted(player.accent) { accent ->
+            viewModel.setCoverAccent(
+                AccentColors.visible(
+                    accent ?: requireContext().getColor(R.color.accent),
+                    requireContext().getColor(R.color.window_background),
+                ),
+            )
+        }
         // Solo si hay canción y si suena: el estado completo cambia con cada tic de progreso.
         val playback = viewModel.playbackState.map { (it.currentTrack != null) to it.isPlaying }.distinctUntilChanged()
         collectWhenStarted(combine(playback, viewModel.dataState) { p, d -> p to d }) { (p, d) ->
