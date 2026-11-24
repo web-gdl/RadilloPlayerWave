@@ -67,25 +67,24 @@
         android:paddingEnd="@dimen/space_l"
         android:paddingBottom="@dimen/space_s">
 
+        <!-- El número cede espacio (se recorta) para que los botones nunca se corten en el móvil. -->
         <TextView
             android:id="@+id/libraryCount"
             style="@style/Text.Secondary"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
             android:maxLines="1" />
 
-        <!-- Junto al número de canciones: «actualizar esto» (ley de proximidad). -->
+        <!-- 0.23.0: oculto. Repetía «Buscar música nueva» de Ajustes y la app ya busca sola al abrir. -->
         <ImageButton
             android:id="@+id/btnRescan"
             style="@style/IconButton"
+            android:visibility="gone"
             android:contentDescription="@string/action_find_new_music"
             android:src="@drawable/ic_refresh"
             android:tint="@color/text_secondary" />
-
-        <Space
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
 
         <LinearLayout
             android:id="@+id/actions"
@@ -177,6 +176,7 @@
                 android:layout_height="72dp"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_library_music"
+                android:tag="accent_icon"
                 android:tint="@color/accent" />
 
             <TextView

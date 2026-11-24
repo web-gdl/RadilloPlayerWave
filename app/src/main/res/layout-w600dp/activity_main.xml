@@ -88,40 +88,6 @@
                 android:textStyle="bold" />
         </LinearLayout>
         <LinearLayout
-            android:id="@+id/navFavorites"
-            android:layout_width="wrap_content"
-            android:layout_height="@dimen/nav_pill_height"
-            android:layout_marginEnd="8dp"
-            android:background="@drawable/bg_nav_pill"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="15dp"
-            android:paddingEnd="15dp">
-
-            <ImageView
-                android:id="@+id/navFavoritesIcon"
-                android:layout_width="@dimen/nav_pill_icon"
-                android:layout_height="@dimen/nav_pill_icon"
-                android:duplicateParentState="true"
-                android:importantForAccessibility="no"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_favorites_list"
-                android:tint="@color/nav_pill_content" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:duplicateParentState="true"
-                android:maxLines="1"
-                android:text="@string/nav_favorites"
-                android:textColor="@color/nav_pill_content"
-                android:textSize="@dimen/nav_pill_text"
-                android:textStyle="bold" />
-        </LinearLayout>
-        <LinearLayout
             android:id="@+id/navNowPlaying"
             android:layout_width="wrap_content"
             android:layout_height="@dimen/nav_pill_height"
@@ -160,6 +126,52 @@
             android:layout_height="1dp"
             android:layout_weight="1" />
 
+        <!-- 0.23.0: «Favoritos ▶» es una acción (reproduce los favoritos), no una sección: va a la
+             derecha, con fondo propio, junto al engrane. -->
+        <LinearLayout
+            android:id="@+id/navFavorites"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/nav_pill_height"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_nav_pill"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp">
+
+            <ImageView
+                android:id="@+id/navFavoritesIcon"
+                android:layout_width="@dimen/nav_pill_icon"
+                android:layout_height="@dimen/nav_pill_icon"
+                android:duplicateParentState="true"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_favorites_list"
+                android:tint="@color/nav_pill_content" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:duplicateParentState="true"
+                android:maxLines="1"
+                android:text="@string/nav_favorites"
+                android:textColor="@color/nav_pill_content"
+                android:textSize="@dimen/nav_pill_text"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginStart="8dp"
+                android:duplicateParentState="true"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_play"
+                android:tint="@color/nav_pill_content" />
+        </LinearLayout>
         <ImageButton
             android:id="@+id/topSettings"
             style="@style/IconButton"

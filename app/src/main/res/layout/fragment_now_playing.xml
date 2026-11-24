@@ -5,10 +5,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- saveEnabled="false": en horizontal este mismo id es un LinearLayout; si la ScrollView
+         restauraba el estado guardado por él, la app se cerraba al volver a vertical (0.23.0). -->
     <ScrollView
         android:id="@+id/contentGroup"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:saveEnabled="false"
         android:fillViewport="true">
 
         <LinearLayout
@@ -98,25 +101,25 @@
             <TextView
                 android:id="@+id/trackTitle"
                 style="@style/Text.Headline"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
+                android:layout_gravity="center_horizontal"
                 android:layout_height="wrap_content"
                 android:ellipsize="marquee"
                 android:marqueeRepeatLimit="marquee_forever"
                 android:scrollHorizontally="true"
-                android:singleLine="true"
-                android:gravity="center" />
+                android:singleLine="true" />
 
             <TextView
                 android:id="@+id/trackSubtitle"
                 style="@style/Text.Secondary"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
+                android:layout_gravity="center_horizontal"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:ellipsize="marquee"
                 android:marqueeRepeatLimit="marquee_forever"
                 android:scrollHorizontally="true"
-                android:singleLine="true"
-                android:gravity="center" />
+                android:singleLine="true" />
 
             <com.radillo.playerwave.ui.player.WaveformSeekView
                 android:id="@+id/seek"

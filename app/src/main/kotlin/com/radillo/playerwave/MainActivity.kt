@@ -2,6 +2,8 @@ package com.radillo.playerwave
 
 import android.widget.Toast
 import com.radillo.playerwave.ui.common.AccentColors
+import com.radillo.playerwave.ui.common.AccentPainter
+import com.radillo.playerwave.ui.common.AppAccent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
@@ -107,7 +109,12 @@ class MainActivity : FragmentActivity(), Navigator {
         supportFragmentManager.registerFragmentLifecycleCallbacks(
             object : FragmentManager.FragmentLifecycleCallbacks() {
                 override fun onFragmentResumed(fm: FragmentManager, f: Fragment) {
-                    if (f.id == R.id.content) updateChrome()
+                    if (f.id == R.id.content) {
+                        updateChrome()
+                        updateNavSelection()
+                        // Pantalla nueva: con el color de la portada vigente.
+                        f.view?.let { AccentPainter.paint(it, AppAccent.current(this@MainActivity)) }
+                    }
                 }
             },
             false,
@@ -249,20 +256,39 @@ class MainActivity : FragmentActivity(), Navigator {
      * (de la portada) que el botón de reproducir. Sin portada, el celeste de siempre.
      */
     private fun applyAccent(accent: Int?) {
+        val wide = binding.topSearch != null
         AccentColors.styleNav(
             context = this,
-            sections = listOf(binding.navLibrary, binding.navFavorites, binding.navNowPlaying),
+            sections = if (wide) listOf(binding.navLibrary, binding.navNowPlaying) else listOf(binding.navLibrary, binding.navFavorites, binding.navNowPlaying),
             search = binding.topSearch,
+            favorites = binding.navFavorites,
             favoritesIcon = binding.navFavoritesIcon,
+            settings = binding.topSettings,
             miniProgress = binding.miniPlayer.miniProgress,
             accent = accent,
-            wide = binding.topSearch != null,
+            wide = wide,
         )
+        // Un solo color en toda la app: pestañas, botones, fila que suena, Ajustes… (antes, celeste fijo).
+        AppAccent.set(
+            AccentColors.visible(accent ?: getColor(R.color.accent), getColor(R.color.window_background)),
+        )
+        AccentPainter.paint(binding.content, AppAccent.current(this))
     }
 
+    /**
+     * Sección resaltada: la de la pantalla que se ve. En Buscar se resalta Buscar y en Ajustes el
+     * engrane, no la sección desde la que se abrieron (antes, en Ajustes seguía marcada «Biblioteca»).
+     */
     private fun updateNavSelection() {
-        binding.navLibrary.isSelected = currentTab == Tab.LIBRARY
-        binding.navNowPlaying.isSelected = currentTab == Tab.NOW_PLAYING
+        val current = supportFragmentManager.findFragmentById(R.id.content)
+        val inSearch = current is com.radillo.playerwave.ui.library.SearchFragment
+        val inSettings = current is com.radillo.playerwave.ui.settings.SettingsFragment ||
+            current is com.radillo.playerwave.ui.diagnostics.DiagnosticsFragment
+        val inSection = !inSearch && !inSettings
+        binding.navLibrary.isSelected = inSection && currentTab == Tab.LIBRARY
+        binding.navNowPlaying.isSelected = inSection && currentTab == Tab.NOW_PLAYING
+        binding.topSearch?.isSelected = inSearch
+        binding.topSettings?.isSelected = inSettings
     }
 
     private fun renderMiniPlayer(state: PlaybackState) {

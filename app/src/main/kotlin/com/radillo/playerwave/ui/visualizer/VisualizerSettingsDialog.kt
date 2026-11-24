@@ -9,6 +9,8 @@ import androidx.lifecycle.lifecycleScope
 import com.radillo.playerwave.R
 import com.radillo.playerwave.core.model.VisualizerSettings
 import com.radillo.playerwave.databinding.DialogVisualizerSettingsBinding
+import com.radillo.playerwave.ui.common.AccentPainter
+import com.radillo.playerwave.ui.common.AppAccent
 import com.radillo.playerwave.ui.common.onUserChange
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -64,17 +66,41 @@ object VisualizerSettingsDialog {
         )
 
         val inflater = LayoutInflater.from(context)
+        // Escena: visible por su nombre (antes solo se cambiaba con dos toques en la portada).
+        val sceneChips = viewModel.sceneIds.map { sceneId ->
+            (inflater.inflate(R.layout.view_chip, b.sceneChips, false) as TextView).apply {
+                setText(sceneLabelRes(sceneId))
+                isSelected = sceneId == draft.sceneId
+                b.sceneChips.addView(this)
+            }
+        }
+        sceneChips.forEachIndexed { index, chip ->
+            chip.setOnClickListener {
+                val id = viewModel.sceneIds[index]
+                sceneChips.forEach { it.isSelected = it === chip }
+                draft = draft.copy(sceneId = id)
+                viewModel.selectScene(id)
+            }
+        }
+
+        // Lo técnico, plegado: se abre con «Ajustes avanzados».
+        fun showAdvanced(open: Boolean) {
+            b.advancedGroup.visibility = if (open) android.view.View.VISIBLE else android.view.View.GONE
+            b.advancedArrow.rotation = if (open) 90f else 0f
+        }
+        showAdvanced(false)
+        b.advancedToggle.setOnClickListener { showAdvanced(b.advancedGroup.visibility != android.view.View.VISIBLE) }
+
         val paletteChips = viewModel.paletteIds.map { paletteId ->
             (inflater.inflate(R.layout.view_chip, b.paletteChips, false) as TextView).apply {
                 setText(paletteLabelRes(paletteId))
                 isSelected = paletteId == draft.paletteId
-                tag = paletteId
                 b.paletteChips.addView(this)
             }
         }
-        paletteChips.forEach { chip ->
+        paletteChips.forEachIndexed { index, chip ->
             chip.setOnClickListener {
-                val id = chip.tag as String
+                val id = viewModel.paletteIds[index]
                 paletteChips.forEach { it.isSelected = it === chip }
                 draft = draft.copy(paletteId = id)
                 viewModel.selectPalette(id)
@@ -89,14 +115,13 @@ object VisualizerSettingsDialog {
                     context.getString(R.string.vis_fps_value, option)
                 }
                 isSelected = option == draft.maxFps
-                tag = option
                 b.fpsChips.addView(this)
             }
         }
-        fpsChips.forEach { chip ->
+        fpsChips.forEachIndexed { index, chip ->
             chip.setOnClickListener {
                 fpsChips.forEach { it.isSelected = it === chip }
-                viewModel.setMaxFps(chip.tag as Int)
+                viewModel.setMaxFps(VisualizerSettings.MAX_FPS_OPTIONS[index])
             }
         }
 
@@ -123,6 +148,10 @@ object VisualizerSettingsDialog {
             }
         }
         dialog.setOnDismissListener { job.cancel() }
+        // Un solo color de acento en toda la app: el de la portada.
+        val accent = AppAccent.current(context)
+        AccentPainter.paint(b.root, accent)
         dialog.show()
+        listOf(AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEUTRAL).forEach { dialog.getButton(it)?.setTextColor(accent) }
     }
 }

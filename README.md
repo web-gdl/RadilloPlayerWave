@@ -136,6 +136,12 @@ publicación en [docs/PLAY_STORE.md](docs/PLAY_STORE.md).
 [GitHub Releases](https://github.com/web-gdl/RadilloPlayerWave/releases) (última versión). Los
 materiales de preparación de Play (`docs/PLAY_STORE.md`, `docs/play/`) quedan como referencia.
 
+**0.23.0:** interfaz revisada:
+- Un solo color (el de la portada) en toda la app.
+- «Favoritos ▶» como acción junto al engrane.
+- Escena elegible por nombre en los ajustes del visualizador.
+- Icono propio para «Mezcla».
+
 **0.22.0:** los visualizadores toman el color de la portada, el mismo de los botones (nueva
 paleta «Portada», por defecto).
 
