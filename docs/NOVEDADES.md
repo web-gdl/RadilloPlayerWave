@@ -1,3 +1,24 @@
+### Novedades de la 0.20.1
+
+**Visualizador más fluido en el autoestéreo (8227L) y Barras LED clásicas**
+
+- **Sin tirones al ajustar la calidad.** La app ajusta sola la calidad del visualizador cada pocos
+  segundos, y en la 0.20.0 cada ajuste volvía a pintar imágenes de pantalla completa en el hilo de
+  dibujo. Eso daba un tirón cada vez y robaba CPU al análisis del audio, por eso el visualizador
+  se atrasaba respecto al ritmo. Ahora esas imágenes se pintan una sola vez por tamaño.
+- **Versión ligera fija en equipos modestos** (como el 8227L, que dibuja sin GPU):
+  - Radial va sin halo ni resplandores.
+  - Onda y osciloscopio va sin relleno ni resplandor.
+  - Terreno usa una malla de 14 × 24 con líneas finas.
+- **Terreno al ritmo:** toda la malla late con los graves del momento, sin esperar a que las
+  montañas lleguen del horizonte.
+- **Barras LED clásicas**, como el «SPECTRUM DISPLAY» de un ecualizador Hi-Fi:
+  - 10 bandas por octava (31 Hz – 16 kHz) y 9 LED redondos por banda: 3 verdes, 3 ámbar y 3 rojos.
+  - Escala de 2 a 18 dB a los dos lados y un pico que se queda encendido un momento.
+  - Además es mucho más ligera: como mucho 90 LED pequeños por frame.
+
+![Barras LED clásicas](https://raw.githubusercontent.com/web-gdl/RadilloPlayerWave/main/docs/screenshots/escena-barras-led.png)
+
 ### Novedades de la 0.20.0
 
 **Visualizadores: ahora son cuatro, rehechos**
