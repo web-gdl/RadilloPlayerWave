@@ -1,3 +1,28 @@
+### Novedades de la 0.21.0
+
+**Nueva escena: Barras modernas**
+
+- Es el segundo visualizador, justo después de las Barras LED. Dos toques en la portada pasan de
+  una a otra.
+- Cada barra se forma con líneas horizontales delgadas, con el color de la paleta de graves a
+  agudos, más brillante arriba. Detrás se ve la pista apagada y una línea de pico flota sobre cada
+  barra.
+- Se mueve igual de natural que las Barras LED y es igual de ligera en el 8227L: 20 barras anchas
+  con espacio entre ellas. En la portada salen unas 10, con la misma proporción.
+
+![Barras modernas](https://raw.githubusercontent.com/web-gdl/RadilloPlayerWave/main/docs/screenshots/escena-barras-modernas.png)
+
+**Barras LED con movimiento natural**
+
+- Suben casi al instante con cada golpe y bajan a velocidad constante, como el medidor de un
+  ecualizador de verdad. Antes bajaban de golpe, saltando de LED en LED.
+- El LED de arriba se va encendiendo poco a poco, así la columna sube y baja fluida aunque solo
+  tenga 9 LED.
+- La entrada se suaviza unos 60 ms, para quitar el temblor sin retrasar el ritmo.
+- Los 9 LED cubren la parte útil de la escala, así la música recorre toda la columna en vez de
+  moverse solo arriba.
+- El pico se queda un momento y cae acelerando, como si tuviera peso.
+
 ### Novedades de la 0.20.1
 
 **Visualizador más fluido en el autoestéreo (8227L) y Barras LED clásicas**

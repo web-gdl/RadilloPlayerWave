@@ -63,7 +63,7 @@ el coste de mantenimiento.
   pantallas de al menos 60 Hz; en una pantalla forzada a 30 Hz bajará la calidad al mínimo sin
   necesidad (se puede desactivar en los ajustes del visualizador). El detalle se recupera despacio
   a propósito (varios segundos sin tirones) para no oscilar.
-- Desde la 0.20.0 hay cuatro escenas: **Barras LED**, **Radial**, **Onda y osciloscopio** y
+- Desde la 0.21.0 hay cinco escenas: **Barras LED**, **Barras modernas**, **Radial**, **Onda y osciloscopio** y
   **Terreno synthwave** (se quitaron Anillos, Partículas, Túnel, Campo de líneas y Ambiente; quien
   tuviera guardada una de ellas pasa a Barras LED). El terreno es «3D» dibujado con líneas en el
   lienzo, sin OpenGL; es la escena más cara y el gobernador le quita filas, columnas y resplandor

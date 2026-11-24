@@ -7,6 +7,7 @@
     <string name="nav_visualizer">Visualizador</string>
 
     <string name="scene_spectrum">Barras LED</string>
+    <string name="scene_modern_bars">Barras modernas</string>
     <string name="scene_radial">Radial</string>
     <string name="scene_oscilloscope">Onda y osciloscopio</string>
     <string name="scene_terrain">Terreno synthwave</string>

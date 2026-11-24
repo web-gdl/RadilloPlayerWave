@@ -43,10 +43,10 @@ class ScenesUpdateTest {
     }
 
     @Test
-    fun `registry exposes the four scenes in order with unique ids and canvas backend`() {
+    fun `registry exposes the five scenes in order with unique ids and canvas backend`() {
         val registry = DefaultScenes.registry()
         assertThat(registry.ids).containsExactly(
-            SpectrumBarsScene.ID, RadialSpectrumScene.ID, OscilloscopeScene.ID, TerrainScene.ID,
+            SpectrumBarsScene.ID, ModernBarsScene.ID, RadialSpectrumScene.ID, OscilloscopeScene.ID, TerrainScene.ID,
         ).inOrder()
         assertThat(registry.ids.toSet()).hasSize(registry.ids.size)
         for (id in registry.ids) {
@@ -144,6 +144,65 @@ class ScenesUpdateTest {
         scene.draw(canvas)
         assertThat(SpectrumBarsScene.segments(scene.level(0))).isEqualTo(SpectrumBarsScene.ROWS)
         assertThat(SpectrumBarsScene.segments(scene.level(SpectrumBarsScene.COLUMNS - 1))).isEqualTo(0)
+    }
+
+    @Test
+    fun `led bars rise fast and fall smoothly at a steady pace`() {
+        val scene = SpectrumBarsScene()
+        scene.onAttach(SceneParams())
+        scene.onResize(1024, 534)
+        val n = config.bandCount
+        val loud = loudFrame()
+        fun frameWith(value: Float) = AudioFrame(
+            spectrum = loud.spectrum, bands = FloatArray(n) { value },
+            bass = value, mid = value, treble = value, rms = value, peak = value, onset = 0f,
+            waveformLeft = loud.waveformLeft, waveformRight = loud.waveformRight, timestampUs = 0L, synthetic = false,
+        )
+        val dt = 1f / 30f
+        // Subida: en ~0,2 s la columna ya está casi llena.
+        repeat(6) { scene.update(frameWith(1f), dt) }
+        assertThat(scene.level(3)).isGreaterThan(0.8f)
+        repeat(30) { scene.update(frameWith(1f), dt) }
+        // Bajada: monótona, sin desplomarse de golpe, y vacía en algo más de un segundo.
+        var previous = scene.level(3)
+        val trace = mutableListOf<Float>()
+        repeat(45) {
+            scene.update(frameWith(0f), dt)
+            val now = scene.level(3)
+            assertThat(now).isAtMost(previous)
+            assertThat(previous - now).isAtMost(SpectrumBarsScene.RELEASE_PER_SECOND * dt + 1e-4f)
+            trace += now
+            previous = now
+        }
+        assertThat(trace[8]).isGreaterThan(0.5f) // a los 0,3 s aún queda más de media columna
+        assertThat(trace.last()).isLessThan(0.01f) // a los 1,5 s, vacía
+        scene.draw(canvas)
+    }
+
+    @Test
+    fun `modern bars keep 20 fixed bars on low end and paint caches once per size and palette`() {
+        val scene = ModernBarsScene()
+        scene.onAttach(SceneParams(deviceScale = 0.6f))
+        scene.onResize(758, 395)
+        assertThat(scene.barCount).isEqualTo(ModernBarsScene.barsFor(ModernBarsScene.LOW_END_BARS, 758, 395))
+        assertThat(scene.cacheBuilds).isEqualTo(1)
+        for (q in floatArrayOf(0.75f, 0.56f, 0.9f, 1f, 0.42f)) scene.onParamsChanged(SceneParams(quality = q, deviceScale = 0.6f))
+        assertThat(scene.barCount).isEqualTo(ModernBarsScene.barsFor(ModernBarsScene.LOW_END_BARS, 758, 395))
+        assertThat(scene.cacheBuilds).isEqualTo(1)
+        scene.onParamsChanged(SceneParams(paletteId = "neon", deviceScale = 0.6f))
+        assertThat(scene.cacheBuilds).isEqualTo(2)
+        // Sube con el sonido y baja a ritmo constante.
+        repeat(20) { scene.update(loudFrame(), 1f / 30f) }
+        val up = scene.level(0)
+        assertThat(up).isGreaterThan(0.2f)
+        scene.update(synthetic.silent(), 1f / 30f)
+        assertThat(up - scene.level(0)).isAtMost(ModernBarsScene.RELEASE_PER_SECOND / 30f + 1e-4f)
+        scene.draw(canvas)
+        // En la portada (cuadrada) hay menos barras, con la misma proporción.
+        assertThat(ModernBarsScene.barsFor(20, 1024, 534)).isEqualTo(20)
+        assertThat(ModernBarsScene.barsFor(20, 360, 360)).isEqualTo(10)
+        scene.onResize(360, 360)
+        assertThat(scene.barCount).isEqualTo(10)
     }
 
     @Test
