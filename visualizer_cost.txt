@@ -1,0 +1,23 @@
+Coste por frame dibujando con CPU (ms, máquina de CI; valen las proporciones)
+escena;carátula 360x360;completa 1024x600;reducida 714x418;ahorro
+spectrum;0.67;0.96;0.42;57 %
+modern_bars;0.35;0.69;0.37;46 %
+radial;1.46;1.36;1.04;24 %
+oscilloscope;2.34;4.19;3.11;26 %
+terrain;1.03;1.49;1.05;30 %
+
+Pantalla completa reducida: versión ligera (gama baja, 8227L) frente a la completa
+escena;completa;ligera;ahorro
+spectrum;0.19;0.19;2 %
+modern_bars;0.69;0.65;6 %
+radial;4.42;1.10;75 %
+oscilloscope;9.01;3.07;66 %
+terrain;3.72;1.01;73 %
+
+Reconstrucción al cambiar la calidad (gama baja; ms por cambio)
+escena;frame;cambio de calidad
+spectrum;0.39;0.004
+modern_bars;0.52;0.057
+radial;0.92;0.029
+oscilloscope;2.68;0.019
+terrain;0.50;0.119
